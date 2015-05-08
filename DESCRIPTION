@@ -1,0 +1,30 @@
+Package: mixt
+Type: Package
+Title: Package for doing Matched Interaction across Tissues (MIxT) data analysis and visualization (short line)
+Version: 1.0
+Date: 2015-05-08
+Author: Bjørn Fjukstad 
+Maintainer: Bjørn Fjukstad <bjorn@cs.uit.no>
+Description: Package for doing Matched Interaction across Tissues (MIxT) data analysis and visualization. (more to come)
+License: 
+Imports: 
+  Biobase,
+  DBI,
+  RSQLite,
+  AnnotationDbi,
+  GO.db,
+  RColorBrewer,
+  latticeExtra,
+  colorspace,
+  munsell,
+  scales,
+  ggplot2,
+  Hmisc,
+  reshape,
+  preprocessCore,
+  WGCNA,
+  illuminaHumanv3.db,
+  illuminaHumanv4.db,
+  animation,
+  limma
+  
