@@ -99,7 +99,7 @@ getAllGenesAndModules <- function() {
 
 #' Get available tissues
 #' @export
-getTissues <- function() {
+getAllTissues <- function() {
   return (names(modules))
 }
 

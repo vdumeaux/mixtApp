@@ -3,7 +3,7 @@
 export(getAllGenes)
 export(getAllGenesAndModules)
 export(getAllModules)
+export(getAllTissues)
 export(getGeneList)
 export(getModules)
-export(getTissues)
 export(heatmap)
