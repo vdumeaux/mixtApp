@@ -37,11 +37,11 @@ datadir <- "/home/bjorn/mixt/data"
 #' heatmap("biopsy", "blue") 
 #' 
 
-heatmap <- function(tissue,module) { 
+heatmap <- function(tissue, module) { 
     plot.new()
-    create.modules.heatmap(bs=mymodules$blood$bresat[[i]],exprs=mymodules$blood$exprs, 
-                           clinical=mymodules$blood$clinical, re.order=FALSE,
-                           title=paste(names(mymodules$blood$bresat)[i], tissue ,sep="-"))
+    create.modules.heatmap(bs=mymodules[[tissue]]$bresat[[module]],exprs=mymodules[[tissue]]$exprs, 
+                           clinical=mymodules[[tissue]]$clinical, re.order=FALSE,
+                           title=paste(module, tissue ,sep="-"))
     #dev.off() 
 }
 
@@ -49,7 +49,7 @@ heatmap <- function(tissue,module) {
 #' @param tissue tissue we want to retrieve modules for 
 #' @export
 getModules <- function(tissue) {
-  return (names(modules[[tissue]]$modules))
+  return (names(mymodules[[tissue]]$modules))
 }
 
 #' Returns a list of all genes found in  all modules across all tissues. 
@@ -76,11 +76,11 @@ getAllGenesAndModules <- function() {
   res <- NULL
   tissues <- c("blood", "biopsy")
   for (tissue in tissues){
-    for(module in names(modules[[tissue]]$modules)) {
+    for(module in names(mymodules[[tissue]]$modules)) {
       if(module == "grey"){
         next 
       }
-      gs <- modules[[tissue]]$bresat[[module]]$gene.order
+      gs <- mymodules[[tissue]]$bresat[[module]]$gene.order
       for(gene in gs){
         if(length(res[[gene]])==0) {
           res[[gene]] = list()
@@ -101,7 +101,7 @@ getAllGenesAndModules <- function() {
 #' Get available tissues
 #' @export
 getAllTissues <- function() {
-  return (names(modules))
+  return (names(mymodules))
 }
 
 #' Get a list of genes for a specific module and tissue.
@@ -109,8 +109,8 @@ getAllTissues <- function() {
 #' @param module is the module we want to get the genes from
 #' @export  
 getGeneList <- function(tissue,module){
-  genes <- modules[[tissue]]$bresat[[module]]$gene.order
-  up.dn <- modules[[tissue]]$bresat[[module]]$up.dn
+  genes <- mymodules[[tissue]]$bresat[[module]]$gene.order
+  up.dn <- mymodules[[tissue]]$bresat[[module]]$up.dn
   res <- matrix(c(genes,up.dn), nrow=length(genes))
   colnames(res) <- c("Gene", "up.dn")
   return(res)
