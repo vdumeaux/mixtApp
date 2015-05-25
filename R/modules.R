@@ -1,3 +1,164 @@
+remove.outliers<- function (exprs){
+  altered = NULL
+  res = (sapply(1:nrow(exprs), function(i){
+    ratio = 4.652788
+    gene.exprs = exprs[i,]
+    mad = mad(gene.exprs)
+    diff = abs(median(gene.exprs) - gene.exprs)
+    indices = which(diff>(ratio*abs(mad)))
+    out = diff[indices]
+    NAs = matrix(FALSE,nrow=1,ncol=length(gene.exprs))
+    colnames(NAs) = colnames(exprs)
+    if (length(out) > 0) {
+      NAs[indices] = TRUE
+    }
+    return(list(exprs=gene.exprs,NAs=NAs,gene=rownames(exprs)[i]))
+  }))
+  altered = do.call(rbind,res['NAs',])
+  rownames(altered) = do.call(rbind,res['gene',])
+  NAs = sort(rowSums(altered>0),decreasing=TRUE)
+  to.change = exprs[rownames(altered),colnames(altered)]
+  to.change[altered] = NA
+  exprs[rownames(altered),colnames(altered)] = to.change
+}
+
+match.datasets <- function(ds1, ds2, include.normals=TRUE, remove.outliers=TRUE) {
+  if(is.null(ds1$exprs) || is.null(ds1$exprs))
+    stop("Both datasets should have expression matrix stored as dataset$exprs in them")
+  if(is.null(ds1$probe.info$gene.name) || is.null(ds2$probe.info$gene.name))
+    stop("Both datasets should have gene names stored as dataset$probe.info$gene.name in them")
+  
+  
+  if(remove.outliers) {
+    ds1.exprs <-remove.outliers(exprs=ds1$exprs)
+    ds2.exprs <-remove.outliers(exprs=ds2$exprs)
+  }
+  
+  ### renoming objects
+  ds1.exprs = ds1$exprs
+  ds1.clinical = ds1$clinical
+  ds1.clinical.heatmap = ds1$clinical.heatmap
+  
+  ds2.exprs = ds2$exprs
+  ds2.clinical = ds2$clinical
+  ds2.clinical.heatmap = ds2$clinical.heatmap
+  
+  if(remove.outliers) {
+    ds1.exprs <-remove.outliers(exprs=ds1.exprs)
+    ds2.exprs <-remove.outliers(exprs=ds2.exprs)
+  }
+  
+  ds1.genes = ds1$probe.info$gene.name
+  ds2.genes = ds2$probe.info$gene.name
+  
+  ## create matched.ds[[ds$name]]$matched.tumor including only MATCHED BC CASES AND GENES from both datasets
+  ds1.samples = colnames(ds1.exprs)[!ds1.clinical$Normal][ds1.clinical$orig.id[!ds1.clinical$Normal] %in% ds2.clinical$orig.id[!ds2.clinical$Normal]]
+  ds2.samples = colnames(ds2.exprs)[!ds2.clinical$Normal][ds2.clinical$orig.id[!ds2.clinical$Normal] %in% ds1.clinical$orig.id[!ds1.clinical$Normal]]
+  
+  ds1.matched.genes = ds1.genes %in% ds2.genes
+  ds2.matched.genes = ds2.genes %in% ds1.genes
+  
+  matched.ds = NULL
+  matched.ds[[ds1$name]]$matched.tumor = NULL
+  matched.ds[[ds2$name]]$matched.tumor = NULL
+  
+  matched.ds[[ds1$name]]$matched.tumor$exprs = ds1.exprs[ds1.matched.genes,sort(ds1.samples)]
+  matched.ds[[ds1$name]]$matched.tumor$genes = ds1$genes[ds1.matched.genes,]
+  matched.ds[[ds1$name]]$matched.tumor$probe.info = ds1$probe.info[ds1.matched.genes,]
+  matched.ds[[ds1$name]]$matched.tumor$clinical = ds1.clinical[sort(ds1.samples),,drop=F]
+  matched.ds[[ds1$name]]$matched.tumor$clinical.heatmap = ds1.clinical.heatmap[sort(ds1.samples),,drop=F]
+  matched.ds[[ds1$name]]$matched.tumor$name = ds1$name
+  matched.ds[[ds2$name]]$matched.tumor$exprs = ds2.exprs[ds2.matched.genes,sort(ds2.samples)]
+  matched.ds[[ds2$name]]$matched.tumor$genes = ds2$genes[ds2.matched.genes,]
+  matched.ds[[ds2$name]]$matched.tumor$probe.info = ds2$probe.info[ds2.matched.genes,]
+  matched.ds[[ds2$name]]$matched.tumor$clinical = ds2.clinical[sort(ds2.samples),,drop=F]
+  matched.ds[[ds2$name]]$matched.tumor$clinical.heatmap = ds2.clinical.heatmap[sort(ds2.samples),,drop=F]
+  matched.ds[[ds2$name]]$matched.tumor$name = ds2$name
+  
+  ## create matched.ds[[ds$name]]$normal including only controls and MATCHED GENES from both datasets
+  if(include.normals){ 
+    ds1.samples = colnames(ds1.exprs)[ds1.clinical$Normal]
+    ds2.samples = colnames(ds2.exprs)[ds2.clinical$Normal]
+    
+    matched.ds[[ds1$name]]$normal = NULL
+    matched.ds[[ds2$name]]$normal = NULL
+    matched.ds[[ds1$name]]$normal$exprs = ds1.exprs[ds1.matched.genes,sort(ds1.samples)]
+    matched.ds[[ds1$name]]$normal$genes = ds1$genes[ds1.matched.genes,]
+    matched.ds[[ds1$name]]$matched.tumor$probe.info = ds1$probe.info[ds1.matched.genes,]
+    matched.ds[[ds1$name]]$normal$clinical = ds1.clinical[sort(ds1.samples),,drop=F]
+    matched.ds[[ds1$name]]$normal$clinical.heatmap = ds1.clinical.heatmap[sort(ds1.samples),,drop=F]
+    matched.ds[[ds1$name]]$normal$name = ds1$name
+    matched.ds[[ds2$name]]$normal$exprs = ds2.exprs[ds2.matched.genes,sort(ds2.samples)]
+    matched.ds[[ds2$name]]$normal$genes = ds2$genes[ds2.matched.genes,]
+    matched.ds[[ds2$name]]$matched.tumor$probe.info = ds2$probe.info[ds2.matched.genes,]
+    matched.ds[[ds2$name]]$normal$clinical = ds2.clinical[sort(ds2.samples),,drop=F]
+    matched.ds[[ds2$name]]$normal$clinical.heatmap = ds2.clinical.heatmap[sort(ds2.samples),,drop=F]
+    matched.ds[[ds2$name]]$normal$name = ds2$name
+  }
+  return(matched.ds)
+}  
+
+################################
+### Function to plot scale free topology criterion and mean connectivify given power (default=6 for unsigned network)
+### choose soft-thesholding powers that (a) give approximate scale-free topology
+### in each data set, and (b) give roughly comparable mean or median
+### connectivities across the data sets. 
+
+soft.threshold.exprs.data <- function (exprs, powers = c(c(1:10), seq(from = 12, to=20, by=2))) {
+  sft = pickSoftThreshold(t(exprs), powerVector = powers, verbose = 1, networkType="unsigned")
+  
+  dev.new()
+  sizeGrWindow(9, 5)
+  par(mfrow = c(1,2));
+  cex1 = 0.9;
+  # Scale-free topology fit index as a function of the soft-thresholding power
+  plot(sft$fitIndices[,1], -sign(sft$fitIndices[,3])*sft$fitIndices[,2], xlab="Soft Threshold (power)",ylab="Scale Free Topology Model Fit,signed R^2",type="n", main = paste("Scale independence"));
+  text(sft$fitIndices[,1], -sign(sft$fitIndices[,3])*sft$fitIndices[,2], labels=powers,cex=cex1,col="red");
+  # this line corresponds to using an R^2 cut-off of h
+  abline(h=0.90,col="red")
+  # Mean connectivity as a function of the soft-thresholding power
+  plot(sft$fitIndices[,1], sft$fitIndices[,5], xlab="Soft Threshold (power)",ylab="Mean Connectivity", type="n", main = paste("Mean connectivity"))
+  text(sft$fitIndices[,1], sft$fitIndices[,5], labels=powers, cex=cex1,col="red")
+  
+  return(sft)
+}
+
+find.modules <- function (exprs, power = 6, deepSplit = 2, 
+                          minModuleSize = 30, reassignThreshold = 0, mergeCutHeight = 0.25, pick.soft.threshold=FALSE){
+  ### to interactively pick power for soft-threshold
+  if (pick.soft.threshold) {
+    soft.threshold.exprs.data(exprs)
+    cat ("Please enter a valid integer as the soft threshold power to find modules (default=6) :")
+    line <- readline()
+    while(is.na(as.integer(line))) {
+      cat ("Please enter a valid integer as the soft threshold power to find modules (default=6) :")
+      line <- readline()
+    }
+    power = as.integer(line)
+  }
+  
+  ### identify modules using the blockwise function
+  gene.modules = NULL
+  gene.modules = blockwiseModules(t(exprs), power = power, deepSplit = deepSplit, minModuleSize = minModuleSize, 
+                                  reassignThreshold = reassignThreshold, mergeCutHeight = mergeCutHeight, 
+                                  numericLabels = TRUE, pamRespectsDendro = FALSE, saveTOMs = FALSE, verbose = 3)
+  
+  moduleLabels = gene.modules$colors
+  moduleColors = labels2colors(gene.modules$colors)
+  MEs = gene.modules$MEs;
+  geneTree = gene.modules$dendrograms;
+  gene.modules = list(MEs=MEs, moduleLabels=moduleLabels, moduleColors=moduleColors, geneTree=geneTree, modules.GeneList=NULL, blockGenes=gene.modules$blockGenes)
+  
+  modules.gene.list = list()
+  for (item in (unique(gene.modules$moduleColors))) {
+    modules.gene.list[[item]] = rownames(exprs)[which(gene.modules$moduleColors == item)]
+  }
+  
+  gene.modules$modules.GeneList = modules.gene.list 
+  
+  return(gene.modules)
+}
+
 load.modules <- function(dat, mod)
 {
   mymodules$biopsy$exprs <- dat$biopsy$matched.tumor$exprs
@@ -22,8 +183,8 @@ gene.overlap.test <- function(modules)
 {
   all.genes <- intersect(unlist(modules$biopsy$modules[-1]), unlist(modules$blood$modules[-1]))
   
-  pvals <- sapply(modules$blood$modules[-1], function(blood.mod) {
-    sapply(modules$biopsy$modules[-1], function(biopsy.mod) {
+  pvals <- sapply(modules$biopsy$modules[-1], function(biopsy.mod) {
+    sapply(modules$blood$modules[-1], function(blood.mod) {
       s <- length(intersect(blood.mod, all.genes))
       e <- length(intersect(biopsy.mod, all.genes))
       com <- length(intersect(biopsy.mod, blood.mod))
@@ -37,7 +198,7 @@ gene.overlap.test <- function(modules)
 }
 
 
-create.modules.heatmap <- function(bs, clinical, title=title) 
+create.modules.heatmap <- function(bs, exprs, clinical, re.order=TRUE, order.by, title=title) 
 {
   stopifnot(ncol(bs$dat) == nrow(clinical))  
   
@@ -48,7 +209,7 @@ create.modules.heatmap <- function(bs, clinical, title=title)
   #layout.m.dist.cdf = matrix(c("","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","col.labels.ljust","","",""  ,  "row.labels.rjust","heatmap","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""),nrow=11,ncol=5,byrow=TRUE)
   layout.m.updn = matrix(c("","","","",""  ,  "","","","",""  ,"","","","",""  ,  "","","","heatmap",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""),nrow=9,ncol=5,byrow=TRUE)
   widths = c(2,5,0.25,0.25,0.25)
-  heights = c(1,0.25,0.5,5,0.5,0.5,0.25,2,0.25)
+  heights = c(1,0.25,0.5,5,0.25,0.5,0.25,2,0.25)
   
   scale = "none"
   min.val=-5
@@ -56,18 +217,23 @@ create.modules.heatmap <- function(bs, clinical, title=title)
   key.min=-5
   key.max=5
   
-  module.info = bs$gene.order
-  data = bs$dat
-  mclinical = clinical[bs$pat.order,]
+  if (re.order == FALSE){
+    order.by<-bs$pat.order
+  }
+  
+  data = exprs[bs$gene.order, order.by, drop=FALSE]
+  mclinical = clinical[order.by,]
+
   
   #plot.new()
   ddrs = heatmap.simple(data,layout.mat = layout.m, widths = widths, heights = heights, col.clust = FALSE, 
-                        clinical = mclinical, row.clust = FALSE, title=title,row.labels=rownames(data))
+                        clinical = mclinical, row.clust = FALSE, title=title,row.labels=rownames(data), 
+                        col.labels=rep("", ncol(data)))
   
   ranks = bs$pat.order
   names(ranks) = 1:length(bs$pat.order)
   ranks = as.integer(names(sort(ranks)))
-  ranksum = t(as.matrix(ranks))[,bs$pat.order,drop=FALSE]
+  ranksum = t(as.matrix(ranks))[,order.by,drop=FALSE]
   rownames(ranksum) = "ranks"
   heatmap.simple(-ranksum, layout.mat = layout.m.sum, widths = widths, heights = heights, col.clust = FALSE, row.clust = FALSE)
   
@@ -87,7 +253,7 @@ create.modules.heatmap <- function(bs, clinical, title=title)
   pushViewport(viewport(name=elem,
                         layout.pos.row=unique(idx[,1]),
                         layout.pos.col=unique(idx[,2])))
-  ranksum.plot = bs$ranksum[bs$pat.order]
+  ranksum.plot = bs$ranksum[order.by]
   par(new=TRUE, fig=gridFIG(), mar=c(0,0,0,0))
   plot(1:length(ranksum.plot), ranksum.plot, ann=FALSE, xaxs='i', yaxt='n', xaxt='n',bty='n',type='l')
   upViewport()
@@ -154,3 +320,58 @@ mod.p.heatmap<- function (mat.p, title, blood.biopsy=TRUE){
     upViewport()
   } 
 }
+
+plot.modules.correlation <- function(moduleColors, exprs, power = 6, max.size = 0, min.size = 0, dir="", filename="") {
+  allowWGCNAThreads()
+  
+  if (max.size == 0 && min.size == 0) {
+    colors = "all"
+  } else if (max.size == 0) {
+    max.size =sum(table(moduleColors))
+    colors = paste("contains between",min.size,"and",max.size,"genes")
+  } else {
+    colors = paste("contains between",min.size,"and",max.size,"genes")
+  }
+  
+  if (max.size > 0) {
+    selected.colors.min = names(sort(table(moduleColors)))[which(sort(table(moduleColors)) > min.size)]
+    selected.colors.max = names(sort(table(moduleColors)))[which(sort(table(moduleColors)) < max.size)]
+    selected.colors = selected.colors.max[selected.colors.max %in% selected.colors.min]
+  }
+  
+  ordered.indices = NULL
+  ordered.expressions = NULL
+  ordered.colors = NULL
+  
+  for (color in selected.colors) {
+    print(color)
+    if(color != 'grey') {
+      select = sort(which(moduleColors == color))
+      ordered.expressions = rbind(ordered.expressions,exprs[select,])
+      
+      dissTOM = 1-TOMsimilarityFromExpr(t(exprs[select,]), power = power);
+      selectTree = flashClust(as.dist(dissTOM), method = "average")
+      selectColor = moduleColors[select]
+      
+      ordered.indices = c(ordered.indices,(selectTree$order+length(ordered.indices)))
+      ordered.colors = c(ordered.colors,selectColor)
+    }
+  }
+  print('TOM disstance for the whole matrix')
+  
+  # calculated during module detection, but let us do it again here.
+  dissTOM = 1-TOMsimilarityFromExpr(t(ordered.expressions), power = power);
+  # set the diagonal of the dissimilarity to NA and raised it to the power of 4 to bring out the module structure
+  #(these changes effectively amount to a change in the color scale of the plot). 
+  plotDiss = dissTOM^6
+  diag(plotDiss) = NA;
+  png(filename=paste(dir,filename,' modules (', colors ,').png',sep=""), width=5000, height=5000, units='px')
+  heatmap(plotDiss[rev(ordered.indices),ordered.indices], RowSideColors=rev(ordered.colors), ColSideColors=ordered.colors, main = paste(filename,"modules heatmap plot, (", colors ,")"), Rowv = NA, Colv = NA, scale='none', labRow = F, labCol = F)
+  dev.off()
+  png(filename=paste(dir,filename,' modules (', colors ,') - small.png',sep=""), width=500, height=500, units='px')
+  heatmap(plotDiss[rev(ordered.indices),ordered.indices], RowSideColors=rev(ordered.colors), ColSideColors=ordered.colors, Rowv = NA, Colv = NA, scale='none', labRow = F, labCol = F)
+  dev.off()
+  
+  gc()
+}
+

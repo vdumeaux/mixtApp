@@ -428,4 +428,3 @@ define.roi.regions <- function(bresat, random.rank.counts, middle.range=0.95){
 #   upViewport(ndown)
 #   invisible(NULL)
 # }
-
