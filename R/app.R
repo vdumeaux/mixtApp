@@ -13,7 +13,7 @@ datadir <- "/home/bjorn/mixt/data"
 #modulesFilename <-paste0(datadir, "/modules-complete-pepi.RData")
 
 #modules <- loadModulesAndROI(rawModulesFilename,exprsFilename,modulesFilename)
-
+  
 ### Set Kvik option so that the output is readable in Kvik 
 #options(width=10000) 
 
@@ -39,8 +39,9 @@ datadir <- "/home/bjorn/mixt/data"
 
 heatmap <- function(tissue,module) { 
     plot.new()
-    create.modules.heatmap(modules[[tissue]]$bresat[[module]],modules[[tissue]]$clinical,
-                           title=Hmisc::capitalize(paste(tissue, module)))
+    create.modules.heatmap(bs=mymodules$blood$bresat[[i]],exprs=mymodules$blood$exprs, 
+                           clinical=mymodules$blood$clinical, re.order=FALSE,
+                           title=paste(names(mymodules$blood$bresat)[i], tissue ,sep="-"))
     #dev.off() 
 }
 
@@ -114,3 +115,9 @@ getGeneList <- function(tissue,module){
   colnames(res) <- c("Gene", "up.dn")
   return(res)
 } 
+
+#' Get enrichment scores for specific module and tissue 
+#' @export  
+getEnrichmentScores <- function(tissue, module) {
+  return (msigdb.enrichment[[tissue]][[module]]$table)
+}
