@@ -2,11 +2,11 @@
 % Please edit documentation in R/app.R
 \name{getAllGenesAndModules}
 \alias{getAllGenesAndModules}
-\title{Retrieves all genes and the modules they participate in.}
+\title{Retrieves an overview of all genes and the modules they participate in.}
 \usage{
 getAllGenesAndModules()
 }
 \description{
-Retrieves all genes and the modules they participate in.
+Retrieves an overview of all genes and the modules they participate in.
 }
 

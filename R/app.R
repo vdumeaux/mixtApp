@@ -55,26 +55,24 @@ getModules <- function(tissue) {
 #' Returns a list of all genes found in  all modules across all tissues. 
 #' @export
 getAllGenes <- function(){ 
-  genesAndModules = getAllGenesAndModules()
-  return (genesAndModules$gene)
+  return (geneModuleOverview$gene)
 }
 
 #' Get all modules a specific gene is found in. 
 #' @param gene the interesting gene
 #' @export
 getAllModules <- function(gene) { 
-  genesAndModules = getAllGenesAndModules() 
-  id = match(gene,genesAndModules$gene)
-  g = genesAndModules[id,]
+  id = match(gene,geneModuleOverview$gene)
+  g = geneModuleOverview[id,]
   d = c(lapply(g,as.character))
   return(c(d$blood, d$biopsy))
 }
 
-#' Retrieves all genes and the modules they participate in.
+#' Retrieves an overview of all genes and the modules they participate in.
 #' @export  
 getAllGenesAndModules <- function() {
   res <- NULL
-  tissues <- c("blood", "biopsy")
+  tissues <- getAllTissues()
   for (tissue in tissues){
     for(module in names(mymodules[[tissue]]$modules)) {
       if(module == "grey"){
@@ -84,18 +82,20 @@ getAllGenesAndModules <- function() {
       for(gene in gs){
         if(length(res[[gene]])==0) {
           res[[gene]] = list()
-          res[[gene]][["blood"]] = NA
-          res[[gene]][["biopsy"]] = NA
+          for (ti in tissues){ 
+            res[[gene]][[ti]] = NA
+          }
         }
         res[[gene]][[tissue]] = c(module)
       }
     }
   }
-  genes = matrix(unlist(res), nrow=length(names(res)))
-  genes = cbind(names(res), genes)
-  colnames(genes) <-  c("gene",tissues)
-  genes = as.data.frame(genes) 
-  return (genes)
+  geneModuleOverview = matrix(unlist(res), nrow=length(names(res)))
+  genes = cbind(names(res), geneModuleOverview)
+  colnames(geneModuleOverview) <-  c("gene",tissues)
+  geneModuleOverview = as.data.frame(geneModuleOverview) 
+  save(geneModuleOverview, file="data/geneModuleOverview.RData")
+  return (geneModuleOverview)
 }
 
 #' Get available tissues

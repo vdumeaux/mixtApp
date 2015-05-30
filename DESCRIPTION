@@ -7,7 +7,6 @@ Author: Bjørn Fjukstad
 Maintainer: Bjørn Fjukstad <bjorn@cs.uit.no>
 Description: Package for doing Matched Interaction across Tissues (MIxT) data analysis and visualization. (more to come)
 License: 
-LazyData: True
 Imports: 
   Biobase,
   DBI,
