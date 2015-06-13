@@ -2,11 +2,22 @@
 % Please edit documentation in R/app.R
 \name{getEnrichmentScores}
 \alias{getEnrichmentScores}
-\title{Get enrichment scores for specific module and tissue}
+\title{Get enrichment scores for specific module, tissue and specific
+gene set if applicable. If no gene set is specified it will return
+all gene sets}
 \usage{
-getEnrichmentScores(tissue, module)
+getEnrichmentScores(tissue, module, genesets = c())
+}
+\arguments{
+\item{tissue}{is the tissue, e.g. "blood"}
+
+\item{module}{is the module, e.g. "red"}
+
+\item{genesets}{is a vector of genesets we want to retrieve scores from. unspecified will return all gene sets}
 }
 \description{
-Get enrichment scores for specific module and tissue
+Get enrichment scores for specific module, tissue and specific
+gene set if applicable. If no gene set is specified it will return
+all gene sets
 }
 

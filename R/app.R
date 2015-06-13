@@ -116,8 +116,25 @@ getGeneList <- function(tissue,module){
   return(res)
 } 
 
-#' Get enrichment scores for specific module and tissue 
+#' Get enrichment scores for specific module, tissue and specific
+#' gene set if applicable. If no gene set is specified it will return
+#' all gene sets
+#' @param tissue is the tissue, e.g. "blood"
+#' @param module is the module, e.g. "red"
+#' @param genesets is a vector of genesets we want to retrieve scores from. unspecified will return all gene sets
 #' @export  
-getEnrichmentScores <- function(tissue, module) {
-  return (msigdb.enrichment[[tissue]][[module]]$table)
+getEnrichmentScores <- function(tissue, module,genesets=c()) {
+  if(length(genesets) < 1 ){ 
+    return (msigdb.enrichment[[tissue]][[module]]$table)
+  }
+  return (msigdb.enrichment[[tissue]][[module]]$table[genesets,])
 }
+
+#' Get gene set names available to the MIxT app
+#' @export 
+getGeneSetNames <- function() {
+  return (names(msigdb.enrichment[[1]][[1]][[1]]))
+}
+
+
+get
