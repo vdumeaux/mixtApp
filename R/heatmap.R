@@ -235,7 +235,6 @@ heatmap.map <- function(x, color.scheme=heatmap.color.scheme(), na.color = "grey
     ## add na.color at the end of the color scheme
     bc$col <- c(bc$col, na.color)
     x.colors[is.na(x.colors)] <- length(bc$col)
-    
 
     ## this viewport is set up so that origo is on the top left and the
     ## ranges of the "native" units are number of columns and rows of x.
@@ -715,7 +714,6 @@ heatmap.simple <- function(exprs,
 {
     library(grid)
     library(gridBase)
-    
 
     ## save all standard R graphical parameters
     old.par <- par(no.readonly=TRUE)
@@ -850,7 +848,6 @@ heatmap.simple <- function(exprs,
         pushViewport(viewport(name=elem,
                               layout.pos.row=unique(idx[,1]),
                               layout.pos.col=unique(idx[,2])))
-        
         heatmap.map(exprs, color.scheme=color.scheme, na.color=na.color, use.raster=use.raster)
         upViewport()
     }

@@ -37,11 +37,11 @@ match.datasets <- function(ds1, ds2, include.normals=TRUE, remove.outliers=TRUE)
   ### renoming objects
   ds1.exprs = ds1$exprs
   ds1.clinical = ds1$clinical
-  ds1.clinical.heatmap = ds1$clinical.heatmap
+  #ds1.clinical.heatmap = ds1$clinical.heatmap
   
   ds2.exprs = ds2$exprs
   ds2.clinical = ds2$clinical
-  ds2.clinical.heatmap = ds2$clinical.heatmap
+  #ds2.clinical.heatmap = ds2$clinical.heatmap
   
   if(remove.outliers) {
     ds1.exprs <-remove.outliers(exprs=ds1.exprs)
@@ -66,13 +66,13 @@ match.datasets <- function(ds1, ds2, include.normals=TRUE, remove.outliers=TRUE)
   matched.ds[[ds1$name]]$matched.tumor$genes = ds1$genes[ds1.matched.genes,]
   matched.ds[[ds1$name]]$matched.tumor$probe.info = ds1$probe.info[ds1.matched.genes,]
   matched.ds[[ds1$name]]$matched.tumor$clinical = ds1.clinical[sort(ds1.samples),,drop=F]
-  matched.ds[[ds1$name]]$matched.tumor$clinical.heatmap = ds1.clinical.heatmap[sort(ds1.samples),,drop=F]
+  #matched.ds[[ds1$name]]$matched.tumor$clinical.heatmap = ds1.clinical.heatmap[sort(ds1.samples),,drop=F]
   matched.ds[[ds1$name]]$matched.tumor$name = ds1$name
   matched.ds[[ds2$name]]$matched.tumor$exprs = ds2.exprs[ds2.matched.genes,sort(ds2.samples)]
   matched.ds[[ds2$name]]$matched.tumor$genes = ds2$genes[ds2.matched.genes,]
   matched.ds[[ds2$name]]$matched.tumor$probe.info = ds2$probe.info[ds2.matched.genes,]
   matched.ds[[ds2$name]]$matched.tumor$clinical = ds2.clinical[sort(ds2.samples),,drop=F]
-  matched.ds[[ds2$name]]$matched.tumor$clinical.heatmap = ds2.clinical.heatmap[sort(ds2.samples),,drop=F]
+  #matched.ds[[ds2$name]]$matched.tumor$clinical.heatmap = ds2.clinical.heatmap[sort(ds2.samples),,drop=F]
   matched.ds[[ds2$name]]$matched.tumor$name = ds2$name
   
   ## create matched.ds[[ds$name]]$normal including only controls and MATCHED GENES from both datasets
@@ -86,13 +86,13 @@ match.datasets <- function(ds1, ds2, include.normals=TRUE, remove.outliers=TRUE)
     matched.ds[[ds1$name]]$normal$genes = ds1$genes[ds1.matched.genes,]
     matched.ds[[ds1$name]]$matched.tumor$probe.info = ds1$probe.info[ds1.matched.genes,]
     matched.ds[[ds1$name]]$normal$clinical = ds1.clinical[sort(ds1.samples),,drop=F]
-    matched.ds[[ds1$name]]$normal$clinical.heatmap = ds1.clinical.heatmap[sort(ds1.samples),,drop=F]
+    #matched.ds[[ds1$name]]$normal$clinical.heatmap = ds1.clinical.heatmap[sort(ds1.samples),,drop=F]
     matched.ds[[ds1$name]]$normal$name = ds1$name
     matched.ds[[ds2$name]]$normal$exprs = ds2.exprs[ds2.matched.genes,sort(ds2.samples)]
     matched.ds[[ds2$name]]$normal$genes = ds2$genes[ds2.matched.genes,]
     matched.ds[[ds2$name]]$matched.tumor$probe.info = ds2$probe.info[ds2.matched.genes,]
     matched.ds[[ds2$name]]$normal$clinical = ds2.clinical[sort(ds2.samples),,drop=F]
-    matched.ds[[ds2$name]]$normal$clinical.heatmap = ds2.clinical.heatmap[sort(ds2.samples),,drop=F]
+    #matched.ds[[ds2$name]]$normal$clinical.heatmap = ds2.clinical.heatmap[sort(ds2.samples),,drop=F]
     matched.ds[[ds2$name]]$normal$name = ds2$name
   }
   return(matched.ds)
@@ -163,8 +163,10 @@ load.modules <- function(dat, mod)
 {
   mymodules$biopsy$exprs <- dat$biopsy$matched.tumor$exprs
   mymodules$blood$exprs <- dat$blood$matched.tumor$exprs
-  mymodules$biopsy$clinical <- dat$biopsy$matched.tumor$clinical.heatmap
-  mymodules$blood$clinical <- dat$blood$matched.tumor$clinical.heatmap
+  mymodules$biopsy$clinical <- dat$biopsy$matched.tumor$clinical
+  mymodules$blood$clinical <- dat$blood$matched.tumor$clinical
+  mymodules$biopsy$heatmap.clinical <- huc.color.clinical(dat$biopsy$matched.tumor$clinical)
+  mymodules$blood$heatmap.clinical <- huc.color.clinical(dat$blood$matched.tumor$clinical)
   mymodules$biopsy$modules <- mod$biopsy$modules.GeneList
   mymodules$blood$modules <- mod$blood$modules.GeneList
   ## make sure the grey module always comes first
@@ -172,9 +174,14 @@ load.modules <- function(dat, mod)
   blood.grey.idx <- which(names(mymodules$blood$modules) == "grey")
   mymodules$biopsy$modules <- c(mymodules$biopsy$modules[biopsy.grey.idx], mymodules$biopsy$modules[-biopsy.grey.idx])
   mymodules$blood$modules <- c(mymodules$blood$modules[blood.grey.idx], mymodules$blood$modules[-blood.grey.idx])
-  ## remove periods and '_' from clinical names
-  names(mymodules$biopsy$clinical) <- sub("_", " ", sub("\\.", " ", names(mymodules$biopsy$clinical)))
-  names(mymodules$blood$clinical) <- sub("_", " ", sub("\\.", " ", names(mymodules$blood$clinical)))
+  
+  ### add normals
+  mymodules$nblood<-mymodules$blood
+  mymodules$nblood$exprs<-cbind(dat$blood$matched.tumor$exprs,dat$blood$normal$exprs)
+  mymodules$nblood$clinical<-rbind(dat$blood$matched.tumor$clinical, dat$blood$normal$clinical)
+  mymodules$nblood$clinical$Normal<-c(rep(FALSE, nrow(dat$blood$matched.tumor$clinical)), 
+                                      rep(TRUE,nrow(dat$blood$normal$clinical)))
+  mymodules$nblood$heatmap.clinical<-huc.color.clinical(mymodules$nblood$clinical)
   
   return(mymodules)
 }
@@ -209,7 +216,7 @@ create.modules.heatmap <- function(bs, exprs, clinical, re.order=TRUE, order.by,
   #layout.m.dist.cdf = matrix(c("","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","col.labels.ljust","","",""  ,  "row.labels.rjust","heatmap","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""),nrow=11,ncol=5,byrow=TRUE)
   layout.m.updn = matrix(c("","","","",""  ,  "","","","",""  ,"","","","",""  ,  "","","","heatmap",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""),nrow=9,ncol=5,byrow=TRUE)
   widths = c(2,5,0.25,0.25,0.25)
-  heights = c(1,0.25,0.5,5,0.25,0.5,0.25,2,0.25)
+  heights = c(1,0.25,0.5,3,0.25,0.25,0.25,8,0.25)
   
   scale = "none"
   min.val=-5
@@ -220,10 +227,9 @@ create.modules.heatmap <- function(bs, exprs, clinical, re.order=TRUE, order.by,
   if (re.order == FALSE){
     order.by<-bs$pat.order
   }
-  
-  data = exprs[bs$gene.order, order.by, drop=FALSE]
-  mclinical = clinical[order.by,]
 
+  data = exprs[bs$gene.order,order.by, drop=FALSE]
+  mclinical = clinical[order.by,]
   
   #plot.new()
   ddrs = heatmap.simple(data,layout.mat = layout.m, widths = widths, heights = heights, col.clust = FALSE, 
@@ -302,76 +308,76 @@ mod.p.heatmap<- function (mat.p, title, blood.biopsy=TRUE){
                  color.scheme=col.scheme, key.min=-2, key.max=10, title=title)
   
   if(blood.biopsy){
-    idx <- which(mylayout == "rowSideLabels", arr.ind=TRUE) 
-    pushViewport(viewport(name="rowSideLabels", layout.pos.row=unique(idx[,1]), 
-                          layout.pos.col=unique(idx[,2])))
-    
-    grid.text("blood", x=0.95, y=0.55,default.units="native", rot=-90,
-              gp=gpar(cex=0.2 * heatmap.labels.cex("blood")))
-    upViewport()
-    
-    idx <- which(mylayout == "colSideLabels", arr.ind=TRUE)
-    pushViewport(viewport(name="colSideLabels",
-                          layout.pos.row=unique(idx[,1]),
-                          layout.pos.col=unique(idx[,2])))
-    
-    grid.text("biopsy", y=0.05, default.units="native", 
-              gp=gpar(cex=0.2 * heatmap.labels.cex("biopsy")))
-    upViewport()
+  idx <- which(mylayout == "rowSideLabels", arr.ind=TRUE) 
+  pushViewport(viewport(name="rowSideLabels", layout.pos.row=unique(idx[,1]), 
+  layout.pos.col=unique(idx[,2])))
+  
+  grid.text("blood", x=0.95, y=0.55,default.units="native", rot=-90,
+            gp=gpar(cex=0.2 * heatmap.labels.cex("blood")))
+  upViewport()
+  
+  idx <- which(mylayout == "colSideLabels", arr.ind=TRUE)
+  pushViewport(viewport(name="colSideLabels",
+                        layout.pos.row=unique(idx[,1]),
+                        layout.pos.col=unique(idx[,2])))
+  
+  grid.text("biopsy", y=0.05, default.units="native", 
+            gp=gpar(cex=0.2 * heatmap.labels.cex("biopsy")))
+  upViewport()
   } 
 }
 
 plot.modules.correlation <- function(moduleColors, exprs, power = 6, max.size = 0, min.size = 0, dir="", filename="") {
-  allowWGCNAThreads()
-  
-  if (max.size == 0 && min.size == 0) {
-    colors = "all"
-  } else if (max.size == 0) {
-    max.size =sum(table(moduleColors))
-    colors = paste("contains between",min.size,"and",max.size,"genes")
-  } else {
-    colors = paste("contains between",min.size,"and",max.size,"genes")
-  }
-  
-  if (max.size > 0) {
-    selected.colors.min = names(sort(table(moduleColors)))[which(sort(table(moduleColors)) > min.size)]
-    selected.colors.max = names(sort(table(moduleColors)))[which(sort(table(moduleColors)) < max.size)]
-    selected.colors = selected.colors.max[selected.colors.max %in% selected.colors.min]
-  }
-  
-  ordered.indices = NULL
-  ordered.expressions = NULL
-  ordered.colors = NULL
-  
-  for (color in selected.colors) {
-    print(color)
-    if(color != 'grey') {
-      select = sort(which(moduleColors == color))
-      ordered.expressions = rbind(ordered.expressions,exprs[select,])
-      
-      dissTOM = 1-TOMsimilarityFromExpr(t(exprs[select,]), power = power);
-      selectTree = flashClust(as.dist(dissTOM), method = "average")
-      selectColor = moduleColors[select]
-      
-      ordered.indices = c(ordered.indices,(selectTree$order+length(ordered.indices)))
-      ordered.colors = c(ordered.colors,selectColor)
-    }
-  }
-  print('TOM disstance for the whole matrix')
-  
-  # calculated during module detection, but let us do it again here.
-  dissTOM = 1-TOMsimilarityFromExpr(t(ordered.expressions), power = power);
-  # set the diagonal of the dissimilarity to NA and raised it to the power of 4 to bring out the module structure
-  #(these changes effectively amount to a change in the color scale of the plot). 
+	allowWGCNAThreads()
+	
+	if (max.size == 0 && min.size == 0) {
+		colors = "all"
+	} else if (max.size == 0) {
+		max.size =sum(table(moduleColors))
+		colors = paste("contains between",min.size,"and",max.size,"genes")
+	} else {
+		colors = paste("contains between",min.size,"and",max.size,"genes")
+	}
+	
+	if (max.size > 0) {
+		selected.colors.min = names(sort(table(moduleColors)))[which(sort(table(moduleColors)) > min.size)]
+		selected.colors.max = names(sort(table(moduleColors)))[which(sort(table(moduleColors)) < max.size)]
+		selected.colors = selected.colors.max[selected.colors.max %in% selected.colors.min]
+	}
+	
+	ordered.indices = NULL
+	ordered.expressions = NULL
+	ordered.colors = NULL
+	
+	for (color in selected.colors) {
+		print(color)
+		if(color != 'grey') {
+			select = sort(which(moduleColors == color))
+			ordered.expressions = rbind(ordered.expressions,exprs[select,])
+			
+			dissTOM = 1-TOMsimilarityFromExpr(t(exprs[select,]), power = power);
+			selectTree = flashClust(as.dist(dissTOM), method = "average")
+			selectColor = moduleColors[select]
+			
+			ordered.indices = c(ordered.indices,(selectTree$order+length(ordered.indices)))
+			ordered.colors = c(ordered.colors,selectColor)
+		}
+	}
+	print('TOM disstance for the whole matrix')
+	
+	# calculated during module detection, but let us do it again here.
+	dissTOM = 1-TOMsimilarityFromExpr(t(ordered.expressions), power = power);
+	# set the diagonal of the dissimilarity to NA and raised it to the power of 4 to bring out the module structure
+	#(these changes effectively amount to a change in the color scale of the plot). 
   plotDiss = dissTOM^6
-  diag(plotDiss) = NA;
-  png(filename=paste(dir,filename,' modules (', colors ,').png',sep=""), width=5000, height=5000, units='px')
-  heatmap(plotDiss[rev(ordered.indices),ordered.indices], RowSideColors=rev(ordered.colors), ColSideColors=ordered.colors, main = paste(filename,"modules heatmap plot, (", colors ,")"), Rowv = NA, Colv = NA, scale='none', labRow = F, labCol = F)
-  dev.off()
-  png(filename=paste(dir,filename,' modules (', colors ,') - small.png',sep=""), width=500, height=500, units='px')
-  heatmap(plotDiss[rev(ordered.indices),ordered.indices], RowSideColors=rev(ordered.colors), ColSideColors=ordered.colors, Rowv = NA, Colv = NA, scale='none', labRow = F, labCol = F)
-  dev.off()
-  
-  gc()
+	diag(plotDiss) = NA;
+	png(filename=paste(dir,filename,' modules (', colors ,').png',sep=""), width=5000, height=5000, units='px')
+	heatmap(plotDiss[rev(ordered.indices),ordered.indices], RowSideColors=rev(ordered.colors), ColSideColors=ordered.colors, main = paste(filename,"modules heatmap plot, (", colors ,")"), Rowv = NA, Colv = NA, scale='none', labRow = F, labCol = F)
+	dev.off()
+	png(filename=paste(dir,filename,' modules (', colors ,') - small.png',sep=""), width=500, height=500, units='px')
+	heatmap(plotDiss[rev(ordered.indices),ordered.indices], RowSideColors=rev(ordered.colors), ColSideColors=ordered.colors, Rowv = NA, Colv = NA, scale='none', labRow = F, labCol = F)
+	dev.off()
+	
+	gc()
 }
 

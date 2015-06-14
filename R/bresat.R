@@ -193,6 +193,8 @@ sig.ranksum <- function(exprdata, up=NULL, dn=NULL, ns=NULL, full.return = FALSE
     ret$gene.order <- c(up[rev(order(up.cor))], dn[order(dn.cor)])
     ret$up <- up
     ret$dn <- dn
+    ret$up.cor<-up.cor
+    ret$dn.cor<-dn.cor
     ret$dat <- exprdata[ret$gene.order, ret$pat.order, drop=FALSE]
     ret$up.dn <- c(rep(1, length(up)), rep(-1, length(dn)))
     ret$ranksum <- ranksum
