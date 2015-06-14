@@ -40,7 +40,7 @@ datadir <- "/home/bjorn/mixt/data"
 heatmap <- function(tissue, module) { 
     plot.new()
     create.modules.heatmap(bs=mymodules[[tissue]]$bresat[[module]],exprs=mymodules[[tissue]]$exprs, 
-                           clinical=mymodules[[tissue]]$clinical, re.order=FALSE,
+                           clinical=mymodules[[tissue]]$heatmap.clinical, re.order=FALSE,
                            title=paste(module, tissue ,sep="-"))
     #dev.off() 
 }
@@ -91,7 +91,7 @@ getAllGenesAndModules <- function() {
     }
   }
   geneModuleOverview = matrix(unlist(res), nrow=length(names(res)))
-  genes = cbind(names(res), geneModuleOverview)
+  geneModuleOverview = cbind(names(res), geneModuleOverview)
   colnames(geneModuleOverview) <-  c("gene",tissues)
   geneModuleOverview = as.data.frame(geneModuleOverview) 
   save(geneModuleOverview, file="data/geneModuleOverview.RData")
