@@ -136,5 +136,23 @@ getGeneSetNames <- function() {
   return (names(msigdb.enrichment[[1]][[1]][[1]]))
 }
 
+#' Get enrichment scores for all modules 
+#' @param tissue is the tissue we're interested in, e.g. blood
+#' @param genesets is a vector of the genesets we want to look at, default is the first... 
+getEnrichmentForTissue <- function(tissue, genesets=c(1)) {
+  res = lapply(msigdb.enrichment[[tissue]], gs, sets = genesets)
+  res = lapply(res, addTissue, tissue=tissue) 
+  res = do.call("rbind", res)
+  return(res)
+}
 
-get
+gs <- function(d, sets){
+  return(d$table[sets,])
+}
+
+addTissue <- function(d, tissue){
+  e = d;
+  e$tissue = tissue
+  return(e)
+}
+
