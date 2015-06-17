@@ -111,8 +111,21 @@ getAllTissues <- function() {
 getGeneList <- function(tissue,module){
   genes <- mymodules[[tissue]]$bresat[[module]]$gene.order
   up.dn <- mymodules[[tissue]]$bresat[[module]]$up.dn
+
   res <- matrix(c(genes,up.dn), nrow=length(genes))
   colnames(res) <- c("Gene", "up.dn")
+  res = data.frame(res)
+  
+  # get correlation and join it 
+  a = matrix(c(mymodules[[tissue]]$bresat[[module]]$up.cor, mymodules[[tissue]]$bresat[[module]]$dn.cor))
+  colnames(a) <- c("cor")
+  df = data.frame(a) 
+  df$gene = names(a)
+  df[match(res$Gene, df$gene),]
+  res$cor = df$cor
+
+  print(names(a)) 
+  
   return(res)
 } 
 
@@ -156,4 +169,3 @@ addTissue <- function(d, tissue){
   e$tissue = tissue
   return(e)
 }
-
