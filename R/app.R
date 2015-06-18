@@ -169,3 +169,30 @@ addTissue <- function(d, tissue){
   e$tissue = tissue
   return(e)
 }
+
+#' Get go terms for the given module and tissue. Possible to specify
+#' which specific terms you're interested in. 
+#' @param tissue is the tissue, e.g. blood
+#' @param module is the module, e.g. blue, pink etc.
+#' @param terms are a vector GO terms we're interested in, default is all, given as a vector. 
+getGOTerms <- function(tissue, module, terms=c()){
+  if(length(terms) < 1){
+    return (goterms[[tissue]][[module]]$GO.table)
+  }
+  return (subset(goterms[[tissue]][[module]]$GO.table, Term==terms))
+}
+
+
+saveGOTerms <- function(){
+  load("data/topGO.RData.latest") 
+  goterms <- all.single
+  for (tissue in names(goterms)){
+    for(module in names(goterms[[tissue]])){
+      goterms[[tissue]][[module]]$GO.data <- NULL
+      goterms[[tissue]][[module]]$resultFisher <- NULL
+    }
+  }
+  save(goterms, file="data/goterms.RData") 
+}
+
+
