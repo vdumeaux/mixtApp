@@ -122,9 +122,7 @@ getGeneList <- function(tissue,module){
   df = data.frame(a) 
   df$gene = names(a)
   df[match(res$Gene, df$gene),]
-  res$cor = df$cor
-
-  print(names(a)) 
+  res$cor = as.numeric(df$cor)
   
   return(res)
 } 
@@ -138,15 +136,15 @@ getGeneList <- function(tissue,module){
 #' @export  
 getEnrichmentScores <- function(tissue, module,genesets=c()) {
   if(length(genesets) < 1 ){ 
-    return (msigdb.enrichment[[tissue]][[module]]$table)
+    return (msigdb.enrichment[[tissue]][[module]]$results)
   }
-  return (msigdb.enrichment[[tissue]][[module]]$table[genesets,])
+  return (msigdb.enrichment[[tissue]][[module]]$results[genesets,])
 }
 
 #' Get gene set names available to the MIxT app
 #' @export 
 getGeneSetNames <- function() {
-  return (names(msigdb.enrichment[[1]][[1]][[1]]))
+  return (names(msigdb.enrichment[[1]][[1]][[1]]$sig.set))
 }
 
 #' Get enrichment scores for all modules 
@@ -161,7 +159,7 @@ getEnrichmentForTissue <- function(tissue, genesets=c(1)) {
 }
 
 gs <- function(d, sets){
-  return(d$table[sets,])
+  return(d$results[sets,])
 }
 
 addTissue <- function(d, tissue){
@@ -172,6 +170,7 @@ addTissue <- function(d, tissue){
 
 #' Get go terms for the given module and tissue. Possible to specify
 #' which specific terms you're interested in. 
+#' @export 
 #' @param tissue is the tissue, e.g. blood
 #' @param module is the module, e.g. blue, pink etc.
 #' @param terms are a vector GO terms we're interested in, default is all, given as a vector. 
