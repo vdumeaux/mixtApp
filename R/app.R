@@ -194,4 +194,11 @@ saveGOTerms <- function(){
   save(goterms, file="data/goterms.RData") 
 }
 
+#' Get common genes for given tissue, module, geneset and optionally status
+#' @param geneset is the geneset, from any of the msgidb sets
+#' @param status is the status, up.common, dn.common or default updn.common
+#' @export 
+getCommonGenes <- function(tissue, module, geneset, status = "updn.common") { 
+    return (msigdb.enrichment[[tissue]][[module]][[status]][[geneset]])
+} 
 
