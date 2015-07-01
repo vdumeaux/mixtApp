@@ -117,7 +117,7 @@ getGeneList <- function(tissue,module){
   res = data.frame(res)
   
   # get correlation and merge  
-  a = matrix(c(mymodules[[tissue]]$bresat[[module]]$up.cor, mymodules[[tissue]]$bresat[[module]]$dn.cor))
+  a = matrix(unlist(c(mymodules[[tissue]]$bresat[[module]]$up.cor, mymodules[[tissue]]$bresat[[module]]$dn.cor)))
   colnames(a) <- c("cor")
   df = data.frame(a) 
   df$Gene = names(c(mymodules[[tissue]]$bresat[[module]]$up.cor, mymodules[[tissue]]$bresat[[module]]$dn.cor))
