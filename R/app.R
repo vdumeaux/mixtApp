@@ -176,9 +176,9 @@ addTissue <- function(d, tissue){
 #' @param terms are a vector GO terms we're interested in, default is all, given as a vector. 
 getGOTerms <- function(tissue, module, terms=c()){
   if(length(terms) < 1){
-    return (goterms[[tissue]][[module]]$GO.table)
+    return (subset(goterms[[tissue]][[module]]$GO.table, classicFisher != "1.00000"))
   }
-  return (subset(goterms[[tissue]][[module]]$GO.table, Term==terms))
+  return (subset(subset(goterms[[tissue]][[module]]$GO.table, Term==terms), classicFisher != "1.00000"))
 }
 
 
