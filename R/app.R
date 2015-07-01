@@ -128,16 +128,17 @@ getGeneList <- function(tissue,module){
 
 #' Get enrichment scores for specific module, tissue and specific
 #' gene set if applicable. If no gene set is specified it will return
-#' all gene sets
+#' all gene sets. Only returns genesets with updn pvalue < 1. Since
+#' p-value is stored as a factor we're checking for != 1. 
 #' @param tissue is the tissue, e.g. "blood"
 #' @param module is the module, e.g. "red"
 #' @param genesets is a vector of genesets we want to retrieve scores from. unspecified will return all gene sets
 #' @export  
 getEnrichmentScores <- function(tissue, module,genesets=c()) {
   if(length(genesets) < 1 ){ 
-    return (msigdb.enrichment[[tissue]][[module]]$results)
+    return (subset(msigdb.enrichment[[tissue]][[module]]$results, updn.pval != 1))
   }
-  return (msigdb.enrichment[[tissue]][[module]]$results[genesets,])
+  return (subset(msigdb.enrichment[[tissue]][[module]]$results[genesets,], updn.pval != 1))
 }
 
 #' Get gene set names available to the MIxT app
