@@ -155,6 +155,7 @@ getEnrichmentForTissue <- function(tissue, genesets=c(1)) {
   res = lapply(msigdb.enrichment[[tissue]], gs, sets = genesets)
   res = lapply(res, addTissue, tissue=tissue) 
   res = do.call("rbind", res)
+  res = subset(res, updn.pval != 1)
   return(res)
 }
 
