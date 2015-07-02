@@ -4,7 +4,8 @@
 \alias{getEnrichmentScores}
 \title{Get enrichment scores for specific module, tissue and specific
 gene set if applicable. If no gene set is specified it will return
-all gene sets}
+all gene sets. Only returns genesets with updn pvalue < 1. Since
+p-value is stored as a factor we're checking for != 1.}
 \usage{
 getEnrichmentScores(tissue, module, genesets = c())
 }
@@ -18,6 +19,7 @@ getEnrichmentScores(tissue, module, genesets = c())
 \description{
 Get enrichment scores for specific module, tissue and specific
 gene set if applicable. If no gene set is specified it will return
-all gene sets
+all gene sets. Only returns genesets with updn pvalue < 1. Since
+p-value is stored as a factor we're checking for != 1.
 }
 
