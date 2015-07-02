@@ -203,3 +203,24 @@ getCommonGenes <- function(tissue, module, geneset, status = "updn.common") {
     return (msigdb.enrichment[[tissue]][[module]][[status]][[geneset]])
 } 
 
+#' Get p-values from the hypergeometric test between an arbirtrary gene list
+#' and the modules. User must specify tissue and genelist
+#' @param tissue is the tissue we're interested in, e.g. "blood"
+#' @param genelist is the genelist as a vector. 
+#' @export
+userEnrichmentScores <- function(tissue, genelist) {
+  modules = mymodules[[tissue]]$modules[-1]
+  all_genes = unlist(modules)
+  intersections = lapply(modules, function(module) intersect(module, genelist)) 
+  
+  q = sapply(intersections, length) - 1
+  k = sapply(modules, length)
+  m = length(genelist)
+  n = length(all_genes) - length(genelist) 
+  
+  p_values = p.adjust(phyper(q, m, n, k, lower.tail=FALSE), method="BH") 
+  return(p_values)
+  
+}
+
+
