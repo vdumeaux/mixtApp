@@ -211,6 +211,7 @@ getCommonGenes <- function(tissue, module, geneset, status = "updn.common") {
 userEnrichmentScores <- function(tissue, genelist) {
   modules = mymodules[[tissue]]$modules[-1]
   all_genes = unlist(modules)
+  genelist = genelist[genelist %in% all_genes]
   intersections = lapply(modules, function(module) intersect(module, genelist)) 
   
   q = sapply(intersections, length) - 1
@@ -220,7 +221,4 @@ userEnrichmentScores <- function(tissue, genelist) {
   
   p_values = p.adjust(phyper(q, m, n, k, lower.tail=FALSE), method="BH") 
   return(p_values)
-  
 }
-
-
