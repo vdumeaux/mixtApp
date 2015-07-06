@@ -220,5 +220,10 @@ userEnrichmentScores <- function(tissue, genelist) {
   n = length(all_genes) - length(genelist) 
   
   p_values = p.adjust(phyper(q, m, n, k, lower.tail=FALSE), method="BH") 
+  p_values = as.data.frame(p_values) 
+  names(p_values) <- c("p-value")
+  p_values$module = row.names(p_values) 
+  row.names(p_values) <- NULL
+  
   return(p_values)
 }
