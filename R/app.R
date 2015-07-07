@@ -227,3 +227,25 @@ userEnrichmentScores <- function(tissue, genelist) {
   
   return(p_values)
 }
+
+#' Get all go term names
+#' @export 
+getGOTermNames <- function(){
+  return(goterms$blood$blue$GO.table$Term)
+}
+
+#' Get all scores for a specific term in a tissue 
+#' @export 
+getGOScoresForTissue <- function(tissue,term) {
+  res <- NULL
+  for (i in 1:length(goterms[[tissue]])){
+    module = names(goterms[[tissue]])[i]
+    score = subset(goterms[[tissue]][[module]]$GO.table, Term == term)
+    score$module = module
+    res[[module]] <- score
+  }
+  res = do.call(rbind, res) 
+  return(res)
+}
+
+
