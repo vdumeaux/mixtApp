@@ -190,6 +190,8 @@ saveGOTerms <- function(){
     for(module in names(goterms[[tissue]])){
       goterms[[tissue]][[module]]$GO.data <- NULL
       goterms[[tissue]][[module]]$resultFisher <- NULL
+      goterms[[tissue]][[module]]$common <- NULL
+      goterms[[tissue]][[module]]$common <- go.common[[tissue]][[module]]
     }
   }
   save(goterms, file="data/goterms.RData") 
@@ -202,6 +204,14 @@ saveGOTerms <- function(){
 getCommonGenes <- function(tissue, module, geneset, status = "updn.common") { 
     return (msigdb.enrichment[[tissue]][[module]][[status]][[geneset]])
 } 
+
+#' Get the common genes from the go term anlysis for a specific
+#' tissue, module and GO term id. 
+#' @export
+#' @param gotermID is the GO term id, e.g. "GO:0070848" 
+getCommonGOTermGenes <- function(tissue,module,gotermID){
+   return (goterms[[tissue]][[module]]$common[[gotermID]])
+}
 
 #' Get p-values from the hypergeometric test between an arbirtrary gene list
 #' and the modules. User must specify tissue and genelist
@@ -247,5 +257,3 @@ getGOScoresForTissue <- function(tissue,term) {
   res = do.call(rbind, res) 
   return(res)
 }
-
-
