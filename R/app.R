@@ -1,29 +1,3 @@
-# Where data and scripts are stored 
-datadir <- "/home/bjorn/mixt/data"
-#scriptdir <- "/home/bjorn/mixt/src"
-
-# Get helper scripts 
-#source(paste0(scriptdir, "/bresat.R"), chdir=TRUE)
-#source(paste0(scriptdir, "/heatmap.R"), chdir=TRUE)
-#source(paste0(scriptdir, "/mixt-utils.r"), chdir=TRUE)
-
-# Get datafiles 
-#rawModulesFilename <- paste0(datadir, "/cc.blood-biopsy-Modules.RData")
-#exprsFilename <-  paste0(datadir, "/CC-Biopsy-Expressions.RData")
-#modulesFilename <-paste0(datadir, "/modules-complete-pepi.RData")
-
-#modules <- loadModulesAndROI(rawModulesFilename,exprsFilename,modulesFilename)
-  
-### Set Kvik option so that the output is readable in Kvik 
-#options(width=10000) 
-
-### Where to store images
-#imgpath <- "images"
-#dir.create(imgpath,showWarnings = FALSE)
-### Directory to store tables (output as csv files)
-#tablePath <- "tables"
-#dir.create(tablePath,showWarnings = FALSE)
-
 #' Generate heatmap plot for the given tissue and module. If the heatmap
 #' already exists, it finds the appropriate png file where it is supposed
 #' to store a new one, it returns this file. This heat map function
