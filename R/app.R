@@ -75,7 +75,8 @@ getAllGenesAndModules <- function() {
 #' Get available tissues
 #' @export
 getAllTissues <- function() {
-  return (names(mymodules))
+  #return (names(mymodules))
+  return(c("biopsy","blood"))
 }
 
 #' Get a list of genes for a specific module and tissue.
@@ -209,7 +210,16 @@ userEnrichmentScores <- function(tissue, genelist) {
   p_values$module = row.names(p_values) 
   row.names(p_values) <- NULL
   
+  p_values$common = intersections
+  
   return(p_values)
+}
+
+#' Get common genes from er analysis with genelist and module
+#' @export 
+commonEnrichmentScoreGenes <- function(tissue, module, genelist){
+  scores = userEnrichmentScores(tissue,genelist)
+  return(scores$common[[module]])
 }
 
 #' Get all go term names
