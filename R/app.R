@@ -75,8 +75,8 @@ getAllGenesAndModules <- function() {
 #' Get available tissues
 #' @export
 getAllTissues <- function() {
-  #return (names(mymodules))
-  return(c("biopsy","blood"))
+  return (names(mymodules))
+  #return(c("biopsy","blood"))
 }
 
 #' Get a list of genes for a specific module and tissue.
@@ -151,6 +151,9 @@ addTissue <- function(d, tissue){
 #' @param module is the module, e.g. blue, pink etc.
 #' @param terms are a vector GO terms we're interested in, default is all, given as a vector. 
 getGOTerms <- function(tissue, module, terms=c()){
+  if(tissue == "nblood"){
+    tissue = "blood"
+  }
   if(length(terms) < 1){
     return (subset(goterms[[tissue]][[module]]$GO.table, classicFisher != "1.00000"))
   }
@@ -185,6 +188,9 @@ getCommonGenes <- function(tissue, module, geneset, status = "updn.common") {
 #' @export
 #' @param gotermID is the GO term id, e.g. "GO:0070848" 
 getCommonGOTermGenes <- function(tissue,module,gotermID){
+  if(tissue == "nblood"){
+    tissue = "blood"
+  }
    return (goterms[[tissue]][[module]]$common[[gotermID]])
 }
 
@@ -231,6 +237,9 @@ getGOTermNames <- function(){
 #' Get all scores for a specific term in a tissue 
 #' @export 
 getGOScoresForTissue <- function(tissue,term) {
+  if(tissue == "nblood"){
+    tissue = "blood"
+  }
   res <- NULL
   for (i in 1:length(goterms[[tissue]])){
     module = names(goterms[[tissue]])[i]
@@ -240,4 +249,37 @@ getGOScoresForTissue <- function(tissue,term) {
   }
   res = do.call(rbind, res) 
   return(res)
+}
+
+#' Calculates eigengene correlations between tissue A and tissue B. Returns
+#' the p-values. 
+#' @export 
+eigengeneCorrelation <- function(tissueA,tissueB){
+  if(tissueA==tissueB){
+    module2Cor<-NULL
+    module2Pvalue<-NULL
+    
+    module2Cor[[tissueA]] = cor(MEs[[tissueA]], use = "p");
+    module2Pvalue[[tissueA]] = corPvalueStudent(module2Cor[[tissueA]], ncol(mymodules$blood$exprs)); 
+    
+    res <- NULL
+    
+    moduleNames = names(MEs[[tissueA]])
+    
+    res = matrix(unlist(module2Pvalue[[tissueA]]), ncol=length(moduleNames))
+    colnames(res) = moduleNames
+    rownames(res) = moduleNames
+    return(res) 
+  }
+  ## Correlation analyses of eigengenes across tissues
+  moduleCor = cor(MEs[[tissueA]], MEs[[tissueB]], use = "p");
+  modulePvalue = corPvalueStudent(moduleCor, ncol(mymodules$blood$exprs));
+  res = matrix(unlist(modulePvalue), ncol=length(names(MEs[[tissueB]])))
+  colnames(res) = names(MEs[[tissueB]])
+  rownames(res) = names(MEs[[tissueA]])
+  return(res) 
+}
+
+getEigengenes <- function(tissue){
+  return(names(MEs[[tissue]]))
 }

@@ -22,9 +22,10 @@ Imports:
   Hmisc,
   reshape,
   preprocessCore,
-  WGCNA,
   illuminaHumanv3.db,
   illuminaHumanv4.db,
   animation,
   limma,
   gridBase,
+Depends: 
+  WGCNA,
