@@ -296,13 +296,14 @@ getEigengenes <- function(tissue){
 #' @param tissueA is the first tissue we are interested in, e.g. "blood"
 #' @param tissueB is the other, e.g. "biopsy" 
 #' @export  
-eigengeneHypergeometricTest <- function(tissueA, tissueB){
-  moduleCor = cor(MEs[[tissueA]], MEs[[tissueB]], use = "p");
+moduleHypergeometricTest <- function(tissueA, tissueB){
+  
+  moduleCor = cor(MEs[[tissueB]], MEs[[tissueA]], use = "p");
   modulePvalue = corPvalueStudent(moduleCor, ncol(mymodules$blood$exprs));
   
   hyper <- geneOverlapTest(mymodules,tissueA,tissueB)
-  #hyper <- hyper[match(rownames(modulePvalue), names(MEs[[tissueA]])),
-  #                                   match(colnames(modulePvalue), names(MEs[[tissueB]]) )] 
+  hyper <- hyper[match(rownames(modulePvalue), paste("ME", rownames(hyper), sep="")),
+                 match(colnames(modulePvalue), paste("ME", colnames(hyper), sep=""))]
   
   ret = as.matrix(hyper, ncol=names(MEs[[tissueA]]))
   ret = cbind(rownames(hyper), ret)
@@ -313,15 +314,17 @@ eigengeneHypergeometricTest <- function(tissueA, tissueB){
 
 
 geneOverlapTest <- function(modules, tissueA="biopsy", tissueB="blood"){
-  
   all.genes <- intersect(unlist(modules[[tissueA]]$modules[-1]), unlist(modules[[tissueB]]$modules[-1]))
   
-  pvals <- sapply(modules[[tissueA]]$modules[-1], function(biopsy.mod) {
-    sapply(modules[[tissueB]]$modules[-1], function(blood.mod) {
-      s <- length(intersect(blood.mod, all.genes))
-      e <- length(intersect(biopsy.mod, all.genes))
-      com <- length(intersect(biopsy.mod, blood.mod))
-      hyper.test(s, length(all.genes) - s, e, com)
+  pvals <- sapply(modules[[tissueA]]$modules[-1], function(tissueA.mod) {
+    sapply(modules[[tissueB]]$modules[-1], function(tissueB.mod) {
+      
+      white <- length(intersect(tissueB.mod, all.genes))
+      black <- length(all.genes) - white
+      total.drawn <- length(intersect(tissueA.mod, all.genes))
+      white.drawn <- length(intersect(tissueA.mod, tissueB.mod))
+      
+      phyper(white.drawn - 1, white, black, total.drawn, log.p = FALSE, lower.tail=FALSE)
     })
   })
   ret <- p.adjust(pvals, method="BH")
@@ -329,16 +332,3 @@ geneOverlapTest <- function(modules, tissueA="biopsy", tissueB="blood"){
   dimnames(ret) <- dimnames(pvals)
   return(ret)
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
