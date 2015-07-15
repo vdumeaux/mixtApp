@@ -2,7 +2,6 @@
 
 export(commonEnrichmentScoreGenes)
 export(eigengeneCorrelation)
-export(eigengeneHypergeometricTest)
 export(getAllGenes)
 export(getAllGenesAndModules)
 export(getAllModules)
@@ -18,4 +17,5 @@ export(getGeneList)
 export(getGeneSetNames)
 export(getModules)
 export(heatmap)
+export(moduleHypergeometricTest)
 export(userEnrichmentScores)
