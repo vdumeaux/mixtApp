@@ -267,19 +267,78 @@ eigengeneCorrelation <- function(tissueA,tissueB){
     moduleNames = names(MEs[[tissueA]])
     
     res = matrix(unlist(module2Pvalue[[tissueA]]), ncol=length(moduleNames))
-    colnames(res) = moduleNames
-    rownames(res) = moduleNames
+    
+    #log transform 
+    #res = -log10(res) 
+    #res[res > 10] <- 10
+    
+    res = cbind(moduleNames, res)
+    colnames(res) = c("module", moduleNames)
     return(res) 
   }
+  
   ## Correlation analyses of eigengenes across tissues
   moduleCor = cor(MEs[[tissueA]], MEs[[tissueB]], use = "p");
   modulePvalue = corPvalueStudent(moduleCor, ncol(mymodules$blood$exprs));
+  
   res = matrix(unlist(modulePvalue), ncol=length(names(MEs[[tissueB]])))
-  colnames(res) = names(MEs[[tissueB]])
-  rownames(res) = names(MEs[[tissueA]])
+  res = cbind(names(MEs[[tissueA]]),res)
+  colnames(res) = c("module", names(MEs[[tissueB]]))
   return(res) 
 }
 
 getEigengenes <- function(tissue){
   return(names(MEs[[tissue]]))
 }
+
+#' Run gene overlap test between eigengenes in tissueA and tissueB. Returns 
+#' p values 
+#' @param tissueA is the first tissue we are interested in, e.g. "blood"
+#' @param tissueB is the other, e.g. "biopsy" 
+#' @export  
+eigengeneHypergeometricTest <- function(tissueA, tissueB){
+  moduleCor = cor(MEs[[tissueA]], MEs[[tissueB]], use = "p");
+  modulePvalue = corPvalueStudent(moduleCor, ncol(mymodules$blood$exprs));
+  
+  hyper <- geneOverlapTest(mymodules,tissueA,tissueB)
+  #hyper <- hyper[match(rownames(modulePvalue), names(MEs[[tissueA]])),
+  #                                   match(colnames(modulePvalue), names(MEs[[tissueB]]) )] 
+  
+  ret = as.matrix(hyper, ncol=names(MEs[[tissueA]]))
+  ret = cbind(rownames(hyper), ret)
+  colnames(ret) = c("module", names(MEs[[tissueA]]))  
+  rownames(ret) = NULL
+  return (ret)
+}
+
+
+geneOverlapTest <- function(modules, tissueA="biopsy", tissueB="blood"){
+  
+  all.genes <- intersect(unlist(modules[[tissueA]]$modules[-1]), unlist(modules[[tissueB]]$modules[-1]))
+  
+  pvals <- sapply(modules[[tissueA]]$modules[-1], function(biopsy.mod) {
+    sapply(modules[[tissueB]]$modules[-1], function(blood.mod) {
+      s <- length(intersect(blood.mod, all.genes))
+      e <- length(intersect(biopsy.mod, all.genes))
+      com <- length(intersect(biopsy.mod, blood.mod))
+      hyper.test(s, length(all.genes) - s, e, com)
+    })
+  })
+  ret <- p.adjust(pvals, method="BH")
+  dim(ret) <- dim(pvals)
+  dimnames(ret) <- dimnames(pvals)
+  return(ret)
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
