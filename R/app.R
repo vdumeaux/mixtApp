@@ -282,6 +282,7 @@ eigengeneCorrelation <- function(tissueA,tissueB){
   modulePvalue = corPvalueStudent(moduleCor, ncol(mymodules$blood$exprs));
   
   res = matrix(unlist(modulePvalue), ncol=length(names(MEs[[tissueB]])))
+  rownames(res) = NULL
   res = cbind(names(MEs[[tissueA]]),res)
   colnames(res) = c("module", names(MEs[[tissueB]]))
   return(res) 
@@ -305,9 +306,11 @@ moduleHypergeometricTest <- function(tissueA, tissueB){
   hyper <- hyper[match(rownames(modulePvalue), paste("ME", rownames(hyper), sep="")),
                  match(colnames(modulePvalue), paste("ME", colnames(hyper), sep=""))]
   
-  ret = as.matrix(hyper, ncol=names(MEs[[tissueA]]))
+  hyper = t(hyper) 
+  
+  ret = as.matrix(hyper, ncol=length(colnames(modulePvalue)))
   ret = cbind(rownames(hyper), ret)
-  colnames(ret) = c("module", names(MEs[[tissueA]]))  
+  colnames(ret) = c("module", colnames(hyper))  
   rownames(ret) = NULL
   return (ret)
 }
