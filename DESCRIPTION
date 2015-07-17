@@ -29,3 +29,5 @@ Imports:
   gridBase,
 Depends: 
   WGCNA,
+  parallel,
+  plyr,

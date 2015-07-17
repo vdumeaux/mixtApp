@@ -308,6 +308,7 @@ moduleHypergeometricTest <- function(tissueA, tissueB){
   
   hyper = t(hyper) 
   
+  ret = NULL
   ret = as.matrix(hyper, ncol=length(colnames(modulePvalue)))
   ret = cbind(rownames(hyper), ret)
   colnames(ret) = c("module", colnames(hyper))  
@@ -334,4 +335,41 @@ geneOverlapTest <- function(modules, tissueA="biopsy", tissueB="blood"){
   dim(ret) <- dim(pvals)
   dimnames(ret) <- dimnames(pvals)
   return(ret)
+}
+
+#' ROI fisher's exact test
+#' @export
+roiTest <- function(tissueA="biopsy", tissueB="blood"){
+  moduleCor = cor(MEs[[tissueB]], MEs[[tissueA]], use = "p");
+  modulePvalue = corPvalueStudent(moduleCor, ncol(mymodules$blood$exprs));
+  
+  # Define roi categories (from ROI.R) 
+  roi.cat<-NULL
+  for (tissue in c(tissueA, tissueB))
+  {
+    module.names <- names(mymodules[[tissue]]$bresat)
+    roi.cat[[tissue]]<- mclapply(module.names, function(module) {
+      define.roi.regions(mymodules[[tissue]]$bresat[[module]], mymodules[[tissue]]$bresat[[module]]$roi)
+    })
+    names(roi.cat[[tissue]])<-module.names
+  }  
+  
+  # Fisher's exact teset between roi categories
+  mod.roi <- NULL
+  mod.roi <- laply(roi.cat[[tissueA]], function(x){
+    laply(roi.cat[[tissueB]], function(y){
+      fisher.test(x, y, workspace = 2e+07, hybrid=TRUE)$p
+    })
+  })
+  
+  rownames(mod.roi) <- names(roi.cat[[tissueA]])
+  colnames(mod.roi) <- names(roi.cat[[tissueB]]) 
+  
+  mod.roi <- mod.roi[match(colnames(modulePvalue),paste("ME", rownames(mod.roi), sep="")),
+                     match(rownames(modulePvalue), paste("ME", colnames(mod.roi), sep=""))]
+  
+  mod.roi = cbind(rownames(mod.roi), mod.roi)
+  colnames(mod.roi) = c("module", rownames(modulePvalue)) 
+  rownames(mod.roi) <- NULL 
+  return(mod.roi)
 }
