@@ -299,14 +299,14 @@ getEigengenes <- function(tissue){
 #' @export  
 moduleHypergeometricTest <- function(tissueA, tissueB){
   
-  moduleCor = cor(MEs[[tissueB]], MEs[[tissueA]], use = "p");
+  moduleCor = cor(MEs[[tissueA]], MEs[[tissueB]], use = "p");
   modulePvalue = corPvalueStudent(moduleCor, ncol(mymodules$blood$exprs));
   
   hyper <- geneOverlapTest(mymodules,tissueA,tissueB)
   hyper <- hyper[match(rownames(modulePvalue), paste("ME", rownames(hyper), sep="")),
                  match(colnames(modulePvalue), paste("ME", colnames(hyper), sep=""))]
   
-  hyper = t(hyper) 
+  #hyper = t(hyper) 
   
   ret = NULL
   ret = as.matrix(hyper, ncol=length(colnames(modulePvalue)))
@@ -317,11 +317,11 @@ moduleHypergeometricTest <- function(tissueA, tissueB){
 }
 
 
-geneOverlapTest <- function(modules, tissueA="biopsy", tissueB="blood"){
+geneOverlapTest <- function(modules, tissueA="blood", tissueB="biopsy"){
   all.genes <- intersect(unlist(modules[[tissueA]]$modules[-1]), unlist(modules[[tissueB]]$modules[-1]))
   
-  pvals <- sapply(modules[[tissueA]]$modules[-1], function(tissueA.mod) {
-    sapply(modules[[tissueB]]$modules[-1], function(tissueB.mod) {
+  pvals <- sapply(modules[[tissueB]]$modules[-1], function(tissueB.mod) {
+    sapply(modules[[tissueA]]$modules[-1], function(tissueA.mod) {
       
       white <- length(intersect(tissueB.mod, all.genes))
       black <- length(all.genes) - white
@@ -339,8 +339,9 @@ geneOverlapTest <- function(modules, tissueA="biopsy", tissueB="blood"){
 
 #' ROI fisher's exact test
 #' @export
-roiTest <- function(tissueA="biopsy", tissueB="blood"){
-  moduleCor = cor(MEs[[tissueB]], MEs[[tissueA]], use = "p");
+roiTest <- function(tissueA="blood", tissueB="biopsy"){
+  
+  moduleCor = cor(MEs[[tissueA]], MEs[[tissueB]], use = "p");
   modulePvalue = corPvalueStudent(moduleCor, ncol(mymodules$blood$exprs));
   
   # Define roi categories (from ROI.R) 
@@ -365,11 +366,13 @@ roiTest <- function(tissueA="biopsy", tissueB="blood"){
   rownames(mod.roi) <- names(roi.cat[[tissueA]])
   colnames(mod.roi) <- names(roi.cat[[tissueB]]) 
   
-  mod.roi <- mod.roi[match(colnames(modulePvalue),paste("ME", rownames(mod.roi), sep="")),
-                     match(rownames(modulePvalue), paste("ME", colnames(mod.roi), sep=""))]
+  mod.roi <- mod.roi[match(rownames(modulePvalue),paste("ME", rownames(mod.roi), sep="")),
+                     match(colnames(modulePvalue), paste("ME", colnames(mod.roi), sep=""))]
   
   mod.roi = cbind(rownames(mod.roi), mod.roi)
-  colnames(mod.roi) = c("module", rownames(modulePvalue)) 
-  rownames(mod.roi) <- NULL 
+  colnames(mod.roi) = c("module", colnames(modulePvalue))  
+  rownames(mod.roi) <- NULL
+  
+  
   return(mod.roi)
 }
