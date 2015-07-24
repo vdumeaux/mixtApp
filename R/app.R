@@ -5,17 +5,38 @@
 #' given by 'imgpath'
 #' @param tissue we want to look at
 #' @param module the module we want to generate a heetmap for
+#' @param orderByModule which module we want to order patients by. Default is order by module. 
+#' @param orderByTissue the tissue where the orderByModule module is found. Default is the same tissue. 
+#' @param re.order set to true if patients should be re ordered. Defaults to FALSE. 
 #' @export
 #' @examples
 #' heatmap("blood", "green")
 #' heatmap("biopsy", "blue") 
 #' 
 
-heatmap <- function(tissue, module) { 
+heatmap <- function(tissue, module, re.order=FALSE, orderByModule=NULL, orderByTissue=NULL) { 
     plot.new()
-    create.modules.heatmap(bs=mymodules[[tissue]]$bresat[[module]],exprs=mymodules[[tissue]]$exprs, 
-                           clinical=mymodules[[tissue]]$heatmap.clinical, re.order=FALSE,
-                           title=paste(module, tissue ,sep="-"))
+    title = "" 
+    if(is.null(orderByModule)){
+      orderByModule = module
+    }
+    if(is.null(orderByTissue)){
+      orderByTissue = tissue
+    }
+    
+    if(re.order == FALSE || (orderByTissue==tissue && orderByModule==module)){
+      title = paste(module," module from ",tissue, sep="") 
+    } 
+    else {
+      title = paste(paste(module, " module from ",tissue ,sep=""), "ordered by", orderByModule, "module from", orderByTissue, sep=" ") 
+    }
+   
+    create.modules.heatmap(bs = mymodules[[tissue]]$bresat[[module]], 
+                           exprs = mymodules[[tissue]]$exprs, 
+                           clinical = mymodules[[tissue]]$heatmap.clinical,
+                           re.order = re.order,
+                           order.by = mymodules[[orderByTissue]]$bresat[[orderByModule]]$pat.order,
+                           title = title )
     #dev.off() 
 }
 
@@ -264,7 +285,7 @@ eigengeneCorrelation <- function(tissueA,tissueB){
     
     res <- NULL
     
-    moduleNames = names(MEs[[tissueA]])
+    moduleNames = names(mymodules[[tissueA]]$bresat)
     
     res = matrix(unlist(module2Pvalue[[tissueA]]), ncol=length(moduleNames))
     
@@ -280,11 +301,11 @@ eigengeneCorrelation <- function(tissueA,tissueB){
   ## Correlation analyses of eigengenes across tissues
   moduleCor = cor(MEs[[tissueA]], MEs[[tissueB]], use = "p");
   modulePvalue = corPvalueStudent(moduleCor, ncol(mymodules$blood$exprs));
-  
+  res <- NULL
   res = matrix(unlist(modulePvalue), ncol=length(names(MEs[[tissueB]])))
   rownames(res) = NULL
-  res = cbind(names(MEs[[tissueA]]),res)
-  colnames(res) = c("module", names(MEs[[tissueB]]))
+  res = cbind(names(mymodules[[tissueA]]$bresat),res)
+  colnames(res) = c("module", names(mymodules[[tissueB]]$bresat))
   return(res) 
 }
 
@@ -311,7 +332,8 @@ moduleHypergeometricTest <- function(tissueA, tissueB){
   ret = NULL
   ret = as.matrix(hyper, ncol=length(colnames(modulePvalue)))
   ret = cbind(rownames(hyper), ret)
-  colnames(ret) = c("module", colnames(hyper))  
+  colnames(ret) = c("module", names(mymodules[[tissueB]]$bresat))  
+  
   rownames(ret) = NULL
   return (ret)
 }
@@ -370,9 +392,65 @@ roiTest <- function(tissueA="blood", tissueB="biopsy"){
                      match(colnames(modulePvalue), paste("ME", colnames(mod.roi), sep=""))]
   
   mod.roi = cbind(rownames(mod.roi), mod.roi)
-  colnames(mod.roi) = c("module", colnames(modulePvalue))  
+  colnames(mod.roi) = c("module", names(roi.cat[[tissueB]]))  
   rownames(mod.roi) <- NULL
   
   
   return(mod.roi)
+}
+
+#' Compute correlation between patient rank in two tissues
+#' @export 
+patientRankCorrelation <- function(tissueA="blood", tissueB="biopsy"){
+  moduleCor = cor(MEs[[tissueA]], MEs[[tissueB]], use = "p");
+  modulePvalue = corPvalueStudent(moduleCor, ncol(mymodules[[tissueA]]$exprs));
+  
+  rank <- NULL
+  
+  ### relate patient ordering across tissues
+  for (tissue in c(tissueA, tissueB)){
+    rank[[tissue]] <- do.call(cbind, lapply(mymodules[[tissue]]$bresat, '[', "pat.order"))[,]
+  }
+  
+  rank.cor.p<-laply(rank[[tissueA]], function (x){
+    laply(rank[[tissueB]], function (y){
+      corPvalueStudent(cor(x,y, use="p"), ncol(mymodules[[tissueA]]$exprs))
+    })
+  })
+  
+  rownames(rank.cor.p) <- names(rank[[tissueA]])
+  colnames(rank.cor.p) <- names(rank[[tissueB]])
+  
+  rank.cor.p<- rank.cor.p[match(rownames(modulePvalue), paste("ME", rownames(rank.cor.p), sep="")),
+                          match(colnames(modulePvalue), paste("ME", colnames(rank.cor.p), sep=""))] 
+  
+  rank.cor.p = cbind(rownames(rank.cor.p), rank.cor.p)
+  colnames(rank.cor.p) = c("module", names(rank[[tissueB]]))  
+  rownames(rank.cor.p) <- NULL
+  
+  return(rank.cor.p)
+}
+
+#' Compute all 4 different analyses for modules from two tissues. 
+#' @param tissueA is the first tissue
+#' @param tissueB is the second tissue
+#' @param moduleA is a module from the first tissue
+#' @param moduleB is a module from the second tissue
+#' @export 
+comparisonAnalyses <- function(tissueA, tissueB, moduleA, moduleB){
+  
+  analyses = NULL
+  eigen = eigengeneCorrelation(tissueA,tissueB) 
+  rank = patientRankCorrelation(tissueA,tissueB)
+  overlap = moduleHypergeometricTest(tissueA, tissueB) 
+  roi = roiTest(tissueA, tissueB) 
+  
+  analyses$eigen =  as.numeric(eigen[eigen[,1] == moduleA , colnames(eigen) == moduleB])
+  analyses$rank =  as.numeric(rank[rank[,1] == moduleA , colnames(rank) == moduleB])
+  analyses$overlap =  as.numeric(overlap[overlap[,1] == moduleA , colnames(overlap) == moduleB])
+  analyses$roi =  as.numeric(roi[roi[,1] == moduleA , colnames(roi) == moduleB])
+  
+  analyses$common = intersect(rownames(mymodules[[tissueA]]$bresat[[moduleA]]$dat), rownames(mymodules[[tissueB]]$bresat[[moduleB]]$dat))
+  
+  return(analyses)
 }
