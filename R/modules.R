@@ -228,7 +228,7 @@ create.modules.heatmap <- function(bs, exprs, clinical, re.order=TRUE, order.by,
     order.by<-bs$pat.order
   }
 
-  data = exprs[bs$gene.order,order.by, drop=FALSE]
+  data = exprs[bs$gene.order, order.by, drop=FALSE]
   mclinical = clinical[order.by,]
   
   #plot.new()

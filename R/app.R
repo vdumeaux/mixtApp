@@ -321,18 +321,18 @@ getEigengenes <- function(tissue){
 moduleHypergeometricTest <- function(tissueA, tissueB){
   
   moduleCor = cor(MEs[[tissueA]], MEs[[tissueB]], use = "p");
-  modulePvalue = corPvalueStudent(moduleCor, ncol(mymodules$blood$exprs));
+  modulePvalue = corPvalueStudent(moduleCor, ncol(mymodules[[tissueA]]$exprs));
   
   hyper <- geneOverlapTest(mymodules,tissueA,tissueB)
   hyper <- hyper[match(rownames(modulePvalue), paste("ME", rownames(hyper), sep="")),
                  match(colnames(modulePvalue), paste("ME", colnames(hyper), sep=""))]
   
   #hyper = t(hyper) 
-  
+  cols = colnames(hyper) 
   ret = NULL
   ret = as.matrix(hyper, ncol=length(colnames(modulePvalue)))
   ret = cbind(rownames(hyper), ret)
-  colnames(ret) = c("module", names(mymodules[[tissueB]]$bresat))  
+  colnames(ret) = c("module", cols)  
   
   rownames(ret) = NULL
   return (ret)
@@ -364,7 +364,7 @@ geneOverlapTest <- function(modules, tissueA="blood", tissueB="biopsy"){
 roiTest <- function(tissueA="blood", tissueB="biopsy"){
   
   moduleCor = cor(MEs[[tissueA]], MEs[[tissueB]], use = "p");
-  modulePvalue = corPvalueStudent(moduleCor, ncol(mymodules$blood$exprs));
+  modulePvalue = corPvalueStudent(moduleCor, ncol(mymodules[[tissueA]]$exprs));
   
   # Define roi categories (from ROI.R) 
   roi.cat<-NULL
@@ -391,8 +391,10 @@ roiTest <- function(tissueA="blood", tissueB="biopsy"){
   mod.roi <- mod.roi[match(rownames(modulePvalue),paste("ME", rownames(mod.roi), sep="")),
                      match(colnames(modulePvalue), paste("ME", colnames(mod.roi), sep=""))]
   
+  cols = colnames(mod.roi) 
+  
   mod.roi = cbind(rownames(mod.roi), mod.roi)
-  colnames(mod.roi) = c("module", names(roi.cat[[tissueB]]))  
+  colnames(mod.roi) = c("module", cols)  
   rownames(mod.roi) <- NULL
   
   
@@ -423,9 +425,9 @@ patientRankCorrelation <- function(tissueA="blood", tissueB="biopsy"){
   
   rank.cor.p<- rank.cor.p[match(rownames(modulePvalue), paste("ME", rownames(rank.cor.p), sep="")),
                           match(colnames(modulePvalue), paste("ME", colnames(rank.cor.p), sep=""))] 
-  
+  cols = colnames(rank.cor.p) 
   rank.cor.p = cbind(rownames(rank.cor.p), rank.cor.p)
-  colnames(rank.cor.p) = c("module", names(rank[[tissueB]]))  
+  colnames(rank.cor.p) = c("module", cols)  
   rownames(rank.cor.p) <- NULL
   
   return(rank.cor.p)
