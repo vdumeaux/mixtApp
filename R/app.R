@@ -472,21 +472,20 @@ comparisonAnalyses <- function(tissueA, tissueB, moduleA, moduleB){
 eigengeneClinicalRelation <- function(tissue){
   
   ### Qualitative variables 
-  cl.mod<-NULL
-  cl.mod[[tissue]] <- laply(mymodules[[tissue]]$clinical[,-c(1:9, 12:15, 17, 19, 31:39, 40, 41, 46,47)], function(y) {
+  cl <- laply(mymodules[[tissue]]$clinical[,-c(1:9, 12:15, 17, 19, 31:39, 40, 41, 46,47)], function(y) {
     laply(MEs[[tissue]], function (x){
       anova(lm(x~y))$`Pr(>F)`[1]
     })
   })
-  rownames(cl.mod[[tissue]]) <- names(mymodules[[tissue]]$clinical)[-c(1:9, 12:15, 17, 19, 31:39, 40, 41, 46, 47)]
-  colnames(cl.mod[[tissue]]) <- names(MEs[[tissue]])
+  rownames(cl) <- names(mymodules[[tissue]]$clinical)[-c(1:9, 12:15, 17, 19, 31:39, 40, 41, 46, 47)]
+  colnames(cl) <- names(MEs[[tissue]])
   
   ### quantitative variables 
   moduleTraitCor<-NULL
   moduleTraitPvalue<-NULL
   moduleTraitCor[[tissue]]= cor(MEs[[tissue]], mymodules[[tissue]]$clinical[, c(15, 31:34, 41)], use = "p");
   moduleTraitPvalue[[tissue]]= corPvalueStudent(moduleTraitCor[[tissue]], nrow(mymodules[[tissue]]$clinical));
-  cl.mod[[tissue]]<-rbind(cl.mod[[tissue]], t(moduleTraitPvalue[[tissue]]))
+  cl<-rbind(cl, t(moduleTraitPvalue[[tissue]]))
   
   
   if(tissue == "blood") { 
@@ -494,23 +493,95 @@ eigengeneClinicalRelation <- function(tissue){
       anova(lm(x~mymodules[[tissue]]$clinical[,3]))$`Pr(>F)`[1]
     })
     
-    cl.mod[[tissue]] <- rbind(cl.mod[[tissue]], orig.dataset)
+    cl <- rbind(cl, orig.dataset)
   }
   
   if(tissue == "nblood"){
-    cl.mod[[tissue]] <-laply(mymodules[[tissue]]$clinical[,c(4, 16, 42:46)], function(y) {
+    cl <-laply(mymodules[[tissue]]$clinical[,c(4, 16, 42:46)], function(y) {
       laply(MEs[[tissue]], function(x){
         anova(lm(x~y))$`Pr(>F)`[1]})
     })
     
-    rownames(cl.mod[[tissue]])<-names(mymodules[[tissue]]$clinical)[c(4, 16, 42:46)]
-    colnames(cl.mod[[tissue]])<-names(MEs[[tissue]])
+    rownames(cl)<-names(mymodules[[tissue]]$clinical)[c(4, 16, 42:46)]
+    colnames(cl)<-names(MEs[[tissue]])
     
   }
-  cols = colnames(cl.mod[[tissue]]) 
-  cl.mod[[tissue]] = cbind(rownames(cl.mod[[tissue]]), cl.mod[[tissue]])
-  colnames(cl.mod[[tissue]]) = c("Clinical", cols) 
-  #res[[tissue]] <- -log10(cl.mod[[tissue]])
+  cols = colnames(cl) 
+  cl = cbind(rownames(cl), cl)
+  colnames(cl) = c("Clinical", cols) 
+  #res[[tissue]] <- -log10(cl)
   #res[[tissue]][res[[tissue]] > 10] <- 10
-  return (cl.mod[[tissue]]) 
+  return (cl) 
 } 
+
+#' Computes ROI for the given tissue
+computeROICategories <- function(tissue) {
+    roi.cat<-NULL
+    module.names <- names(mymodules[[tissue]]$bresat)
+    roi.cat[[tissue]]<- mclapply(module.names, function(module) {
+      define.roi.regions(mymodules[[tissue]]$bresat[[module]], mymodules[[tissue]]$bresat[[module]]$roi)
+    })
+    names(roi.cat[[tissue]])<-module.names
+    return(roi.cat) 
+}
+
+#' ROI and clinical categories relation 
+roiClinicalRelation <- function(tissue){
+  
+  roi.cat <- computeROICategories(tissue) 
+  cl.roi <- NULL
+  # fisher's exact betgween roi and qualitative variables 
+  cl.roi<-laply(mymodules[[tissue]]$clinical[,-c(1:9, 12:15, 17, 19, 31:39, 40, 41, 46,47)], function(y) {
+      laply(data.frame(roi.cat[[tissue]]), function (x) {
+        fisher.test(y,x, workspace=2e+07,hybrid=TRUE)$p
+      })
+    })
+    
+  rownames(cl.roi) <- names(mymodules[[tissue]]$clinical)[-c(1:9, 12:15, 17, 19, 31:39, 40, 41, 46,47)]
+  colnames(cl.roi) <- names(roi.cat[[tissue]])
+  
+  roiTraitPvalue<-NULL
+  
+  roiTraitPvalue[[tissue]]<- laply(mymodules[[tissue]]$clinical[,c(15, 31:34, 41)], function(y) {
+    laply(MEs[[tissue]], function (x){
+      anova(lm(x~y))$`Pr(>F)`[1]
+    })
+  })
+  
+  rownames(roiTraitPvalue[[tissue]]) <- names(mymodules[[tissue]]$clinical)[c(15, 31:34, 41)]
+  colnames(roiTraitPvalue[[tissue]]) <- names(MEs[[tissue]])
+  
+  cl.roi <- rbind(cl.roi, roiTraitPvalue[[tissue]])
+
+  
+  if(tissue == "blood") { 
+    orig.dataset<-NULL
+    orig.dataset<- laply(roi.cat[[tissue]], function (x){
+      fisher.test(x,mymodules[[tissue]]$clinical[,3])$p
+    })
+    
+    cl.roi<-rbind(cl.roi, orig.dataset)
+  }
+  
+  if(tissue == "nblood"){ 
+    cl.roi<-laply(mymodules[[tissue]]$clinical[,c(4, 16, 42:46)], function(y) {
+      laply(data.frame(roi.cat[[tissue]]), function(x){
+        fisher.test(y,x, workspace=2e+07, hybrid=TRUE)$p
+      })
+    })
+  
+  
+    rownames(cl.roi)<-names(mymodules[[tissue]]$clinical)[c(4, 16, 42:46)]
+    colnames(cl.roi)<-names(roi.cat[[tissue]])
+  }
+  
+  cl.roi <- cl.roi[,match(names(MEs[[tissue]]), paste("ME",colnames(cl.roi), sep=""))]
+  
+  cols = colnames(cl.roi) 
+  cl.roi = cbind(rownames(cl.roi), cl.roi)
+  colnames(cl.roi) = c("Clinical", cols) 
+  
+  
+  
+  return(cl.roi)
+}
