@@ -465,3 +465,52 @@ comparisonAnalyses <- function(tissueA, tissueB, moduleA, moduleB){
   
   return(analyses)
 }
+
+#' Computes correlation between eigengenes and quantitative variables
+#' and anova between eigengenes and qualitative variables.  
+#' @param tissue is the tissue from which to get the eigengenes 
+eigengeneClinicalRelation <- function(tissue){
+  
+  ### Qualitative variables 
+  cl.mod<-NULL
+  cl.mod[[tissue]] <- laply(mymodules[[tissue]]$clinical[,-c(1:9, 12:15, 17, 19, 31:39, 40, 41, 46,47)], function(y) {
+    laply(MEs[[tissue]], function (x){
+      anova(lm(x~y))$`Pr(>F)`[1]
+    })
+  })
+  rownames(cl.mod[[tissue]]) <- names(mymodules[[tissue]]$clinical)[-c(1:9, 12:15, 17, 19, 31:39, 40, 41, 46, 47)]
+  colnames(cl.mod[[tissue]]) <- names(MEs[[tissue]])
+  
+  ### quantitative variables 
+  moduleTraitCor<-NULL
+  moduleTraitPvalue<-NULL
+  moduleTraitCor[[tissue]]= cor(MEs[[tissue]], mymodules[[tissue]]$clinical[, c(15, 31:34, 41)], use = "p");
+  moduleTraitPvalue[[tissue]]= corPvalueStudent(moduleTraitCor[[tissue]], nrow(mymodules[[tissue]]$clinical));
+  cl.mod[[tissue]]<-rbind(cl.mod[[tissue]], t(moduleTraitPvalue[[tissue]]))
+  
+  
+  if(tissue == "blood") { 
+    orig.dataset<- laply(MEs[[tissue]], function (x){
+      anova(lm(x~mymodules[[tissue]]$clinical[,3]))$`Pr(>F)`[1]
+    })
+    
+    cl.mod[[tissue]] <- rbind(cl.mod[[tissue]], orig.dataset)
+  }
+  
+  if(tissue == "nblood"){
+    cl.mod[[tissue]] <-laply(mymodules[[tissue]]$clinical[,c(4, 16, 42:46)], function(y) {
+      laply(MEs[[tissue]], function(x){
+        anova(lm(x~y))$`Pr(>F)`[1]})
+    })
+    
+    rownames(cl.mod[[tissue]])<-names(mymodules[[tissue]]$clinical)[c(4, 16, 42:46)]
+    colnames(cl.mod[[tissue]])<-names(MEs[[tissue]])
+    
+  }
+  cols = colnames(cl.mod[[tissue]]) 
+  cl.mod[[tissue]] = cbind(rownames(cl.mod[[tissue]]), cl.mod[[tissue]])
+  colnames(cl.mod[[tissue]]) = c("Clinical", cols) 
+  #res[[tissue]] <- -log10(cl.mod[[tissue]])
+  #res[[tissue]][res[[tissue]] > 10] <- 10
+  return (cl.mod[[tissue]]) 
+} 
