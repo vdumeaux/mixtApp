@@ -257,7 +257,7 @@ getGOTermNames <- function(){
 
 #' Get all scores for a specific term in a tissue 
 #' @export 
-getGOScoresForTissue <- function(tissue,term) {
+getGOScoresForTissue <- function(tissue, term) {
   if(tissue == "nblood"){
     tissue = "blood"
   }
@@ -265,11 +265,20 @@ getGOScoresForTissue <- function(tissue,term) {
   for (i in 1:length(goterms[[tissue]])){
     module = names(goterms[[tissue]])[i]
     score = subset(goterms[[tissue]][[module]]$GO.table, Term == term)
+    
+    if(dim(score)[1] < 1){
+      next
+    }
+    
     score$module = module
     res[[module]] <- score
   }
-  res = do.call(rbind, res) 
-  return(res)
+  if(!is.null(res)){ 
+    res = do.call(rbind, res) 
+  } else { 
+    res = 0
+  }
+    return(res)
 }
 
 #' Calculates eigengene correlations between tissue A and tissue B. Returns
