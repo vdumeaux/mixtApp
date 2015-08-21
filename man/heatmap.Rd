@@ -8,12 +8,19 @@ to store a new one, it returns this file. This heat map function
 generates both a png and a pdf. All plots are stored in the path
 given by 'imgpath'}
 \usage{
-heatmap(tissue, module)
+heatmap(tissue, module, re.order = FALSE, orderByModule = NULL,
+  orderByTissue = NULL)
 }
 \arguments{
 \item{tissue}{we want to look at}
 
 \item{module}{the module we want to generate a heetmap for}
+
+\item{re.order}{set to true if patients should be re ordered. Defaults to FALSE.}
+
+\item{orderByModule}{which module we want to order patients by. Default is order by module.}
+
+\item{orderByTissue}{the tissue where the orderByModule module is found. Default is the same tissue.}
 }
 \description{
 Generate heatmap plot for the given tissue and module. If the heatmap
