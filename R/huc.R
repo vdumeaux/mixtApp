@@ -2738,16 +2738,16 @@ huc.clinical.info <- function(clinical, readable.names=TRUE) {
         cit <- sapply(cit, function(count) paste0(count, " (",format(count/samples*100,digits=4),"%)"))
     }
 
-    if (all(is.na(clinical$lehmann)))
-    {
-        lehmann <- rep(NA, length(bresect.cohorts.lehmann))
-        names(lehmann) <- bresect.cohorts.lehmann
-    }
-    else
-    {
-        lehmann <- sapply(bresect.cohorts.lehmann,function(type) sum(clinical$lehmann==type,na.rm=T))
-        lehmann <- sapply(lehmann,function(count) paste0(count, " (",format(count/samples*100,digits=4),"%)"))
-    }
+#     if (all(is.na(clinical$lehmann)))
+#     {
+#         lehmann <- rep(NA, length(bresect.cohorts.lehmann))
+#         names(lehmann) <- bresect.cohorts.lehmann
+#     }
+#     else
+#     {
+#         lehmann <- sapply(bresect.cohorts.lehmann,function(type) sum(clinical$lehmann==type,na.rm=T))
+#         lehmann <- sapply(lehmann,function(count) paste0(count, " (",format(count/samples*100,digits=4),"%)"))
+#     }
 
     if(all(is.na(clinical$age)) == TRUE){
         age.50 <- NA
@@ -2756,8 +2756,8 @@ huc.clinical.info <- function(clinical, readable.names=TRUE) {
         age.range <- c(NA,NA)
     } else {
         age <- as.numeric(clinical$age)
-        age.50 <- length(which(age <= 50))
-        age.50.plus <- length(which(age > 50))
+        age.50 <- length(which(age < 50))
+        age.50.plus <- length(which(age >= 50))
         age.mean <- format(mean(age, na.rm=T), digits=4)
         age.range <- range(age, na.rm=T)
 
@@ -2768,6 +2768,90 @@ huc.clinical.info <- function(clinical, readable.names=TRUE) {
 
         age.50 <- paste(age.50, a, sep=" ")
         age.50.plus <- paste(age.50.plus, a1, sep=" ")
+    }
+
+    if(all(is.na(clinical$weight)) == TRUE){
+      weight.70 <- NA
+      weight.70.plus <- NA
+      weight.mean <- NA
+      weight.range <- c(NA,NA)
+    } else {
+      weight <- as.numeric(clinical$weight)
+      weight.70 <- length(which(weight <= 70))
+      weight.70.plus <- length(which(weight > 70))
+      weight.mean <- format(mean(weight, na.rm=T), digits=4)
+      weight.range <- range(weight, na.rm=T)
+      
+      weight.mean <- paste(weight.mean, " (", weight.range[1], "-", weight.range[2], ")", sep="")
+      
+      a <- paste("(", format(weight.70/samples * 100, digits=4), "%", ")", sep="")
+      a1 <- paste("(", format(weight.70.plus/samples * 100, digits=4), "%", ")", sep="")
+      
+      weight.70 <- paste(weight.70, a, sep=" ")
+      weight.70.plus <- paste(weight.70.plus, a1, sep=" ")
+    }
+
+    if(all(is.na(clinical$MKS)) == TRUE){
+      mks.6.5 <- NA
+      mks.6.5.plus <- NA
+      mks.mean <- NA
+      mks.range <- c(NA,NA)
+    } else {
+      mks <- as.numeric(clinical$MKS)
+      mks.6.5 <- length(which(mks <= 6.5))
+      mks.6.5.plus <- length(which(mks > 6.5))
+      mks.mean <- format(mean(mks, na.rm=T), digits=4)
+      mks.range <- format(range(mks, na.rm=T), digits=4)
+      
+      mks.mean <- paste(mks.mean, " (", mks.range[1], "-", mks.range[2], ")", sep="")
+      
+      a <- paste("(", format(mks.6.5/samples * 100, digits=4), "%", ")", sep="")
+      a1 <- paste("(", format(mks.6.5.plus/samples * 100, digits=4), "%", ")", sep="")
+      
+      mks.6.5 <- paste(mks.6.5, a, sep=" ")
+      mks.6.5.plus <- paste(mks.6.5.plus, a1, sep=" ")
+    }
+
+    if(all(is.na(clinical$ERS)) == TRUE){
+      ers.6.5 <- NA
+      ers.6.5.plus <- NA
+      ers.mean <- NA
+      ers.range <- c(NA,NA)
+    } else {
+      ers <- as.numeric(clinical$ERS)
+      ers.6.5 <- length(which(ers <= 6.5))
+      ers.6.5.plus <- length(which(ers > 6.5))
+      ers.mean <- format(mean(ers, na.rm=T), digits=4)
+      ers.range <- format(range(ers, na.rm=T), digits=4)
+      
+      ers.mean <- paste(ers.mean, " (", ers.range[1], "-", ers.range[2], ")", sep="")
+      
+      a <- paste("(", format(ers.6.5/samples * 100, digits=4), "%", ")", sep="")
+      a1 <- paste("(", format(ers.6.5.plus/samples * 100, digits=4), "%", ")", sep="")
+      
+      ers.6.5 <- paste(ers.6.5, a, sep=" ")
+      ers.6.5.plus <- paste(ers.6.5.plus, a1, sep=" ")
+    }
+
+    if(all(is.na(clinical$HER2S)) == TRUE){
+      her2s.7.5 <- NA
+      her2s.7.5.plus <- NA
+      her2s.mean <- NA
+      her2s.range <- c(NA,NA)
+    } else {
+      her2s <- as.numeric(clinical$HER2S)
+      her2s.7.5 <- length(which(her2s <= 7.5))
+      her2s.7.5.plus <- length(which(her2s > 7.5))
+      her2s.mean <- format(mean(her2s, na.rm=T), digits=4)
+      her2s.range <- format(range(her2s, na.rm=T), digits=4)
+      
+      her2s.mean <- paste(her2s.mean, " (", her2s.range[1], "-", her2s.range[2], ")", sep="")
+      
+      a <- paste("(", format(her2s.7.5/samples * 100, digits=4), "%", ")", sep="")
+      a1 <- paste("(", format(her2s.7.5.plus/samples * 100, digits=4), "%", ")", sep="")
+      
+      her2s.7.5 <- paste(her2s.7.5, a, sep=" ")
+      her2s.7.5.plus <- paste(her2s.7.5.plus, a1, sep=" ")
     }
 
     if(all(is.na(clinical$event)) == TRUE){
@@ -2824,8 +2908,12 @@ huc.clinical.info <- function(clinical, readable.names=TRUE) {
              node.p=node.p, node.n=node.n,
              pam50.la=pam50[["LumA"]], pam50.lb=pam50[["LumB"]], pam50.b=pam50[["Basal"]],
              pam50.h=pam50[["Her2"]], pam50.n=pam50[["Normal"]],
-             cit=cit, lehmann=lehmann, ## here is an R lesson for you, how does this work?
+             cit=cit, #lehmann=lehmann, ## here is an R lesson for you, how does this work?
+             mks.6.5=mks.6.5, mks.6.5.plus=mks.6.5.plus, mks.mean=mks.mean,
+             ers.6.5=ers.6.5, ers.6.5.plus=ers.6.5.plus, ers.mean=ers.mean,
+             her2s.7.5=her2s.7.5, her2s.7.5.plus=her2s.7.5.plus, her2s.mean=her2s.mean,
              age.50=age.50, age.50.plus=age.50.plus, age.mean=age.mean,
+             weight.70=weight.70, weight.70.plus=weight.70.plus, weight.mean=weight.mean,
              num.rec=num.rec, within.five.rec=within.five.rec, mean.rec=mean.rec, mean.five.rec=mean.five.rec,
              tamoxifen.y = tamoxifen.y, tamoxifen.n = tamoxifen.n, chemo.y = chemo.y, chemo.n = chemo.n, herceptin.y = herceptin.y, herceptin.n = herceptin.n)
 
@@ -2851,10 +2939,22 @@ huc.clinical.info <- function(clinical, readable.names=TRUE) {
                       pam50.h="PAM50 her2",
                       pam50.n="PAM50 normal",
                       cit=sapply(names(cit), function(type) paste("CIT", type)), ## lesson in R pt. 2!
-                      lehmann=sapply(names(lehmann), function(type) paste("Lehmann", type)),
+                      #lehmann=sapply(names(lehmann), function(type) paste("Lehmann", type)),
+                      mks.6.5="Mitosis kinase score (< 6.5)",
+                      mks.6.5.plus="Mitosis kinase score (> 6.5)",
+                      mks.mean="Mitosis kinase score: mean (range)",
+                      ers.6.5="Estrogen receptor score (< 6.5)",
+                      ers.6.5.plus="Estrogen receptor score (> 6.5)",
+                      ers.mean="Estrogen receptor score: mean (range)",
+                      her2s.7.5="HER2 score (< 7.5)",
+                      her2s.7.5.plus="HER2 score (> 7.5)",
+                      her2s.mean="Estrogen receptor: mean (range)",
                       age.50="Age (< 50)",
                       age.50.plus="Age (> 50)",
                       age.mean="Age: mean (range)",
+                      weight.70="Weight (< 70)",
+                      weight.70.plus="weight (> 70)",
+                      weight.mean="Weight: mean (range)",
                       num.rec="Total relapse",
                       within.five.rec="Total relapse (within five years)",
                       mean.rec="Total relapse: mean in months (range)",

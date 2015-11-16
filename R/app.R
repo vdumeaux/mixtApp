@@ -24,6 +24,17 @@ heatmap <- function(tissue, module, re.order=FALSE, orderByModule=NULL, orderByT
       orderByTissue = tissue
     }
     
+    if(tissue == "blood"){
+      clinical=huc.color.clinical(dat$blood$clinical)[,c(1,3,4,6, 8:12, 14,16,18:24, 27, 29:30)]
+    }
+    if(tissue =="biopsy"){
+      clinical=huc.color.clinical(dat$biopsy$clinical)[,c(1,3,4,6, 8:12, 14,18:24, 26:27, 29:30)]
+    }
+    
+    if(tissue == "nblood") {
+      clinical=huc.color.clinical(dat$nblood$clinical)[, c(16, 19:24)]
+    }
+          
     if(re.order == FALSE || (orderByTissue==tissue && orderByModule==module)){
       title = paste(module," module from ",tissue, sep="") 
     } 
@@ -31,11 +42,11 @@ heatmap <- function(tissue, module, re.order=FALSE, orderByModule=NULL, orderByT
       title = paste(paste(module, " module from ",tissue ,sep=""), "ordered by", orderByModule, "module from", orderByTissue, sep=" ") 
     }
    
-    create.modules.heatmap(bs = mymodules[[tissue]]$bresat[[module]], 
-                           exprs = mymodules[[tissue]]$exprs, 
-                           clinical = mymodules[[tissue]]$heatmap.clinical,
+    create.modules.heatmap(bs = bresat[[tissue]][[module]], 
+                           exprs = dat[[tissue]]$exprs, 
+                           clinical = clinical,
                            re.order = re.order,
-                           order.by = mymodules[[orderByTissue]]$bresat[[orderByModule]]$pat.order,
+                           order.by = bresat[[orderByTissue]][[orderByModule]]$pat.order,
                            title = title )
     #dev.off() 
 }
