@@ -3,8 +3,9 @@
 
 huc.variable.categorical <- function(variable) {
   variable %in% c("lymph","grade","er","her2","stage","event","event.5",
-                  "pam50.genefu","hybrid.genefu","aims","intclust","claudin.low","chemo","tamoxifen","herceptin",
+                  "pam50.parker","hybrid.parker","aims","intclust","claudin.low","chemo","tamoxifen","herceptin",
                   "lum", "lumN", "prolif", "basalL",
+                  "lumC", "lumaNormL", "basLmApo", "lumBlumC",
                   "MKS", "ERS", "LUMS", "HER2S",
                   "consistently.classified","type","dataset", 
                   "Normal", "cit", "orig.dataset", "TissueType")
@@ -18,16 +19,20 @@ huc.clinical.colors <- function() {
   heatmap.clinical[["event.5"]] <- c(Good="white",Bad="red")
   heatmap.clinical[["event"]] <- c(Good="white",Bad="red")
   heatmap.clinical[["er"]] <- c(Negative="white",Positive="green")
-  heatmap.clinical[["her2"]] <- c(Negative="white", Positive="orange")
-  heatmap.clinical[["pam50.genefu"]] <- c(LumA="blue4", LumB="deepskyblue", Basal="firebrick2", Normal="green4", Her2="hotpink2")
+  heatmap.clinical[["her2"]] <- c(Negative="white", Positive="hotpink2")
+  #heatmap.clinical[["pam50.genefu"]] <- c(LumA="blue4", LumB="deepskyblue", Basal="firebrick2", Normal="green4", Her2="hotpink2")
   heatmap.clinical[["pam50.parker"]] <- c(LumA="blue4", LumB="deepskyblue", Basal="firebrick2", Normal="green4", Her2="hotpink2")
   heatmap.clinical[["aims"]] <- c(LumA="blue4", LumB="deepskyblue", Basal="firebrick2", Normal="green4", Her2="hotpink2")
-  heatmap.clinical[["hybrid.genefu"]] <- c(luma.erp="blue4", lumb.erp="deepskyblue", basal.erp="firebrick2", normal.erp="green4", her2pam50p.erp="hotpink2", her2clinicaln.ern="tan", her2clinicalp.ern="orange")
+  heatmap.clinical[["hybrid.parker"]] <- c(erp.lumA="blue4", erp.lumB="deepskyblue", erp.normL="green4", erp.her2E="orange", erp.basalL="black", ern.her2p="hotpink2", ern.her2n="firebrick2")
   #heatmap.clinical[["intclust"]] <- c("tomato2", "palegreen3", "violetred3", "turquoise3", "firebrick4", "yellow2", "royalblue4", "darkgoldenrod1", "plum3", "purple3")
   heatmap.clinical[["lum"]]<-c(No="white", Yes="blue")
   heatmap.clinical[["lumN"]]<-c( No="white", Yes="darkturquoise")
   heatmap.clinical[["prolif"]]<-c( No="white", Yes="magenta")
   heatmap.clinical[["basalL"]]<-c(No="white", Yes="firebrick2")
+  heatmap.clinical[["lumC"]]<-c(No="white", Yes="black")
+  heatmap.clinical[["lumaNormL"]]<-c( No="white", Yes="greenyellow")
+  heatmap.clinical[["basLmApo"]]<-c( No="white", Yes="orange")
+  heatmap.clinical[["lumBlumC"]]<-c(No="white", Yes="purple")
   #names(heatmap.clinical[["intclust"]]) <- paste("intclust", 1:10, sep="")
   heatmap.clinical[["claudin.low"]] <- c(No="white", Yes="yellow3")
   heatmap.clinical[["grade"]] <- c(Low="white",Intermediate="pink",High="red")
@@ -38,7 +43,7 @@ huc.clinical.colors <- function() {
   #heatmap.clinical[["chemo"]] <- c(No="white",Yes="red")
   #heatmap.clinical[["tamoxifen"]] <- c(No="white",Yes="red")
   #heatmap.clinical[["herceptin"]] <- c(No="white",Yes="red")
-  heatmap.clinical[["cit"]] <- c(basL="firebrick2",lumA="blue4",lumB="deepskyblue", normL="green4",lumC="hotpink2",mApo="tan")
+  heatmap.clinical[["cit"]] <- c(basL="firebrick2",lumA="blue4",lumB="deepskyblue", normL="green4",lumC="black",mApo="hotpink2")
   heatmap.clinical[["lehmann"]] <- c(UNS="#F11A14", BL1="#F698C2", BL2="#3651A5", IM="#F99900", M="#BABBBE", MSL="#9B3067", LAR="#66BF3C")
   heatmap.clinical[["menopause"]]<-c(No="white", Yes="red")
   heatmap.clinical[["hrt"]]<-c(No="white", Yes="red")
@@ -46,7 +51,7 @@ huc.clinical.colors <- function() {
   heatmap.clinical[["age.55.plus"]]<-c(No="white", Yes="red")
   heatmap.clinical[["smoking"]]<-c(No="white", Yes="red")
   heatmap.clinical[["medication"]]<-c(No="white", Yes="red")
-  heatmap.clinical[["Normal"]]<-c(No="red", Yes="pink")
+  heatmap.clinical[["cancer"]]<-c(No="pink", Yes="red")
   
   ## age? size? dcis? inherently difficult? claudin low/high?
   hospitals <- c("Tromso", "Tonsberg", "Ulleval","Bodo", "Fredrikstad",
@@ -2724,7 +2729,7 @@ huc.clinical.info <- function(clinical, readable.names=TRUE) {
         node.n <- paste(node.n, n1, sep=" ")
     }
 
-    pam50 <- sapply(c("LumA","LumB","Basal","Her2","Normal"), function(type) sum(clinical$pam50.genefu == type,na.rm=T))
+    pam50 <- sapply(c("LumA","LumB","Basal","Her2","Normal"), function(type) sum(clinical$pam50.parker == type,na.rm=T))
     pam50 <- sapply(pam50, function(count) paste0(count, " (",format(count/samples*100,digits=4),"%)"))
 
     if (all(is.na(clinical$cit)))
@@ -2791,6 +2796,34 @@ huc.clinical.info <- function(clinical, readable.names=TRUE) {
       weight.70.plus <- paste(weight.70.plus, a1, sep=" ")
     }
 
+    if(all(is.na(clinical$menopause))==TRUE) {
+      meno.p <- NA
+      meno.n <- NA
+    } else {
+      meno.p <- length(which(clinical$menopause == TRUE))
+      meno.n <- length(which(clinical$menopause == FALSE))
+      
+      m <- paste("(", format(meno.p/samples * 100, digits=4), "%", ")", sep="")
+      m1 <- paste("(", format(meno.n/samples * 100, digits=4), "%", ")", sep="")
+      
+      meno.p <- paste(meno.p, m, sep=" ")
+      meno.n <- paste(meno.n, m1, sep=" ")
+    }
+
+  if(all(is.na(clinical$smoking))==TRUE) {
+    smoke.p <- NA
+    smoke.n <- NA
+  } else {
+    smoke.p <- length(which(clinical$smoking == TRUE))
+    smoke.n <- length(which(clinical$smoking == FALSE))
+    
+    s <- paste("(", format(smoke.p/samples * 100, digits=4), "%", ")", sep="")
+    s1 <- paste("(", format(smoke.n/samples * 100, digits=4), "%", ")", sep="")
+    
+    smoke.p <- paste(smoke.p, s, sep=" ")
+    smoke.n <- paste(smoke.n, s1, sep=" ")
+  }
+
     if(all(is.na(clinical$MKS)) == TRUE){
       mks.6.5 <- NA
       mks.6.5.plus <- NA
@@ -2812,25 +2845,25 @@ huc.clinical.info <- function(clinical, readable.names=TRUE) {
       mks.6.5.plus <- paste(mks.6.5.plus, a1, sep=" ")
     }
 
-    if(all(is.na(clinical$ERS)) == TRUE){
-      ers.6.5 <- NA
-      ers.6.5.plus <- NA
-      ers.mean <- NA
-      ers.range <- c(NA,NA)
+    if(all(is.na(clinical$LUMS)) == TRUE){
+      lums.6.5 <- NA
+      lums.6.5.plus <- NA
+      lums.mean <- NA
+      lums.range <- c(NA,NA)
     } else {
-      ers <- as.numeric(clinical$ERS)
-      ers.6.5 <- length(which(ers <= 6.5))
-      ers.6.5.plus <- length(which(ers > 6.5))
-      ers.mean <- format(mean(ers, na.rm=T), digits=4)
-      ers.range <- format(range(ers, na.rm=T), digits=4)
+      lums <- as.numeric(clinical$LUMS)
+      lums.6.5 <- length(which(lums <= 6.5))
+      lums.6.5.plus <- length(which(lums > 6.5))
+      lums.mean <- format(mean(lums, na.rm=T), digits=4)
+      lums.range <- format(range(lums, na.rm=T), digits=4)
       
-      ers.mean <- paste(ers.mean, " (", ers.range[1], "-", ers.range[2], ")", sep="")
+      lums.mean <- paste(lums.mean, " (", lums.range[1], "-", lums.range[2], ")", sep="")
       
-      a <- paste("(", format(ers.6.5/samples * 100, digits=4), "%", ")", sep="")
-      a1 <- paste("(", format(ers.6.5.plus/samples * 100, digits=4), "%", ")", sep="")
+      a <- paste("(", format(lums.6.5/samples * 100, digits=4), "%", ")", sep="")
+      a1 <- paste("(", format(lums.6.5.plus/samples * 100, digits=4), "%", ")", sep="")
       
-      ers.6.5 <- paste(ers.6.5, a, sep=" ")
-      ers.6.5.plus <- paste(ers.6.5.plus, a1, sep=" ")
+      lums.6.5 <- paste(lums.6.5, a, sep=" ")
+      lums.6.5.plus <- paste(lums.6.5.plus, a1, sep=" ")
     }
 
     if(all(is.na(clinical$HER2S)) == TRUE){
@@ -2910,10 +2943,12 @@ huc.clinical.info <- function(clinical, readable.names=TRUE) {
              pam50.h=pam50[["Her2"]], pam50.n=pam50[["Normal"]],
              cit=cit, #lehmann=lehmann, ## here is an R lesson for you, how does this work?
              mks.6.5=mks.6.5, mks.6.5.plus=mks.6.5.plus, mks.mean=mks.mean,
-             ers.6.5=ers.6.5, ers.6.5.plus=ers.6.5.plus, ers.mean=ers.mean,
+             lums.6.5=lums.6.5, lums.6.5.plus=lums.6.5.plus, lums.mean=lums.mean,
              her2s.7.5=her2s.7.5, her2s.7.5.plus=her2s.7.5.plus, her2s.mean=her2s.mean,
              age.50=age.50, age.50.plus=age.50.plus, age.mean=age.mean,
              weight.70=weight.70, weight.70.plus=weight.70.plus, weight.mean=weight.mean,
+             meno.p=meno.p, meno.n=meno.n,
+             smoke.p=smoke.p, smoke.n=smoke.n,
              num.rec=num.rec, within.five.rec=within.five.rec, mean.rec=mean.rec, mean.five.rec=mean.five.rec,
              tamoxifen.y = tamoxifen.y, tamoxifen.n = tamoxifen.n, chemo.y = chemo.y, chemo.n = chemo.n, herceptin.y = herceptin.y, herceptin.n = herceptin.n)
 
@@ -2943,18 +2978,22 @@ huc.clinical.info <- function(clinical, readable.names=TRUE) {
                       mks.6.5="Mitosis kinase score (< 6.5)",
                       mks.6.5.plus="Mitosis kinase score (> 6.5)",
                       mks.mean="Mitosis kinase score: mean (range)",
-                      ers.6.5="Estrogen receptor score (< 6.5)",
-                      ers.6.5.plus="Estrogen receptor score (> 6.5)",
-                      ers.mean="Estrogen receptor score: mean (range)",
+                      lums.6.5="Luminal score (< 6.5)",
+                      lums.6.5.plus="Luminal score (> 6.5)",
+                      lums.mean="Luminal score: mean (range)",
                       her2s.7.5="HER2 score (< 7.5)",
                       her2s.7.5.plus="HER2 score (> 7.5)",
-                      her2s.mean="Estrogen receptor: mean (range)",
+                      her2s.mean="HER2 score: mean (range)",
                       age.50="Age (< 50)",
                       age.50.plus="Age (> 50)",
                       age.mean="Age: mean (range)",
                       weight.70="Weight (< 70)",
                       weight.70.plus="weight (> 70)",
                       weight.mean="Weight: mean (range)",
+                      meno.p="Postmenopausal women",
+                      meno.n="Premenopausal women",
+                      smoke.p="Current smokers",
+                      smoke.n="Non smokers",
                       num.rec="Total relapse",
                       within.five.rec="Total relapse (within five years)",
                       mean.rec="Total relapse: mean in months (range)",

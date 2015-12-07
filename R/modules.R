@@ -22,7 +22,7 @@ remove.outliers<- function (exprs){
   exprs[rownames(altered),colnames(altered)] = to.change
 }
 
-match.datasets <- function(ds1, ds2, include.normals=TRUE, remove.outliers=TRUE) {
+match.datasets <- function(ds1, ds2, include.normals=TRUE, remove.outliers=FALSE) {
   if(is.null(ds1$exprs) || is.null(ds1$exprs))
     stop("Both datasets should have expression matrix stored as dataset$exprs in them")
   if(is.null(ds1$probe.info$gene.name) || is.null(ds2$probe.info$gene.name))
@@ -37,16 +37,9 @@ match.datasets <- function(ds1, ds2, include.normals=TRUE, remove.outliers=TRUE)
   ### renoming objects
   ds1.exprs = ds1$exprs
   ds1.clinical = ds1$clinical
-  #ds1.clinical.heatmap = ds1$clinical.heatmap
   
   ds2.exprs = ds2$exprs
   ds2.clinical = ds2$clinical
-  #ds2.clinical.heatmap = ds2$clinical.heatmap
-  
-  if(remove.outliers) {
-    ds1.exprs <-remove.outliers(exprs=ds1.exprs)
-    ds2.exprs <-remove.outliers(exprs=ds2.exprs)
-  }
   
   ds1.genes = ds1$probe.info$gene.name
   ds2.genes = ds2$probe.info$gene.name
@@ -139,7 +132,7 @@ find.modules <- function (exprs, power = 6, deepSplit = 2,
   
   ### identify modules using the blockwise function
   gene.modules = NULL
-  gene.modules = blockwiseModules(t(exprs), power = power, deepSplit = deepSplit, minModuleSize = minModuleSize, 
+  gene.modules = blockwiseModules(t(exprs), randomSeed = 234567, power = power, deepSplit = deepSplit, minModuleSize = minModuleSize, 
                                   reassignThreshold = reassignThreshold, mergeCutHeight = mergeCutHeight, 
                                   numericLabels = TRUE, pamRespectsDendro = FALSE, saveTOMs = FALSE, verbose = 3)
   
@@ -161,6 +154,7 @@ find.modules <- function (exprs, power = 6, deepSplit = 2,
 
 load.modules <- function(dat, mod)
 {
+  mymodules<-NULL
   mymodules$biopsy$exprs <- dat$biopsy$matched.tumor$exprs
   mymodules$blood$exprs <- dat$blood$matched.tumor$exprs
   mymodules$biopsy$clinical <- dat$biopsy$matched.tumor$clinical
@@ -188,15 +182,18 @@ load.modules <- function(dat, mod)
 
 gene.overlap.test <- function(modules)
 {
-  all.genes <- intersect(unlist(modules$biopsy$modules[-1]), unlist(modules$blood$modules[-1]))
+  all.genes <- intersect(unlist(modules$biopsy$modules), unlist(modules$blood$modules))
   
   pvals <- sapply(modules$biopsy$modules[-1], function(biopsy.mod) {
     sapply(modules$blood$modules[-1], function(blood.mod) {
       s <- length(intersect(blood.mod, all.genes))
       e <- length(intersect(biopsy.mod, all.genes))
       com <- length(intersect(biopsy.mod, blood.mod))
-      hyper.test(s, length(all.genes) - s, e, com)
-    })
+      #hyper.test(s, length(all.genes) - s, e, com)
+      ## new computation of hypergeometri test so it matches fisher exact test
+      ## ref http://rpackages.ianhowson.com/bioc/GeneOverlap/man/GeneOverlap.html
+      sum(dhyper(com:e,s,length(all.genes)-s, e))
+      })
   })
   ret <- p.adjust(pvals, method="BH")
   dim(ret) <- dim(pvals)
@@ -228,7 +225,7 @@ create.modules.heatmap <- function(bs, exprs, clinical, re.order=TRUE, order.by,
     order.by<-bs$pat.order
   }
 
-  data = exprs[bs$gene.order, order.by, drop=FALSE]
+  data = exprs[bs$gene.order,order.by, drop=FALSE]
   mclinical = clinical[order.by,]
   
   #plot.new()
@@ -369,7 +366,7 @@ plot.modules.correlation <- function(moduleColors, exprs, power = 6, max.size = 
 	dissTOM = 1-TOMsimilarityFromExpr(t(ordered.expressions), power = power);
 	# set the diagonal of the dissimilarity to NA and raised it to the power of 4 to bring out the module structure
 	#(these changes effectively amount to a change in the color scale of the plot). 
-  plotDiss = dissTOM^6
+  plotDiss = dissTOM^7
 	diag(plotDiss) = NA;
 	png(filename=paste(dir,filename,' modules (', colors ,').png',sep=""), width=5000, height=5000, units='px')
 	heatmap(plotDiss[rev(ordered.indices),ordered.indices], RowSideColors=rev(ordered.colors), ColSideColors=ordered.colors, main = paste(filename,"modules heatmap plot, (", colors ,")"), Rowv = NA, Colv = NA, scale='none', labRow = F, labCol = F)
@@ -381,3 +378,43 @@ plot.modules.correlation <- function(moduleColors, exprs, power = 6, max.size = 
 	gc()
 }
 
+parallelset <- function(..., freq, col="gray", border=0, layer, 
+                        alpha=0.5, gap.width=0.05) {
+  p <- data.frame(..., freq, col, border, alpha, stringsAsFactors=FALSE)
+  n <- nrow(p)
+  if(missing(layer)) { layer <- 1:n }
+  p$layer <- layer
+  np <- ncol(p) - 5
+  d <- p[ , 1:np, drop=FALSE]
+  p <- p[ , -c(1:np), drop=FALSE]
+  p$freq <- with(p, freq/sum(freq))
+  col <- col2rgb(p$col, alpha=TRUE)
+  if(!identical(alpha, FALSE)) { col["alpha", ] <- p$alpha*256 }
+  p$col <- apply(col, 2, function(x) do.call(rgb, c(as.list(x), maxColorValue = 256)))
+  getp <- function(i, d, f, w=gap.width) {
+    a <- c(i, (1:ncol(d))[-i])
+    o <- do.call(order, d[a])
+    x <- c(0, cumsum(f[o])) * (1-w)
+    x <- cbind(x[-length(x)], x[-1])
+    gap <- cumsum( c(0L, diff(as.numeric(d[o,i])) != 0) )
+    gap <- gap / max(gap) * w
+    (x + gap)[order(o),]
+  }
+  dd <- lapply(seq_along(d), getp, d=d, f=p$freq)
+  par(mar = c(0, 0, 2, 0) + 0.1, xpd=TRUE )
+  plot(NULL, type="n",xlim=c(0, 1), ylim=c(np, 1),
+       xaxt="n", yaxt="n", xaxs="i", yaxs="i", xlab='', ylab='', frame=FALSE)
+  for(i in rev(order(p$layer)) ) {
+    for(j in 1:(np-1) )
+      polygon(c(dd[[j]][i,], rev(dd[[j+1]][i,])), c(j, j, j+1, j+1),
+              col=p$col[i], border=p$border[i])
+  }
+  text(0, seq_along(dd), labels=names(d), adj=c(0,-2), font=2)
+  for(j in seq_along(dd)) {
+    ax <- lapply(split(dd[[j]], d[,j]), range)
+    for(k in seq_along(ax)) {
+      lines(ax[[k]], c(j, j))
+      text(ax[[k]][1], j, labels=names(ax)[k], adj=c(0, -0.25))
+    }
+  }           
+}

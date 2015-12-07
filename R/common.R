@@ -118,7 +118,7 @@ bresect.name.map <- c(
                       normL="normL",lumC="lumC",mApo="mApo",
 
                       ## My variables
-                      Normal="Matched control",
+                      cancer="Breast cancer cases",
                       TissueType="Tissue type",
                       
                       ## clinical variables
@@ -134,11 +134,16 @@ bresect.name.map <- c(
                       grade="Tumor grade",
                       pam50.genefu="PAM50 (genefu)",
                       pam50.parker="PAM50 (parker)",
-                      hybrid.genefu="hybrid",
+                      hybrid.genefu="pam50 (genefu) hybrid",
+                      hybrid.parker="pam50 (parker) hybrid",
                       lum="luminal subtypes",
                       lumN="luminal & normal-like subtypes",
                       prolif="proliferative subtypes",
                       basalL="basal-like subtype",
+                      lumC="CIT luminal C subtype",
+                      lumaNormL="CIT luminal A and normal-like subtypes",
+                      basLmApo="CIT basal-like and mApo subtypes",
+                      lumBlumC= "CIT lumB and lumC subtypes",
                       MKS="Mitotic Kinase Score",
                       ERS="Estrogen Receptor Score",
                       LUMS="Luminal Score",
