@@ -95,15 +95,16 @@ go.enrichment<- function (gene.list, bckg.genes){
   
   resultFisher <- runTest(GO.genes, algorithm = "classic", statistic = "fisher")
   print(resultFisher)
-  resultKS <- runTest(GO.genes, algorithm = "classic", statistic = "ks")
-  print(resultKS)
-  resultKS.elim <- runTest(GO.genes, algorithm = "elim", statistic = "ks")
-  print(resultKS.elim) 
+  weight01Fisher <- runTest(GO.genes, algorithm = "weight01", statistic = "fisher")
+  print(weight01Fisher)
+#   resultKS <- runTest(GO.genes, algorithm = "classic", statistic = "ks")
+#   print(resultKS)
+#   resultKS.elim <- runTest(GO.genes, algorithm = "elim", statistic = "ks")
+#   print(resultKS.elim) 
   
-  allRes <- GenTable(GO.genes, classicFisher = resultFisher, elimKS = resultKS.elim,
-                     orderBy = "classicFisher", ranksOf = "elimKS", topNodes = 50) 
+  allRes <- GenTable(GO.genes, classicFisher = resultFisher, weight01Fisher= weight01Fisher, orderBy = "weight01Fisher", topNodes=length(usedGO(GO.genes))) 
   
-  return (list(GO.data=GO.genes, GO.table=allRes, resultFisher=resultFisher))
+  return (list(GO.data=GO.genes, GO.table=allRes, resultFisher=resultFisher, weight01Fisher= weight01Fisher))
 
   #printGraph(GO.genes, resultFisher, firstSigNodes=20, fn.prefix=group, useInfo="all", pdfSW=TRUE)
 }
@@ -256,8 +257,8 @@ load.MSigDB.C2.cgp <- function(file=NULL) {
     line <- paste(c(paste(line.vector[3:(length(line.vector)-1)],'\t',sep=""),line.vector[length(line.vector)]),collapse="")
     line.vector <- strsplit(gsub("/"," ",gsub("\t"," ", line,fixed=TRUE),fixed=TRUE)," ")[[1]]
     line.vector = line.vector[line.vector != ""]
-    MSigDB.c2.cp[[current.line]] <- line.vector
-    names(MSigDB.c2.cp)[current.line] = name
+    MSigDB.c2.cgp[[current.line]] <- line.vector
+    names(MSigDB.c2.cgp)[current.line] = name
     
     current.line = current.line + 1
   }

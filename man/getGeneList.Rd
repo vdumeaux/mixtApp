@@ -11,6 +11,9 @@ getGeneList(tissue, module)
 
 \item{module}{is the module we want to get the genes from}
 }
+\value{
+matrix with columns: gene name, up.dn, cor
+}
 \description{
 Get a list of genes for a specific module and tissue.
 }

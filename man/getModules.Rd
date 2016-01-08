@@ -9,6 +9,9 @@ getModules(tissue)
 \arguments{
 \item{tissue}{tissue we want to retrieve modules for}
 }
+\value{
+vector of module names
+}
 \description{
 Returns a list of modules found for the given tissue
 }

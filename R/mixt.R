@@ -1,3 +1,3 @@
 .onLoad <- function(libname, pkgname) {
-  data("modules", "geneModuleOverview", "cc.biopsy_msigdb", "goterms", package=pkgname, envir=parent.env(environment()))
+  data("merged_bresat","merged_moduleColors", "goterms", "combat_data","msigdb", package=pkgname, envir=parent.env(environment()))
 }

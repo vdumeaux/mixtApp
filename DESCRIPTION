@@ -15,7 +15,6 @@ Imports:
   GO.db,
   RColorBrewer,
   latticeExtra,
-  colorspace,
   munsell,
   scales,
   ggplot2,
@@ -31,3 +30,4 @@ Depends:
   WGCNA,
   parallel,
   plyr,
+  colorspace,

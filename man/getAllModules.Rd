@@ -9,6 +9,9 @@ getAllModules(gene)
 \arguments{
 \item{gene}{the interesting gene}
 }
+\value{
+vector with module name from blood and module name from biopsy
+}
 \description{
 Get all modules a specific gene is found in.
 }

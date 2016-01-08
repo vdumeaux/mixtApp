@@ -204,7 +204,7 @@ gene.overlap.test <- function(modules)
 
 create.modules.heatmap <- function(bs, exprs, clinical, re.order=TRUE, order.by, title=title) 
 {
-  stopifnot(ncol(bs$dat) == nrow(clinical))  
+  stopifnot(length(bs$pat.order) == nrow(clinical))  
   
   #heatmap variables
   col.clust = FALSE
@@ -418,3 +418,179 @@ parallelset <- function(..., freq, col="gray", border=0, layer,
     }
   }           
 }
+
+### pat.cohorts()
+###
+### returns a list containing information about each cohort for the
+### given dataset.  
+###
+### Arguments:
+###
+###     dat:
+###
+###         rearranged dataset object
+###
+### Returns:
+###
+###     a list with each element corresponding to a cohort.
+###
+###         a vector of (integer) indices pointing out the patients that belong to the cohort
+###
+
+pat.cohorts <- function(dat)
+{
+  ret <- list()
+  cl <- dat$clinical
+  
+  ## define all the patient indices for all our cohorts
+  ret$all <- rownames(cl)
+  ret$erp <- rownames(cl)[which(cl$er)]
+  ret$ern <- rownames(cl)[which(!cl$er)]
+  ret$her2clinicalp <- rownames(cl)[which(cl$her2)]
+  ret$her2clinicaln <- rownames(cl)[which(!cl$her2)]
+  ret$erp.her2p <- rownames(cl)[which(cl$er & cl$her2)]
+  ret$ern.her2p <- rownames(cl)[which(!cl$er & cl$her2)]
+  ret$erp.her2n <- rownames(cl)[which(cl$er & !cl$her2)]
+  ret$ern.her2n <- rownames(cl)[which(!cl$er & !cl$her2)]
+  ret$luma <- rownames(cl)[which(cl$pam50.parker == "LumA")]
+  ret$erp.luma <- rownames(cl)[which(cl$pam50.parker == "LumA" & cl$er)]
+  ret$lumb <- rownames(cl)[which(cl$pam50.parker == "LumB")]
+  ret$erp.lumb <- rownames(cl)[which(cl$pam50.parker == "LumB" & cl$er)]
+  ret$normL <- rownames(cl)[which(cl$pam50.parker == "Normal")]
+  ret$erp.normL <- rownames(cl)[which(cl$pam50.parker == "Normal" & cl$er)]
+  ret$basalL <- rownames(cl)[which(cl$pam50.parker == "Basal")]
+  ret$erp.basalL <- rownames(cl)[which(cl$pam50.parker == "Basal" & cl$er)]
+  ret$her2E <- rownames(cl)[which(cl$pam50.parker == "Her2")]
+  ret$erp.her2E <- rownames(cl)[which(cl$pam50.parker == "Her2" & cl$er)]
+  ret$cit.luma <- rownames(cl)[which(cl$cit == "lumA")]
+  ret$cit.lumb <- rownames(cl)[which(cl$cit == "lumB")]
+  ret$cit.lumc <- rownames(cl)[which(cl$cit == "lumC")]
+  ret$cit.normL <- rownames(cl)[which(cl$cit == "normL")]
+  ret$cit.mApo <- rownames(cl)[which(cl$cit == "mApo")]
+  ret$cit.basalL <- rownames(cl)[which(cl$cit == "basL")]
+  
+return(ret)
+}
+
+### plot.pat.bs()
+###
+### plot bresat heatmap for the specified data set and
+### cohort. Genes can also be specified.
+###
+### Arguments:
+###     bs: bresat object (list) returned by sig.ranksum for data set 'dat'
+###
+###     cl: data.frame 'clinical'
+###     
+###     pat.cohort: list of patient cohorts
+###
+###     cohort.name
+###
+###         name of cohort
+###
+###     gene.names
+###
+###         character vector with gene names. If this is missing or is
+###         NULL, then all genes will be used. See 'rm.missing.genes'
+###         for handling of gene names that are not found in the data
+###         set.
+###
+###    title
+###
+
+plot.pat.bs <- function(bs, cl, pat.cohorts, cohort.name="all", patient.ids=NULL, gene.names=NULL, order.by=NULL, title)
+  {
+    #heatmap variables
+    col.clust = FALSE
+    layout.m = matrix(c("key","title","","",""  ,  "","","","",""  ,"ranksum.text","ranksum.line","","",""  ,  "row.labels.rjust","heatmap","","",""  ,  "","col.labels.rjust","","",""  ,  "ranks.text","ranks","","",""  ,  "","","","",""  ,  "clinical.labels.rjust","clinical","","",""  ,  "","","","",""),nrow=9,ncol=5,byrow=TRUE)
+    layout.m.sum = matrix(c("","","","",""  ,  "","","","",""  ,"","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "row.labels.rjust","heatmap","","",""  ,  "","","","",""  ,   "","","","",""  ,  "","","","",""),nrow=9,ncol=5,byrow=TRUE)
+    #layout.m.dist.cdf = matrix(c("","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","col.labels.ljust","","",""  ,  "row.labels.rjust","heatmap","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""),nrow=11,ncol=5,byrow=TRUE)
+    layout.m.updn = matrix(c("","","","",""  ,  "","","","",""  ,"","","","",""  ,  "","","","heatmap",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""),nrow=9,ncol=5,byrow=TRUE)
+    widths = c(2,5,0.25,0.25,0.25)
+    heights = c(1,0.25,0.5,3,0.25,0.25,0.25,8,0.25)
+    
+    scale = "none"
+    min.val=-5
+    max.val=5
+    key.min=-5
+    key.max=5
+    
+    if (is.null(order.by)){
+      order.by<-bs$pat.order
+    }
+  
+    data = bs$dat[, match(rownames(cl)[order.by], colnames(bs$dat))]
+    if (!is.null(gene.names))
+    {data<-data[rownames(data) %in% gene.names,]}
+    
+    mclinical = cl[order.by,]
+    if (is.null(patient.ids))
+    {
+      patients<-pat.cohorts[[cohort.name]]
+    }
+    else
+    {
+      patients<-patient.ids
+    }
+    
+    #plot.new()
+    ddrs = heatmap.simple(data[, colnames(data) %in% patients],
+                          clinical = huc.color.clinical(mclinical)[rownames(mclinical) %in% patients,], 
+                          layout.mat = layout.m, widths = widths, heights = heights, col.clust = FALSE, 
+                          row.clust = FALSE, title=title,
+                          row.labels=rownames(data), 
+                          col.labels=rep("", length(patients)))
+    
+    up.dn = as.vector(array(1,dim=c(1,length(bs$gene.order))))
+    names(up.dn) = unique(c(bs$up,bs$dn))
+    up.dn[names(up.dn) %in% bs$dn] = -1
+    to.plot = (as.matrix(up.dn,ncol=1)[bs$gene.order,,drop=FALSE])
+    color.scheme = heatmap.color.scheme(low.breaks=c(-1.5,0),high.breaks=c(0,1.5))
+    heatmap.simple(to.plot, scale=scale, layout.mat = layout.m.updn, widths = widths, heights = heights, col.clust = FALSE, row.clust = FALSE, color.scheme = color.scheme)
+    
+    the.layout <- grid.layout(nrow(layout.m), ncol(layout.m), widths=widths, heights=heights)
+    mid.vp <- viewport(layout=the.layout, name="heatmap.mid.vp")
+    pushViewport(mid.vp)
+    elem = 'ranks'
+    idx <- which(layout.m == elem, arr.ind=TRUE)
+    pushViewport(viewport(name=elem,
+                          layout.pos.row=unique(idx[,1]),
+                          layout.pos.col=unique(idx[,2])))
+    
+    rank.colors<-rev(diverge_hcl(n=ncol(bs$dat)))
+    names(rank.colors)<-colnames(bs$dat)
+    rank.colors<-rank.colors[match(rownames(cl)[order.by], colnames(bs$dat))]
+    ranksum = t(as.matrix(rank.colors))[,names(rank.colors) %in% patients,drop=FALSE]
+    heatmap.clinical(ranksum)
+    upViewport()
+    elem = 'ranks.text'
+    idx <- which(layout.m == elem, arr.ind=TRUE)
+    pushViewport(viewport(name=elem,
+                          layout.pos.row=unique(idx[,1]),
+                          layout.pos.col=unique(idx[,2])))
+    heatmap.labels('ranks', type="row.labels", just="right")
+    upViewport()
+    
+    the.layout <- grid.layout(nrow(layout.m), ncol(layout.m), widths=widths, heights=heights)
+    top.vp <- viewport(layout=the.layout, name="heatmap.top.vp")
+    pushViewport(top.vp)
+    elem = 'ranksum.line'
+    idx <- which(layout.m == elem, arr.ind=TRUE)
+    pushViewport(viewport(name=elem,
+                          layout.pos.row=unique(idx[,1]),
+                          layout.pos.col=unique(idx[,2])))
+    ranksum.plot = bs$ranksum[order.by][colnames(data) %in% patients]
+    par(new=TRUE, fig=gridFIG(), mar=c(0,0,0,0))
+    plot(1:length(ranksum.plot), ranksum.plot, ann=FALSE, xaxs='i', yaxt='n', xaxt='n',bty='n',type='l')
+    upViewport()
+    elem = 'ranksum.text'
+    idx <- which(layout.m == elem, arr.ind=TRUE)
+    pushViewport(viewport(name=elem,
+                          layout.pos.row=unique(idx[,1]),
+                          layout.pos.col=unique(idx[,2])))
+    
+    heatmap.labels('ranksum', type="row.labels", just="right")
+    upViewport()
+    invisible(NULL)
+  }
+

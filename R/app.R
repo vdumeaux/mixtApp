@@ -83,11 +83,11 @@ getAllGenesAndModules <- function() {
   res <- NULL
   tissues <- getAllTissues()
   for (tissue in tissues){
-    for(module in names(mymodules[[tissue]]$modules)) {
+    for(module in names(bresat[[tissue]])) {
       if(module == "grey"){
         next 
       }
-      gs <- mymodules[[tissue]]$bresat[[module]]$gene.order
+      gs <- bresat[[tissue]][[module]]$gene.order
       for(gene in gs){
         if(length(res[[gene]])==0) {
           res[[gene]] = list()
@@ -196,19 +196,7 @@ getGOTerms <- function(tissue, module, terms=c()){
 }
 
 
-saveGOTerms <- function(){
-  load("data/topGO.RData.latest") 
-  goterms <- all.single
-  for (tissue in names(goterms)){
-    for(module in names(goterms[[tissue]])){
-      goterms[[tissue]][[module]]$GO.data <- NULL
-      goterms[[tissue]][[module]]$resultFisher <- NULL
-      goterms[[tissue]][[module]]$common <- NULL
-      goterms[[tissue]][[module]]$common <- go.common[[tissue]][[module]]
-    }
-  }
-  save(goterms, file="data/goterms.RData") 
-}
+
 
 #' Get common genes for given tissue, module, geneset and optionally status
 #' @param geneset is the geneset, from any of the msgidb sets
@@ -340,7 +328,7 @@ eigengeneCorrelation <- function(tissueA,tissueB){
 
 #' Computes module eigengenes for modules in the given tissues
 #' @param tissues is a vector of tissues 
-#' @returns MEs object with module eigengenes for each tissue
+#' @return MEs object with module eigengenes for each tissue
 computeEigengenes <- function(tissues) { 
   MEs = NULL 
   for (tissue in tissues)
@@ -434,7 +422,7 @@ roiTest <- function(tissueA="blood", tissueB="biopsy"){
   mod.roi <- NULL
   mod.roi <- laply(roi.cat[[tissueA]], function(x){
     laply(roi.cat[[tissueB]], function(y){
-
+  
       fisher.test(x, y, workspace = 2e+07, hybrid=TRUE)$p
     })
   })
@@ -516,23 +504,35 @@ comparisonAnalyses <- function(tissueA, tissueB, moduleA, moduleB){
 #' Computes correlation between eigengenes and quantitative variables
 #' and anova between eigengenes and qualitative variables.  
 #' @param tissue is the tissue from which to get the eigengenes 
+#' @export 
 eigengeneClinicalRelation <- function(tissue){
   
-  MEs = computeEigengenes(c(tissueA,tissueB)) 
+  bc.qual.var<- c("er","her2" ,"pam50.parker","hybrid.parker","cit", "claudin.low", 
+                  "lum" ,"lumN","prolif" ,"basalL",
+                  "lumC" ,"lumaNormL" ,"basLmApo","lumBlumC", 
+                  "lymph" ,
+                  "menopause","hrt","weight.70.plus","age.55.plus", "medication","hospital")
+  bc.quant.var<-c("age","weight", "MKS", "ERS", "LUMS", "HER2S")
+  n.qual.var<- c("menopause","hrt","weight.70.plus","age.55.plus", "medication","orig.dataset")
+  bn.qual.var<- c("cancer", bc.qual.var, "orig.dataset")
+  n.quant.var<-c("age","weight")
+  
+  
+  MEs = computeEigengenes(tissue) 
   
   ### Qualitative variables 
-  cl <- laply(dat[[tissue]]$clinical[,-c(1:9, 12:15, 17, 19, 31:39, 40, 41, 46,47)], function(y) {
+  cl <- laply(dat[[tissue]]$clinical[,bc.qual.var], function(y) {
     laply(MEs[[tissue]], function (x){
       anova(lm(x~y))$`Pr(>F)`[1]
     })
   })
-  rownames(cl) <- names(dat[[tissue]]$clinical)[-c(1:9, 12:15, 17, 19, 31:39, 40, 41, 46, 47)]
+  rownames(cl) <- bc.qual.var
   colnames(cl) <- names(MEs[[tissue]])
   
   ### quantitative variables 
   moduleTraitCor<-NULL
   moduleTraitPvalue<-NULL
-  moduleTraitCor[[tissue]]= cor(MEs[[tissue]], dat[[tissue]]$clinical[, c(15, 31:34, 41)], use = "p");
+  moduleTraitCor[[tissue]]= cor(MEs[[tissue]], dat[[tissue]]$clinical[, bc.quant.var], use = "p");
   moduleTraitPvalue[[tissue]]= corPvalueStudent(moduleTraitCor[[tissue]], nrow(dat[[tissue]]$clinical));
   cl<-rbind(cl, t(moduleTraitPvalue[[tissue]]))
   
@@ -546,13 +546,13 @@ eigengeneClinicalRelation <- function(tissue){
   }
   
   if(tissue == "nblood"){
-    cl <-laply(dat[[tissue]]$clinical[,c(4, 16, 42:46)], function(y) {
+    cl <-laply(dat[[tissue]]$clinical[ , n.qual.var], function(y) {
       laply(MEs[[tissue]], function(x){
         anova(lm(x~y))$`Pr(>F)`[1]})
     })
     
-    rownames(cl)<-names(dat[[tissue]]$clinical)[c(4, 16, 42:46)]
-    colnames(cl)<-names(MEs[[tissue]])
+    rownames(cl) < -n.qual.var
+    colnames(cl) <- names(MEs[[tissue]])
     
   }
   cols = colnames(cl) 
@@ -564,6 +564,7 @@ eigengeneClinicalRelation <- function(tissue){
 } 
 
 #' Computes ROI for the given tissue
+#' @export 
 computeROICategories <- function(tissue) {
     roi.cat<-NULL
     module.names <- names(bresat[[tissue]])
@@ -575,29 +576,44 @@ computeROICategories <- function(tissue) {
 }
 
 #' ROI and clinical categories relation 
+#' @export 
 roiClinicalRelation <- function(tissue){
   
   roi.cat <- computeROICategories(tissue) 
+  MEs = computeEigengenes(tissue) 
+  
+  bc.qual.var<- c("er","her2" ,"pam50.parker","hybrid.parker","cit", "claudin.low", 
+                  "lum" ,"lumN","prolif" ,"basalL",
+                  "lumC" ,"lumaNormL" ,"basLmApo","lumBlumC", 
+                  "lymph" ,
+                  "menopause","hrt","weight.70.plus","age.55.plus", "medication","hospital")
+  bc.quant.var<-c("age","weight", "MKS", "ERS", "LUMS", "HER2S")
+  n.qual.var<- c("menopause","hrt","weight.70.plus","age.55.plus", "medication","orig.dataset")
+  bn.qual.var<- c("cancer", bc.qual.var, "orig.dataset")
+  n.quant.var<-c("age","weight")
+  
+  
   cl.roi <- NULL
   # fisher's exact betgween roi and qualitative variables 
-  cl.roi<-laply(dat[[tissue]]$clinical[,-c(1:9, 12:15, 17, 19, 31:39, 40, 41, 46,47)], function(y) {
+  cl.roi<-laply(dat[[tissue]]$clinical[,bc.qual.var], function(y) {
       laply(data.frame(roi.cat[[tissue]]), function (x) {
-        fisher.test(y,x, workspace=4e+7,hybrid=TRUE)$p
-      })
-    })
+        #fisher.test(y,x, workspace=2e+8,hybrid=TRUE)$p
+        chisq.test(table(y,x))$p.value
+        }, .parallel=FALSE)
+    }, .parallel=FALSE)
     
-  rownames(cl.roi) <- names(dat[[tissue]]$clinical)[-c(1:9, 12:15, 17, 19, 31:39, 40, 41, 46,47)]
+  rownames(cl.roi) <- bc.qual.var
   colnames(cl.roi) <- names(roi.cat[[tissue]])
   
   roiTraitPvalue<-NULL
   
-  roiTraitPvalue[[tissue]]<- laply(dat[[tissue]]$clinical[,c(15, 31:34, 41)], function(y) {
+  roiTraitPvalue[[tissue]]<- laply(dat[[tissue]]$clinical[,bc.quant.var], function(y) {
     laply(MEs[[tissue]], function (x){
       anova(lm(x~y))$`Pr(>F)`[1]
     })
   })
   
-  rownames(roiTraitPvalue[[tissue]]) <- names(dat[[tissue]]$clinical)[c(15, 31:34, 41)]
+  rownames(roiTraitPvalue[[tissue]]) <- bc.quant.var
   colnames(roiTraitPvalue[[tissue]]) <- names(MEs[[tissue]])
   
   cl.roi <- rbind(cl.roi, roiTraitPvalue[[tissue]])
@@ -613,14 +629,15 @@ roiClinicalRelation <- function(tissue){
   }
   
   if(tissue == "nblood"){ 
-    cl.roi<-laply(dat[[tissue]]$clinical[,c(4, 16, 42:46)], function(y) {
+    cl.roi<-laply(dat[[tissue]]$clinical[,n.qual.var], function(y) {
       laply(data.frame(roi.cat[[tissue]]), function(x){
-        fisher.test(y,x, workspace=2e+07, hybrid=TRUE)$p
-      })
+        #fisher.test(y,x, workspace=2e+07, hybrid=TRUE)$p
+        chisq.test(table(y,x))$p.value
+        })
     })
   
   
-    rownames(cl.roi)<-names(dat[[tissue]]$clinical)[c(4, 16, 42:46)]
+    rownames(cl.roi)<-names(dat[[tissue]]$clinical)[n.quant.var]
     colnames(cl.roi)<-names(roi.cat[[tissue]])
   }
   
