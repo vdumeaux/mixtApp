@@ -43,7 +43,7 @@ huc.clinical.colors <- function() {
   #heatmap.clinical[["chemo"]] <- c(No="white",Yes="red")
   #heatmap.clinical[["tamoxifen"]] <- c(No="white",Yes="red")
   #heatmap.clinical[["herceptin"]] <- c(No="white",Yes="red")
-  heatmap.clinical[["cit"]] <- c(basL="firebrick2",lumA="blue4",lumB="deepskyblue", normL="green4",lumC="black",mApo="hotpink2")
+  heatmap.clinical[["cit"]] <- c(basL="firebrick2",lumA="blue4",lumB="deepskyblue", normL="green4",lumC="#7fffd4",mApo="hotpink2")
   heatmap.clinical[["lehmann"]] <- c(UNS="#F11A14", BL1="#F698C2", BL2="#3651A5", IM="#F99900", M="#BABBBE", MSL="#9B3067", LAR="#66BF3C")
   heatmap.clinical[["menopause"]]<-c(No="white", Yes="red")
   heatmap.clinical[["hrt"]]<-c(No="white", Yes="red")

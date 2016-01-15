@@ -46,7 +46,7 @@ heatmap <- function(tissue, module, re.order=FALSE, orderByModule=NULL, orderByT
                            exprs = dat[[tissue]]$exprs, 
                            clinical = clinical,
                            re.order = re.order,
-                           order.by = bresat[[orderByTissue]][[orderByModule]]$pat.order,
+                           bs.order.by = bresat[[orderByTissue]][[orderByModule]]$pat.order,
                            title = title )
     #dev.off() 
 }
@@ -162,6 +162,11 @@ getGeneSetNames <- function() {
 #' @param genesets is a vector of the genesets we want to look at, default is the first... 
 #' @export 
 getEnrichmentForTissue <- function(tissue, genesets=c(1)) {
+  
+  if(tissue == "nblood" || tissue == "bnblood"){
+    tissue = "blood" 
+  }
+  
   res = lapply(msigdb.enrichment[[tissue]], gs, sets = genesets)
   res = lapply(res, addTissue, tissue=tissue) 
   res = do.call("rbind", res)
@@ -169,10 +174,12 @@ getEnrichmentForTissue <- function(tissue, genesets=c(1)) {
   return(res)
 }
 
+#' @export
 gs <- function(d, sets){
   return(d$results[sets,])
 }
 
+#' @export 
 addTissue <- function(d, tissue){
   e = d;
   e$tissue = tissue

@@ -202,7 +202,7 @@ gene.overlap.test <- function(modules)
 }
 
 
-create.modules.heatmap <- function(bs, exprs, clinical, re.order=TRUE, order.by, title=title) 
+create.modules.heatmap <- function(bs, exprs, clinical, re.order=TRUE, bs.order.by, title=title) 
 {
   stopifnot(length(bs$pat.order) == nrow(clinical))  
   
@@ -223,6 +223,13 @@ create.modules.heatmap <- function(bs, exprs, clinical, re.order=TRUE, order.by,
   
   if (re.order == FALSE){
     order.by<-bs$pat.order
+    roi<-bs$roi
+    roi.cat<-bs$roi.cat
+  }
+  if (re.order == TRUE){
+    order.by<-bs.order.by$pat.order
+    roi<-bs.order.by$roi
+    roi.cat<-bs.order.by$roi.cat
   }
 
   data = exprs[bs$gene.order,order.by, drop=FALSE]
@@ -269,8 +276,8 @@ create.modules.heatmap <- function(bs, exprs, clinical, re.order=TRUE, order.by,
   heatmap.labels('ranksum', type="row.labels", just="right")
   upViewport()
   
-  first.ind = length(which(bs$roi.cat==3))+1
-  last.ind = first.ind + length(which(bs$roi.cat==2))
+  first.ind = length(which(roi.cat==3))+1
+  last.ind = first.ind + length(which(roi.cat==2))
   
   res.random.dist.begin = first.ind
   res.random.dist.end = last.ind
@@ -282,8 +289,8 @@ create.modules.heatmap <- function(bs, exprs, clinical, re.order=TRUE, order.by,
                         layout.pos.col=unique(idx[,2])))
   
   par(new=TRUE, fig=gridFIG(), mar=c(0,0,0,0))
-  grid.lines(x = unit(c(first.ind/length(bs$roi),first.ind/length(bs$roi)), "npc"),gp=gpar(col='yellow',lty = 1, lwd = 2))
-  grid.lines(x = unit(c(last.ind/length(bs$roi),last.ind/length(bs$roi)), "npc"),gp=gpar(col='yellow',lty = 1, lwd = 2))
+  grid.lines(x = unit(c(first.ind/length(roi),first.ind/length(roi)), "npc"),gp=gpar(col='yellow',lty = 1, lwd = 2))
+  grid.lines(x = unit(c(last.ind/length(roi),last.ind/length(roi)), "npc"),gp=gpar(col='yellow',lty = 1, lwd = 2))
   upViewport()
 }
 
@@ -444,30 +451,30 @@ pat.cohorts <- function(dat)
   
   ## define all the patient indices for all our cohorts
   ret$all <- rownames(cl)
-  ret$erp <- rownames(cl)[which(cl$er)]
-  ret$ern <- rownames(cl)[which(!cl$er)]
-  ret$her2clinicalp <- rownames(cl)[which(cl$her2)]
-  ret$her2clinicaln <- rownames(cl)[which(!cl$her2)]
-  ret$erp.her2p <- rownames(cl)[which(cl$er & cl$her2)]
-  ret$ern.her2p <- rownames(cl)[which(!cl$er & cl$her2)]
-  ret$erp.her2n <- rownames(cl)[which(cl$er & !cl$her2)]
-  ret$ern.her2n <- rownames(cl)[which(!cl$er & !cl$her2)]
-  ret$luma <- rownames(cl)[which(cl$pam50.parker == "LumA")]
-  ret$erp.luma <- rownames(cl)[which(cl$pam50.parker == "LumA" & cl$er)]
-  ret$lumb <- rownames(cl)[which(cl$pam50.parker == "LumB")]
-  ret$erp.lumb <- rownames(cl)[which(cl$pam50.parker == "LumB" & cl$er)]
-  ret$normL <- rownames(cl)[which(cl$pam50.parker == "Normal")]
-  ret$erp.normL <- rownames(cl)[which(cl$pam50.parker == "Normal" & cl$er)]
-  ret$basalL <- rownames(cl)[which(cl$pam50.parker == "Basal")]
-  ret$erp.basalL <- rownames(cl)[which(cl$pam50.parker == "Basal" & cl$er)]
-  ret$her2E <- rownames(cl)[which(cl$pam50.parker == "Her2")]
-  ret$erp.her2E <- rownames(cl)[which(cl$pam50.parker == "Her2" & cl$er)]
-  ret$cit.luma <- rownames(cl)[which(cl$cit == "lumA")]
-  ret$cit.lumb <- rownames(cl)[which(cl$cit == "lumB")]
-  ret$cit.lumc <- rownames(cl)[which(cl$cit == "lumC")]
-  ret$cit.normL <- rownames(cl)[which(cl$cit == "normL")]
-  ret$cit.mApo <- rownames(cl)[which(cl$cit == "mApo")]
-  ret$cit.basalL <- rownames(cl)[which(cl$cit == "basL")]
+  ret$erp <- rownames(cl)[which(cl$er | is.na(cl$er))]
+  ret$ern <- rownames(cl)[which(!cl$er| is.na(cl$er))]
+  ret$her2p <- rownames(cl)[which(cl$her2| is.na(cl$er))]
+  ret$her2n <- rownames(cl)[which(!cl$her2| is.na(cl$er))]
+  ret$erp.her2p <- rownames(cl)[which(cl$er & cl$her2 | is.na(cl$er))]
+  ret$ern.her2p <- rownames(cl)[which(!cl$er & cl$her2 | is.na(cl$er))]
+  ret$erp.her2n <- rownames(cl)[which(cl$er & !cl$her2 | is.na(cl$er))]
+  ret$ern.her2n <- rownames(cl)[which(!cl$er & !cl$her2| is.na(cl$er))]
+  ret$luma <- rownames(cl)[which(cl$pam50.parker == "LumA" | is.na(cl$er))]
+  ret$erp.luma <- rownames(cl)[which(cl$pam50.parker == "LumA" & cl$er | is.na(cl$er))]
+  ret$lumb <- rownames(cl)[which(cl$pam50.parker == "LumB"| is.na(cl$er))]
+  ret$erp.lumb <- rownames(cl)[which(cl$pam50.parker == "LumB" & cl$er | is.na(cl$er))]
+  ret$normL <- rownames(cl)[which(cl$pam50.parker == "Normal" | is.na(cl$er))]
+  ret$erp.normL <- rownames(cl)[which(cl$pam50.parker == "Normal" & cl$er | is.na(cl$er))]
+  ret$basalL <- rownames(cl)[which(cl$pam50.parker == "Basal"| is.na(cl$er))]
+  ret$erp.basalL <- rownames(cl)[which(cl$pam50.parker == "Basal" & cl$er| is.na(cl$er))]
+  ret$her2E <- rownames(cl)[which(cl$pam50.parker == "Her2"| is.na(cl$er))]
+  ret$erp.her2E <- rownames(cl)[which(cl$pam50.parker == "Her2" & cl$er| is.na(cl$er))]
+  ret$cit.luma <- rownames(cl)[which(cl$cit == "lumA"| is.na(cl$er))]
+  ret$cit.lumb <- rownames(cl)[which(cl$cit == "lumB"| is.na(cl$er))]
+  ret$cit.lumc <- rownames(cl)[which(cl$cit == "lumC"| is.na(cl$er))]
+  ret$cit.normL <- rownames(cl)[which(cl$cit == "normL"| is.na(cl$er))]
+  ret$cit.mApo <- rownames(cl)[which(cl$cit == "mApo"| is.na(cl$er))]
+  ret$cit.basalL <- rownames(cl)[which(cl$cit == "basL"| is.na(cl$er))]
   
 return(ret)
 }
@@ -498,99 +505,344 @@ return(ret)
 ###    title
 ###
 
-plot.pat.bs <- function(bs, cl, pat.cohorts, cohort.name="all", patient.ids=NULL, gene.names=NULL, order.by=NULL, title)
-  {
-    #heatmap variables
-    col.clust = FALSE
-    layout.m = matrix(c("key","title","","",""  ,  "","","","",""  ,"ranksum.text","ranksum.line","","",""  ,  "row.labels.rjust","heatmap","","",""  ,  "","col.labels.rjust","","",""  ,  "ranks.text","ranks","","",""  ,  "","","","",""  ,  "clinical.labels.rjust","clinical","","",""  ,  "","","","",""),nrow=9,ncol=5,byrow=TRUE)
-    layout.m.sum = matrix(c("","","","",""  ,  "","","","",""  ,"","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "row.labels.rjust","heatmap","","",""  ,  "","","","",""  ,   "","","","",""  ,  "","","","",""),nrow=9,ncol=5,byrow=TRUE)
-    #layout.m.dist.cdf = matrix(c("","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","col.labels.ljust","","",""  ,  "row.labels.rjust","heatmap","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""),nrow=11,ncol=5,byrow=TRUE)
-    layout.m.updn = matrix(c("","","","",""  ,  "","","","",""  ,"","","","",""  ,  "","","","heatmap",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""),nrow=9,ncol=5,byrow=TRUE)
-    widths = c(2,5,0.25,0.25,0.25)
-    heights = c(1,0.25,0.5,3,0.25,0.25,0.25,8,0.25)
-    
-    scale = "none"
-    min.val=-5
-    max.val=5
-    key.min=-5
-    key.max=5
-    
-    if (is.null(order.by)){
-      order.by<-bs$pat.order
-    }
-  
-    data = bs$dat[, match(rownames(cl)[order.by], colnames(bs$dat))]
-    if (!is.null(gene.names))
-    {data<-data[rownames(data) %in% gene.names,]}
-    
-    mclinical = cl[order.by,]
-    if (is.null(patient.ids))
-    {
-      patients<-pat.cohorts[[cohort.name]]
-    }
-    else
-    {
-      patients<-patient.ids
-    }
-    
-    #plot.new()
-    ddrs = heatmap.simple(data[, colnames(data) %in% patients],
-                          clinical = huc.color.clinical(mclinical)[rownames(mclinical) %in% patients,], 
-                          layout.mat = layout.m, widths = widths, heights = heights, col.clust = FALSE, 
-                          row.clust = FALSE, title=title,
-                          row.labels=rownames(data), 
-                          col.labels=rep("", length(patients)))
-    
-    up.dn = as.vector(array(1,dim=c(1,length(bs$gene.order))))
-    names(up.dn) = unique(c(bs$up,bs$dn))
-    up.dn[names(up.dn) %in% bs$dn] = -1
-    to.plot = (as.matrix(up.dn,ncol=1)[bs$gene.order,,drop=FALSE])
-    color.scheme = heatmap.color.scheme(low.breaks=c(-1.5,0),high.breaks=c(0,1.5))
-    heatmap.simple(to.plot, scale=scale, layout.mat = layout.m.updn, widths = widths, heights = heights, col.clust = FALSE, row.clust = FALSE, color.scheme = color.scheme)
-    
-    the.layout <- grid.layout(nrow(layout.m), ncol(layout.m), widths=widths, heights=heights)
-    mid.vp <- viewport(layout=the.layout, name="heatmap.mid.vp")
-    pushViewport(mid.vp)
-    elem = 'ranks'
-    idx <- which(layout.m == elem, arr.ind=TRUE)
-    pushViewport(viewport(name=elem,
-                          layout.pos.row=unique(idx[,1]),
-                          layout.pos.col=unique(idx[,2])))
-    
-    rank.colors<-rev(diverge_hcl(n=ncol(bs$dat)))
-    names(rank.colors)<-colnames(bs$dat)
-    rank.colors<-rank.colors[match(rownames(cl)[order.by], colnames(bs$dat))]
-    ranksum = t(as.matrix(rank.colors))[,names(rank.colors) %in% patients,drop=FALSE]
-    heatmap.clinical(ranksum)
-    upViewport()
-    elem = 'ranks.text'
-    idx <- which(layout.m == elem, arr.ind=TRUE)
-    pushViewport(viewport(name=elem,
-                          layout.pos.row=unique(idx[,1]),
-                          layout.pos.col=unique(idx[,2])))
-    heatmap.labels('ranks', type="row.labels", just="right")
-    upViewport()
-    
-    the.layout <- grid.layout(nrow(layout.m), ncol(layout.m), widths=widths, heights=heights)
-    top.vp <- viewport(layout=the.layout, name="heatmap.top.vp")
-    pushViewport(top.vp)
-    elem = 'ranksum.line'
-    idx <- which(layout.m == elem, arr.ind=TRUE)
-    pushViewport(viewport(name=elem,
-                          layout.pos.row=unique(idx[,1]),
-                          layout.pos.col=unique(idx[,2])))
-    ranksum.plot = bs$ranksum[order.by][colnames(data) %in% patients]
-    par(new=TRUE, fig=gridFIG(), mar=c(0,0,0,0))
-    plot(1:length(ranksum.plot), ranksum.plot, ann=FALSE, xaxs='i', yaxt='n', xaxt='n',bty='n',type='l')
-    upViewport()
-    elem = 'ranksum.text'
-    idx <- which(layout.m == elem, arr.ind=TRUE)
-    pushViewport(viewport(name=elem,
-                          layout.pos.row=unique(idx[,1]),
-                          layout.pos.col=unique(idx[,2])))
-    
-    heatmap.labels('ranksum', type="row.labels", just="right")
-    upViewport()
-    invisible(NULL)
-  }
 
+
+plot.pat.bs <- function(bs, dat, pat.cohorts, cohort.name="all", patient.ids=NULL, gene.names=NULL, blood.mod, biopsy.mod, bs.order.by, title)
+{
+### Plot layouts
+  ## layout heatmap top left corner
+  layout.m = matrix(c("key","title","","","","",
+                      "","","","","","",
+                      "ranksum.text","ranksum.line","","","","",
+                      "row.labels.rjust","heatmap","","","" ,"boxplot",
+                      "","","","","","",
+                      "ranks.text","ranks","","","","",
+                      "","","","","","",
+                      "key.2","title.2","","","","",
+                      "test","","","","","",
+                      "ranksum.text.2","ranksum.line.2","","","","",
+                      "row.labels.rjust2","heatmap.2","","","" ,"scatterplot",
+                      "","col.labels.rjust","","",""  ,"",
+                      "ranks.text.2","ranks.2","","","","",
+                      "","","","","","",
+                      "clinical.labels.rjust","clinical","","","","",
+                      "","","","","", ""),nrow=16,ncol=6,byrow=TRUE)
+  ## layout heatmap bottom left corner
+  layout.m.2 = matrix(c("","","","","","",
+                        "","","","","","",
+                        "","","","","","",
+                        "","","","","","",
+                        "","","","","","",
+                        "","","","","","",
+                        "","","","","","",
+                      "key","title","","","","",
+                      "","","","","","",
+                      "ranksum.text","ranksum.line","","","","",
+                      "row.labels.rjust","heatmap","","","" ,"",
+                      "","col.labels.rjust","","",""  ,"",
+                      "ranks.text","ranks","","","","",
+                      "","","","","","",
+                      "clinical.labels.rjust","clinical","","","","",
+                      "","","","","", ""),nrow=16,ncol=6,byrow=TRUE)
+  ## layout updn heatmap for top left corner
+  layout.m.updn = matrix(c("","","","","","",
+                           "","","","","" ,"",
+                           "","","","","","",
+                           "","","","heatmap","","",
+                           "","","","","","",
+                           "","","","","","",
+                           "","","","","","",
+                           "","","","","","",
+                           "","","","","","",
+                           "","","","","","",
+                           "","","","","","",
+                           "","","","","","",
+                           "","","","","","",
+                           "","","","","","",
+                           "","","","","","",
+                           "","","","","",""),nrow=16,ncol=6,byrow=TRUE)
+  ## layout updn heatmap for bottom left corner
+  layout.m.updn.2 = matrix(c("","","","","","",
+                           "","","","","","",
+                           "","","","","","",
+                           "","","","","","",
+                           "","","","","","",
+                           "","","","","","",
+                           "","","","","","",
+                           "","","","","","",
+                           "","","","","","",
+                           "","","","","","",
+                         "","","","heatmap","","",
+                         "","","","","","",
+                         "","","","","","",
+                         "","","","","","",
+                         "","","","","","",
+                         "","","","","",""),nrow=16,ncol=6,byrow=TRUE)
+
+  ## layout dimensions
+  widths = c(2,5,0.25,0.25,0.25,8)
+  heights = c(1,0.25,0.5,3,0.25,0.25,0.25,1,0.25,0.5,3,0.25,0.25,0.25,5,0.25)
+  
+  ## key
+  scale = "none"
+  min.val=-5
+  max.val=5
+  key.min=-5
+  key.max=5
+  
+  ## define reordered variables
+  order.by<-bs.order.by$pat.order
+  roi<-bs.order.by$roi
+  roi.cat<-bs.order.by$roi.cat
+
+  ## define reordered clinical data
+  cl<-dat$blood$clinical
+  mclinical = cl[order.by,]
+  bnclinical=dat$bnblood$clinical[bs$bnblood[[blood.mod]]$pat.order, ]
+  
+  ## define blood reordered expression and select genes
+  blood.data = bs$blood[[blood.mod]]$dat[, match(rownames(cl)[order.by], colnames(bs$blood[[blood.mod]]$dat))]
+  if (!is.null(gene.names))
+  {blood.data<-blood.data[rownames(blood.data) %in% gene.names,]}
+  
+  ## define biopsy reordered expression data and select genes
+  biopsy.data = bs$biopsy[[biopsy.mod]]$dat[, match(rownames(cl)[order.by], colnames(bs$biopsy[[biopsy.mod]]$dat))]
+  if (!is.null(gene.names))
+  {biopsy.data<-biopsy.data[rownames(biopsy.data) %in% gene.names,]}
+
+  ## define patients to include
+  if (is.null(patient.ids))
+  {
+    patients<-pat.cohorts[[cohort.name]]
+  }
+  else
+  {
+    patients<-patient.ids
+  }
+  
+  ## plot blood heatmap top left (no clinical)
+  ddrs = heatmap.simple(blood.data[, colnames(blood.data) %in% patients],
+                        layout.mat = layout.m, widths = widths, heights = heights, col.clust = FALSE, 
+                        row.clust = FALSE, title=paste(cohort.name, blood.mod, "blood ordered by", biopsy.mod, "biopsy"),
+                        row.labels=rownames(blood.data),
+                        col.labels=rep("", length(which(colnames(blood.data) %in% patients))))
+  
+  ## plot updn top left heatmap
+  up.dn = as.vector(array(1,dim=c(1,length(bs$blood[[blood.mod]]$gene.order))))
+  names(up.dn) = unique(c(bs$blood[[blood.mod]]$up,bs$blood[[blood.mod]]$dn))
+  up.dn[names(up.dn) %in% bs$blood[[blood.mod]]$dn] = -1
+  to.plot = (as.matrix(up.dn,ncol=1)[bs$blood[[blood.mod]]$gene.order,,drop=FALSE])
+  color.scheme = heatmap.color.scheme(low.breaks=c(-1.5,0),high.breaks=c(0,1.5))
+  heatmap.simple(to.plot, scale=scale, layout.mat = layout.m.updn, widths = widths, heights = heights, col.clust = FALSE, row.clust = FALSE, color.scheme = color.scheme)
+  
+  ## plot ranks for top left heatmap
+  the.layout <- grid.layout(nrow(layout.m), ncol(layout.m), widths=widths, heights=heights)
+  mid.vp <- viewport(layout=the.layout, name="heatmap.mid.vp")
+  pushViewport(mid.vp)
+  elem = 'ranks'
+  idx <- which(layout.m == elem, arr.ind=TRUE)
+  pushViewport(viewport(name=elem,
+                        layout.pos.row=unique(idx[,1]),
+                        layout.pos.col=unique(idx[,2])))
+  
+  rank.colors<-rev(diverge_hcl(n=ncol(bs$blood[[blood.mod]]$dat)))
+  names(rank.colors)<-colnames(bs$blood[[blood.mod]]$dat)
+  rank.colors<-rank.colors[match(rownames(cl)[order.by], colnames(bs$blood[[blood.mod]]$dat))]
+  ranksum = t(as.matrix(rank.colors))[,names(rank.colors) %in% patients,drop=FALSE]
+  heatmap.clinical(ranksum)
+  upViewport()
+  
+  elem = 'ranks.text'
+  idx <- which(layout.m == elem, arr.ind=TRUE)
+  pushViewport(viewport(name=elem,
+                        layout.pos.row=unique(idx[,1]),
+                        layout.pos.col=unique(idx[,2])))
+  heatmap.labels('ranks', type="row.labels", just="right")
+  upViewport()
+  
+  ## plot ranksum line top left heatmap
+  the.layout <- grid.layout(nrow(layout.m), ncol(layout.m), widths=widths, heights=heights)
+  top.vp <- viewport(layout=the.layout, name="heatmap.top.vp")
+  pushViewport(top.vp)
+  
+  elem = 'ranksum.line'
+  idx <- which(layout.m == elem, arr.ind=TRUE)
+  pushViewport(viewport(name=elem,
+                        layout.pos.row=unique(idx[,1]),
+                        layout.pos.col=unique(idx[,2])))
+  ranksum.plot = bs$blood[[blood.mod]]$ranksum[order.by][colnames(blood.data) %in% patients]
+  par(new=TRUE, fig=gridFIG(), mar=c(0,0,0,0))
+  plot(1:length(ranksum.plot), ranksum.plot, ann=FALSE, xaxs='i', yaxt='n', xaxt='n',bty='n',type='l')
+  upViewport()
+  
+  elem = 'ranksum.text'
+  idx <- which(layout.m == elem, arr.ind=TRUE)
+  pushViewport(viewport(name=elem,
+                        layout.pos.row=unique(idx[,1]),
+                        layout.pos.col=unique(idx[,2])))
+  
+  heatmap.labels('ranksum', type="row.labels", just="right")
+  upViewport()
+  
+  ## plot roi lines top left heatmap
+  first.ind = length(which(roi.cat[rownames(cl) %in% patients]==3))
+  last.ind = first.ind + length(which(roi.cat[rownames(cl) %in% patients]==2))
+  
+  res.random.dist.begin = first.ind
+  res.random.dist.end = last.ind
+  
+  elem = 'heatmap'
+  idx <- which(layout.m == elem, arr.ind=TRUE)
+  pushViewport(viewport(name=elem,
+                        layout.pos.row=unique(idx[,1]),
+                        layout.pos.col=unique(idx[,2])))
+  
+  par(new=TRUE, fig=gridFIG(), mar=c(0,0,0,0))
+  grid.lines(x = unit(c(first.ind/length(which(rownames(cl) %in% patients)),first.ind/length(which(rownames(cl) %in% patients))), "npc"),gp=gpar(col='yellow',lty = 1, lwd = 2))
+  grid.lines(x = unit(c(last.ind/length(which(rownames(cl) %in% patients)),last.ind/length(which(rownames(cl) %in% patients))), "npc"),gp=gpar(col='yellow',lty = 1, lwd = 2))
+  upViewport()
+  
+  ### Biopsy heatmap bottom left (with clinical)
+  ddrs = heatmap.simple(biopsy.data[, colnames(biopsy.data) %in% patients],
+                        clinical = huc.color.clinical(mclinical)[rownames(mclinical) %in% patients,][,c(1,3:15,17, 21:25, 27, 29:33)], 
+                        layout.mat = layout.m.2, widths = widths, heights = heights, col.clust = FALSE, 
+                        row.clust = FALSE, title=paste(cohort.name, biopsy.mod, "biopsy ordered by", biopsy.mod, "biopsy"),
+                        row.labels=rownames(biopsy.data),
+                        col.labels=rep("", length(which(colnames(biopsy.data) %in% patients))))
+
+  
+  up.dn = as.vector(array(1,dim=c(1,length(bs$biopsy[[biopsy.mod]]$gene.order))))
+  names(up.dn) = unique(c(bs$biopsy[[biopsy.mod]]$up,bs$biopsy[[biopsy.mod]]$dn))
+  up.dn[names(up.dn) %in% bs$biopsy[[biopsy.mod]]$dn] = -1
+  to.plot = (as.matrix(up.dn,ncol=1)[bs$biopsy[[biopsy.mod]]$gene.order,,drop=FALSE])
+  color.scheme = heatmap.color.scheme(low.breaks=c(-1.5,0),high.breaks=c(0,1.5))
+  heatmap.simple(to.plot, scale=scale, layout.mat = layout.m.updn.2, widths = widths, heights = heights, col.clust = FALSE, row.clust = FALSE, color.scheme = color.scheme)
+  upViewport()
+
+  ## ranks bottom left heatmap
+  elem = 'ranks.2'
+  idx <- which(layout.m == elem, arr.ind=TRUE)
+  pushViewport(viewport(name=elem,
+                        layout.pos.row=unique(idx[,1]),
+                        layout.pos.col=unique(idx[,2])))
+  
+  rank.colors<-rev(diverge_hcl(n=ncol(bs$biopsy[[biopsy.mod]]$dat)))
+  names(rank.colors)<-colnames(bs$biopsy[[biopsy.mod]]$dat)
+  rank.colors<-rank.colors[match(rownames(cl)[order.by], colnames(bs$biopsy[[biopsy.mod]]$dat))]
+  ranksum = t(as.matrix(rank.colors))[,names(rank.colors) %in% patients,drop=FALSE]
+  heatmap.clinical(ranksum)
+  upViewport()
+  elem = 'ranks.text.2'
+  idx <- which(layout.m == elem, arr.ind=TRUE)
+  pushViewport(viewport(name=elem,
+                        layout.pos.row=unique(idx[,1]),
+                        layout.pos.col=unique(idx[,2])))
+  heatmap.labels('ranks', type="row.labels", just="right")
+  upViewport()
+  
+  ## ranksum bottom left
+  the.layout <- grid.layout(nrow(layout.m), ncol(layout.m), widths=widths, heights=heights)
+  top.vp <- viewport(layout=the.layout, name="heatmap.top.vp")
+  pushViewport(top.vp)
+  elem = 'ranksum.line.2'
+  idx <- which(layout.m == elem, arr.ind=TRUE)
+  pushViewport(viewport(name=elem,
+                        layout.pos.row=unique(idx[,1]),
+                        layout.pos.col=unique(idx[,2])))
+  ranksum.plot = bs$biopsy[[biopsy.mod]]$ranksum[order.by][colnames(biopsy.data) %in% patients]
+  par(new=TRUE, fig=gridFIG(), mar=c(0,0,0,0))
+  plot(1:length(ranksum.plot), ranksum.plot, ann=FALSE, xaxs='i', yaxt='n', xaxt='n',bty='n',type='l')
+  upViewport()
+  elem = 'ranksum.text.2'
+  idx <- which(layout.m == elem, arr.ind=TRUE)
+  pushViewport(viewport(name=elem,
+                        layout.pos.row=unique(idx[,1]),
+                        layout.pos.col=unique(idx[,2])))
+  
+  heatmap.labels('ranksum', type="row.labels", just="right")
+  upViewport()
+  
+  ## plot roi lines bottom left
+  first.ind = length(which(roi.cat[rownames(cl) %in% patients]==3))
+  last.ind = first.ind + length(which(roi.cat[rownames(cl) %in% patients]==2))
+
+  res.random.dist.begin = first.ind
+  res.random.dist.end = last.ind
+  
+  elem = 'heatmap.2'
+  idx <- which(layout.m == elem, arr.ind=TRUE)
+  pushViewport(viewport(name=elem,
+                        layout.pos.row=unique(idx[,1]),
+                        layout.pos.col=unique(idx[,2])))
+  
+  par(new=TRUE, fig=gridFIG(), mar=c(0,0,0,0))
+  grid.lines(x = unit(c(first.ind/length(which(rownames(cl) %in% patients)),first.ind/length(which(rownames(cl) %in% patients))), "npc"),gp=gpar(col='yellow',lty = 1, lwd = 2))
+  grid.lines(x = unit(c(last.ind/length(which(rownames(cl) %in% patients)),last.ind/length(which(rownames(cl) %in% patients))), "npc"),gp=gpar(col='yellow',lty = 1, lwd = 2))
+  upViewport()
+
+  ### Bnblood boxplot data
+  bnblood<-data.frame(bl.ranksum=c(bs$bnblood[[blood.mod]]$ranksum[rownames(dat$bnblood$clinical) %in% patients & dat$bnblood$clinical$cancer==TRUE],
+                                bs$bnblood[[blood.mod]]$ranksum[dat$bnblood$clinical$cancer==FALSE]),
+                      t.ranksum=c(bs$biopsy[[biopsy.mod]]$ranksum[rownames(dat$biopsy$clinical) %in% patients],
+                                  rep(NA, length(which(rownames(dat$bnblood$clinical) %in% patients & dat$bnblood$clinical$cancer==FALSE)))),
+                      cancer=c(rep(cohort.name, length(which(rownames(dat$bnblood$clinical) %in% patients & dat$bnblood$clinical$cancer==TRUE))), 
+                               rep("normal", length(which(rownames(dat$bnblood$clinical) %in% patients & dat$bnblood$clinical$cancer==FALSE)))))
+  bnblood$roi.cat<-c(roi.cat[rownames(cl) %in% patients], rep(NA, length(which(as.character(bnblood$cancer)=="normal"))))
+  bnblood$cancer<-"control"
+  bnblood$cancer<-ifelse(bnblood$roi.cat==1 & !is.na(bnblood$roi.cat), "low", as.character(bnblood$cancer))
+  bnblood$cancer<-ifelse(bnblood$roi.cat==2 & !is.na(bnblood$roi.cat), "mid", as.character(bnblood$cancer))
+  bnblood$cancer<-ifelse(bnblood$roi.cat==3 & !is.na(bnblood$roi.cat), "high", as.character(bnblood$cancer))
+  bnblood$cancer<-factor(bnblood$cancer, levels=c("low", "mid", "high", "control"), ordered=T)
+  
+  ### plot boxplot top right corner
+  elem = 'boxplot'
+  idx <- which(layout.m == elem, arr.ind=TRUE)
+  vp<-viewport(name=elem,
+               layout.pos.row=2:8,
+               layout.pos.col=unique(idx[,2]))
+  pushViewport(vp)
+  
+  p<-ggplot(data = bnblood, aes(x=cancer, y=bl.ranksum, fill=cancer)) + 
+    geom_boxplot(outlier.shape ="+", outlier.size = 1)+ 
+    geom_point(shape="+")+
+    scale_fill_grey(start=0.8, end=0.2)+
+    labs(x="tumor module category",
+         y="blood module ranksum", 
+         title=paste(cohort.name, " patients and controls\n(aov p=", as.character(signif(anova(lm(bnblood$bl.ranksum~bnblood$cancer))$`Pr(>F)`[1], digits=1)), ")", sep=""))+
+    theme(legend.position="none",
+          panel.background = element_rect(fill = "transparent",colour = NA),
+          axis.line   = element_line(colour="grey60"),
+          axis.title.x=element_text(hjust=0.2),
+          axis.title=element_text(size=10),
+          plot.title = element_text(hjust=0,vjust=1, size=12)
+          )
+  print(p, vp=vp)
+  upViewport()
+  
+  ### plot ranksum scatterplot for BC patients in blood vs tumor
+  elem = 'scatterplot'
+  idx <- which(layout.m == elem, arr.ind=TRUE)
+  vp1<-viewport(name=elem,
+               layout.pos.row=9:15,
+               layout.pos.col=unique(idx[,2]))
+  pushViewport(vp1)
+  
+  p1<-ggplot(bnblood[bnblood$cancer != "control",], aes(x=bl.ranksum,y=t.ranksum, color=cancer))+
+    geom_point(size=2)+
+    scale_colour_manual(values=c("#CCCCCC","#ABABAB","#818181"))+
+    labs(y="Tumor module ranksum",
+         x="Blood module ranksum",
+         title=paste(cohort.name, " patients", " (cor=",as.character(signif(cor.test(bnblood[bnblood$cancer != "control",]$bl.ranksum, bnblood[bnblood$cancer != "control",]$t.ranksum)$estimate, digits=1)), ", p=",
+                     as.character(signif(cor.test(bnblood[bnblood$cancer != "control",]$bl.ranksum, bnblood[bnblood$cancer != "control",]$t.ranksum)$p.value, digits=1)), ")",sep="")) +
+    theme(legend.position="none",
+          panel.background = element_rect(fill = "transparent",colour = NA),
+          axis.line   = element_line(colour="grey60"),
+          axis.title = element_text(size=10),
+          plot.title = element_text(hjust=0, vjust=1, size=12))
+  
+  print(p1, vp=vp1)
+  upViewport()
+  invisible(NULL)
+  
+  
+  }

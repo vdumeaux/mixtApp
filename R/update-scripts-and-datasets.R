@@ -49,7 +49,7 @@ initparallel <- function(){
 
 initDev <- function(){ 
   datasets = c("merged_bresat.RData", "merged_moduleColors.RData", "topGO_merged_mod.RData", "msigdb.RData", "combat_data.RData")
-  scripts = c("bresat.R", "common.R", "huc.R", "modules.R", "pathway_analyses.R")
+  scripts = c("bresat.R", "common.R", "huc.R", "heatmap.R" , "modules.R", "pathway_analyses.R")
   datadir = "/home/mixt/data/mixt/"
   scriptdir = "/home/mixt/src/"
   
