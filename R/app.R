@@ -25,14 +25,18 @@ heatmap <- function(tissue, module, re.order=FALSE, orderByModule=NULL, orderByT
     }
     
     if(tissue == "blood"){
-      clinical=huc.color.clinical(dat$blood$clinical)[,c(1,3,4,6, 8:12, 14,16,18:24, 27, 29:30)]
+      clinical=huc.color.clinical(dat$blood$clinical)[,c(1,3:15, 17, 19,21:25, 27, 29:33)]
     }
     if(tissue =="biopsy"){
-      clinical=huc.color.clinical(dat$biopsy$clinical)[,c(1,3,4,6, 8:12, 14,18:24, 26:27, 29:30)]
+      clinical=huc.color.clinical(dat$biopsy$clinical)[,c(1,3:15,17, 21:25, 27, 29:33)]
     }
     
     if(tissue == "nblood") {
-      clinical=huc.color.clinical(dat$nblood$clinical)[, c(16, 19:24)]
+      clinical=huc.color.clinical(dat$nblood$clinical)[, c(19,22:27)]
+    }
+    
+    if(tissue == "bnblood") {
+      clinical=huc.color.clinical(dat$nblood$clinical)[, c(1,3:15,17, 19,21:25,26, 27, 29:33)]
     }
           
     if(re.order == FALSE || (orderByTissue==tissue && orderByModule==module)){
