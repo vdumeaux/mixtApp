@@ -50,7 +50,7 @@ heatmap <- function(tissue, module, re.order=FALSE, orderByModule=NULL, orderByT
                            exprs = dat[[tissue]]$exprs, 
                            clinical = clinical,
                            re.order = re.order,
-                           bs.order.by = bresat[[orderByTissue]][[orderByModule]]$pat.order,
+                           bs.order.by = bresat[[orderByTissue]][[orderByModule]],
                            title = title )
     #dev.off() 
 }
