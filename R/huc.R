@@ -101,6 +101,14 @@ huc.color.clinical <- function(clinical) {
       clinical1[,variable] <- colors[[variable]][clinical1[,variable]]
   }
 
+  age.colors <-heat_hcl(n=length(clinical$age[!is.na(clinical$age)]))
+  names(age.colors)<-rownames(clinical)[order(clinical$age, decreasing=T, na.last=NA)]
+  clinical1$age <- age.colors[rownames(clinical)]
+  
+  weight.colors <-heat_hcl(n=length(clinical$weight[!is.na(clinical$weight)]))
+  names(weight.colors)<-rownames(clinical)[order(clinical$weight, decreasing=T, na.last=NA)]
+  clinical1$weight <- weight.colors[rownames(clinical)]
+  
   mks.colors <-sequential_hcl(n=length(clinical$MKS[!is.na(clinical$MKS)]), h=c(0,30))
   names(mks.colors)<-rownames(clinical)[order(clinical$MKS, decreasing=T, na.last=NA)]
   clinical1$MKS <- mks.colors[rownames(clinical)]

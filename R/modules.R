@@ -116,7 +116,7 @@ soft.threshold.exprs.data <- function (exprs, powers = c(c(1:10), seq(from = 12,
   return(sft)
 }
 
-find.modules <- function (exprs, power = 6, deepSplit = 2, 
+find.modules <- function (exprs, power = 6, deepSplit = 2, saveTOMs=FALSE,
                           minModuleSize = 30, reassignThreshold = 0, mergeCutHeight = 0.25, pick.soft.threshold=FALSE){
   ### to interactively pick power for soft-threshold
   if (pick.soft.threshold) {
@@ -134,7 +134,7 @@ find.modules <- function (exprs, power = 6, deepSplit = 2,
   gene.modules = NULL
   gene.modules = blockwiseModules(t(exprs), randomSeed = 234567, power = power, deepSplit = deepSplit, minModuleSize = minModuleSize, 
                                   reassignThreshold = reassignThreshold, mergeCutHeight = mergeCutHeight, 
-                                  numericLabels = TRUE, pamRespectsDendro = FALSE, saveTOMs = FALSE, verbose = 3)
+                                  numericLabels = TRUE, pamRespectsDendro = FALSE, saveTOMs = saveTOMs, verbose = 3)
   
   moduleLabels = gene.modules$colors
   moduleColors = labels2colors(gene.modules$colors)
@@ -202,7 +202,7 @@ gene.overlap.test <- function(modules)
 }
 
 
-create.modules.heatmap <- function(bs, exprs, clinical, re.order=TRUE, bs.order.by, title=title) 
+create.modules.heatmap <- function(bs, exprs, clinical, re.order=TRUE, cl.height=8, bs.order.by, title=title) 
 {
   stopifnot(length(bs$pat.order) == nrow(clinical))  
   
@@ -213,7 +213,7 @@ create.modules.heatmap <- function(bs, exprs, clinical, re.order=TRUE, bs.order.
   #layout.m.dist.cdf = matrix(c("","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","col.labels.ljust","","",""  ,  "row.labels.rjust","heatmap","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""),nrow=11,ncol=5,byrow=TRUE)
   layout.m.updn = matrix(c("","","","",""  ,  "","","","",""  ,"","","","",""  ,  "","","","heatmap",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""),nrow=9,ncol=5,byrow=TRUE)
   widths = c(2,5,0.25,0.25,0.25)
-  heights = c(1,0.25,0.5,3,0.25,0.25,0.25,8,0.25)
+  heights = c(1,0.25,0.5,3,0.25,0.25,0.25,cl.height,0.25)
   
   scale = "none"
   min.val=-5

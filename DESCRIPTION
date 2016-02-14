@@ -26,8 +26,12 @@ Imports:
   animation,
   limma,
   gridBase,
+  Rcpp,
+  dplyr, 
+  igraph, 
 Depends: 
   WGCNA,
   parallel,
   plyr,
   colorspace,
+

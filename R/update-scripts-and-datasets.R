@@ -21,6 +21,31 @@ update_scripts_and_datasets <- function() {
   
   saveGOTerms() 
   
+  saveTOMgraph()
+  
+}
+
+saveTOMgraph <- function(){
+  datadir = "/home/mixt/data/mixt/"
+  load(paste0(datadir,"merged_TOM.RData"))
+  
+  tom<-NULL
+  for (tissue in c("blood","biopsy", "nblood")){
+    tom[[tissue]] <- TOM[[tissue]][moduleColors[[tissue]] != "grey", moduleColors[[tissue]] !="grey"]}
+  tom$nblood<- TOM$nblood[moduleColors$blood != "grey", moduleColors$blood !="grey"]
+  
+  net<-NULL
+  for (tissue in c("blood", "biopsy", "nblood")){
+    net[[tissue]]<-exportNetworkToCytoscape(
+      tom[[tissue]],
+      edgeFile = paste("data/", tissue, "_smod_tom_01_edge.txt", sep=""),
+      nodeFile = paste("data/", tissue, "_smod_tom_01_node.txt", sep=""),
+      weighted = TRUE,
+      threshold = 0.1,
+      nodeAttr = moduleColors[[tissue]][moduleColors[[tissue]] !="grey"])
+  }
+  
+  save(net, file="data/TOM.RData")
   
 }
 
@@ -62,7 +87,6 @@ initDev <- function(){
   for(script in scripts){
     source(script) 
   }
-  
   
 }
 

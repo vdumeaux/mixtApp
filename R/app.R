@@ -662,3 +662,38 @@ roiClinicalRelation <- function(tissue){
   
   return(cl.roi)
 }
+
+#' Get graph nodes for a TOM graph for a given tissue 
+#' @export
+getTOMGraphNodes <- function(tissue) {
+
+  edges = net[[tissue]]$edgeData
+  #edges = edges[edges$weight > 0.12, ]
+  g = igraph::graph_from_data_frame(edges)
+  
+  #g <- igraph::simplify(g)
+  layout = igraph::layout_with_fr(g, weights=edges$weight)#, maxiter=1000)#, weights=edges$weight)
+  nodes <- net[[tissue]]$nodeData
+  nodes = nodes[nodes$nodeName %in% igraph::V(g)$name, ]
+  nodes = cbind(nodes, layout)
+  colnames(nodes) <- c("id", "altId", "color", "x", "y")
+  # g.copy = igraph::delete.edges(g, which(igraph::E(g)$weight < 0.15))
+  # layout.copy = igraph::layout_with_fr(g.copy) 
+  # plot(g.copy,layout.copy)
+  #plot(nodes$x, nodes$y, vertex.colors=nodes$color, vertex.size=1)
+  return(nodes)
+}
+
+#' Get graph edges for a TOM graph for a given tissue 
+#' @export
+getTOMGraphEdges <- function(tissue){
+  edges = net[[tissue]]$edgeData
+  edges = mutate(edges, id=paste0(fromNode,"-",toNode))
+  nodes <- net[[tissue]]$nodeData
+  edges = mutate(edges, module=nodes[nodes$nodeName == fromNode,]$color)
+  edges = edges[edges$weight > 0.15, ]
+  colnames(edges) <- c("source", "target", "weight", "direction", "sourceAltId", "targetAltId", "id")
+  return(edges)
+}
+
+
