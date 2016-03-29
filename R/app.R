@@ -8,13 +8,14 @@
 #' @param orderByModule which module we want to order patients by. Default is order by module. 
 #' @param orderByTissue the tissue where the orderByModule module is found. Default is the same tissue. 
 #' @param re.order set to true if patients should be re ordered. Defaults to FALSE. 
+#' @import colorspace
 #' @export
 #' @examples
 #' heatmap("blood", "green")
 #' heatmap("biopsy", "blue") 
 #' 
 
-heatmap <- function(tissue, module, re.order=FALSE, orderByModule=NULL, orderByTissue=NULL) { 
+heatmap <- function(tissue, module, re.order=FALSE, orderByModule=NULL, orderByTissue=NULL, subtypes=NULL) { 
     plot.new()
     title = "" 
     if(is.null(orderByModule)){
@@ -41,19 +42,21 @@ heatmap <- function(tissue, module, re.order=FALSE, orderByModule=NULL, orderByT
           
     if(re.order == FALSE || (orderByTissue==tissue && orderByModule==module)){
       title = paste(module," module from ",tissue, sep="") 
-    } 
-    else {
+    }  else {
       title = paste(paste(module, " module from ",tissue ,sep=""), "ordered by", orderByModule, "module from", orderByTissue, sep=" ") 
     }
-   
+    
+
+    
     create.modules.heatmap(bs = bresat[[tissue]][[module]], 
                            exprs = dat[[tissue]]$exprs, 
                            clinical = clinical,
                            re.order = re.order,
                            bs.order.by = bresat[[orderByTissue]][[orderByModule]],
-                           title = title )
+                           title = title)
     #dev.off() 
 }
+
 
 #' Returns a list of modules found for the given tissue
 #' @param tissue tissue we want to retrieve modules for 
@@ -219,8 +222,8 @@ getCommonGenes <- function(tissue, module, geneset, status = "updn.common") {
 
 #' Get the common genes from the go term anlysis for a specific
 #' tissue, module and GO term id. 
-#' @export
 #' @param gotermID is the GO term id, e.g. "GO:0070848" 
+#' @export
 getCommonGOTermGenes <- function(tissue,module,gotermID){
   if(tissue == "nblood"){
     tissue = "blood"
@@ -309,7 +312,7 @@ eigengeneCorrelation <- function(tissueA,tissueB){
     module2Pvalue<-NULL
     
     module2Cor[[tissueA]] = cor(MEs[[tissueA]], use = "p");
-    module2Pvalue[[tissueA]] = corPvalueStudent(module2Cor[[tissueA]], ncol(dat$blood$exprs)); 
+    module2Pvalue[[tissueA]] = WGCNA::corPvalueStudent(module2Cor[[tissueA]], ncol(dat$blood$exprs)); 
     
     res <- NULL
     
@@ -328,7 +331,7 @@ eigengeneCorrelation <- function(tissueA,tissueB){
   
   ## Correlation analyses of eigengenes across tissues
   moduleCor = cor(MEs[[tissueA]], MEs[[tissueB]], use = "p");
-  modulePvalue = corPvalueStudent(moduleCor, ncol(dat$blood$exprs));
+  modulePvalue = WGCNA::corPvalueStudent(moduleCor, ncol(dat$blood$exprs));
   res <- NULL
   res = matrix(unlist(modulePvalue), ncol=length(names(MEs[[tissueB]])))
   rownames(res) = NULL
@@ -345,18 +348,13 @@ computeEigengenes <- function(tissues) {
   for (tissue in tissues)
   {
     # Recalculate MEs with color labels
-    MEs[[tissue]] = moduleEigengenes(t(dat[[tissue]]$exprs), moduleColors[[tissue]])$eigengenes
-    MEs[[tissue]] = orderMEs(MEs[[tissue]])
+    MEs[[tissue]] = WGCNA::moduleEigengenes(t(dat[[tissue]]$exprs), moduleColors[[tissue]])$eigengenes
+    MEs[[tissue]] = WGCNA::orderMEs(MEs[[tissue]])
     
     #Exclude grey module
     MEs[[tissue]]<-MEs[[tissue]][-which(names(MEs[[tissue]])=="MEgrey")]
   }
   return(MEs)
-}
-
-
-getEigengenes <- function(tissue){
-  return(names(MEs[[tissue]]))
 }
 
 #' Run gene overlap test between eigengenes in tissueA and tissueB. Returns 
@@ -369,7 +367,7 @@ moduleHypergeometricTest <- function(tissueA, tissueB){
   MEs = computeEigengenes(c(tissueA,tissueB)) 
   
   moduleCor = cor(MEs[[tissueA]], MEs[[tissueB]], use = "p");
-  modulePvalue = corPvalueStudent(moduleCor, ncol(dat[[tissueA]]$exprs));
+  modulePvalue = WGCNA::corPvalueStudent(moduleCor, ncol(dat[[tissueA]]$exprs));
   
   hyper <- geneOverlapTest(mymodules,tissueA,tissueB)
   hyper <- hyper[match(rownames(modulePvalue), paste("ME", rownames(hyper), sep="")),
@@ -386,7 +384,8 @@ moduleHypergeometricTest <- function(tissueA, tissueB){
   return (ret)
 }
 
-
+#' Compute gene overlap between genes from two tissues 
+#'@export 
 geneOverlapTest <- function(modules, tissueA="blood", tissueB="biopsy"){
   all.genes <- names(moduleColors$blood)
   
@@ -416,14 +415,14 @@ roiTest <- function(tissueA="blood", tissueB="biopsy"){
   MEs = computeEigengenes(c(tissueA,tissueB)) 
   
   moduleCor = cor(MEs[[tissueA]], MEs[[tissueB]], use = "p");
-  modulePvalue = corPvalueStudent(moduleCor, ncol(dat[[tissueA]]$exprs));
+  modulePvalue = WGCNA::corPvalueStudent(moduleCor, ncol(dat[[tissueA]]$exprs));
   
   # Define roi categories (from ROI.R) 
   roi.cat<-NULL
   for (tissue in c(tissueA, tissueB))
   {
     module.names <- names(bresat[[tissue]])
-    roi.cat[[tissue]]<- mclapply(module.names, function(module) {
+    roi.cat[[tissue]]<- parallel::mclapply(module.names, function(module) {
       define.roi.regions(bresat[[tissue]][[module]], bresat[[tissue]][[module]]$roi)
     })
     names(roi.cat[[tissue]])<-module.names
@@ -431,8 +430,8 @@ roiTest <- function(tissueA="blood", tissueB="biopsy"){
   
   # Fisher's exact teset between roi categories
   mod.roi <- NULL
-  mod.roi <- laply(roi.cat[[tissueA]], function(x){
-    laply(roi.cat[[tissueB]], function(y){
+  mod.roi <- plyr::laply(roi.cat[[tissueA]], function(x){
+    plyr::laply(roi.cat[[tissueB]], function(y){
   
       fisher.test(x, y, workspace = 2e+07, hybrid=TRUE)$p
     })
@@ -454,14 +453,16 @@ roiTest <- function(tissueA="blood", tissueB="biopsy"){
   return(mod.roi)
 }
 
+
+
 #' Compute correlation between patient rank in two tissues
+#' @param subtypes is a vector of subtypes
 #' @export 
 patientRankCorrelation <- function(tissueA="blood", tissueB="biopsy"){
-  
   MEs = computeEigengenes(c(tissueA,tissueB)) 
   
   moduleCor = cor(MEs[[tissueA]], MEs[[tissueB]], use = "p");
-  modulePvalue = corPvalueStudent(moduleCor, ncol(dat[[tissueA]]$exprs));
+  modulePvalue = WGCNA::corPvalueStudent(moduleCor, ncol(dat[[tissueA]]$exprs));
   
   rank <- NULL
   
@@ -470,9 +471,9 @@ patientRankCorrelation <- function(tissueA="blood", tissueB="biopsy"){
     rank[[tissue]] <- do.call(cbind, lapply(bresat[[tissue]], '[', "pat.order"))[,]
   }
   
-  rank.cor.p<-laply(rank[[tissueA]], function (x){
-    laply(rank[[tissueB]], function (y){
-      corPvalueStudent(cor(x,y, use="p"), ncol(dat[[tissueA]]$exprs))
+  rank.cor.p<-plyr::laply(rank[[tissueA]], function (x){
+    plyr::laply(rank[[tissueB]], function (y){
+      WGCNA::corPvalueStudent(cor(x,y, use="p"), ncol(dat[[tissueA]]$exprs))
     })
   })
   
@@ -487,6 +488,57 @@ patientRankCorrelation <- function(tissueA="blood", tissueB="biopsy"){
   rownames(rank.cor.p) <- NULL
   
   return(rank.cor.p)
+}
+
+#' Get available cohorts
+#' @export
+getCohorts <- function(){
+  tissue="blood"
+  pat.dat <- NULL  
+  pat.dat[[tissue]]$cohorts <- pat.cohorts(dat[[tissue]])
+  cohorts<- names(pat.dat[[tissue]]$cohorts)
+  return(cohorts)
+}
+
+#' Calculate patient rank sum scores for given tissues. 
+#' @export 
+patientRankSum <- function(tissueA="blood",tissueB="biopsy",cohort="all") { 
+    tissues = c(tissueA,tissueB)
+    
+    pat.dat <- NULL  
+    for(tissue in tissues){
+      pat.dat[[tissue]]$cohorts <- pat.cohorts(dat[[tissue]])
+    }
+    
+    cohorts<- names(pat.dat[[tissue]]$cohorts)
+    ranksum<-NULL
+
+    for(tissue in tissues){
+      ranksum$all[[tissue]]<-do.call(cbind, lapply(bresat[[tissue]], '[', "ranksum"))[,]
+      ranksum[[cohort]][[tissue]]<-lapply(ranksum$all[[tissue]], function(x) x[pat.dat[[tissue]]$cohorts[[cohort]]])
+    }
+    
+    ranksum.cor.p<-NULL
+    ranksum.cor.p[[cohort]]<-plyr::laply(ranksum[[cohort]][[tissueA]], function (x){
+      plyr::laply(ranksum[[cohort]][[tissueB]], function (y){
+        WGCNA::corPvalueStudent(cor(x,y, use="p"), length(pat.dat[[tissue]]$cohorts[[cohort]]))
+      })
+    })
+    rownames(ranksum.cor.p[[cohort]]) <- names(ranksum[[cohort]][[tissueA]])
+    colnames(ranksum.cor.p[[cohort]]) <- names(ranksum[[cohort]][[tissueB]])
+    
+    
+    cols = colnames(ranksum.cor.p[[cohort]]) 
+    ranksum.cor.p[[cohort]] = cbind(rownames(ranksum.cor.p[[cohort]]), ranksum.cor.p[[cohort]])
+    colnames(ranksum.cor.p[[cohort]]) = c("module", cols)  
+    rownames(ranksum.cor.p[[cohort]]) <- NULL
+    
+    #vals<-NULL
+    #vals[[subtype]] <- -log10(ranksum.cor.p[[subtype]])
+    #vals[[subtype]][vals[[subtype]] > 10] <- 10
+    
+    return(ranksum.cor.p[[cohort]])
+    
 }
 
 #' Compute all 4 different analyses for modules from two tissues. 
@@ -532,8 +584,8 @@ eigengeneClinicalRelation <- function(tissue){
   MEs = computeEigengenes(tissue) 
   
   ### Qualitative variables 
-  cl <- laply(dat[[tissue]]$clinical[,bc.qual.var], function(y) {
-    laply(MEs[[tissue]], function (x){
+  cl <- plyr::laply(dat[[tissue]]$clinical[,bc.qual.var], function(y) {
+    plyr::laply(MEs[[tissue]], function (x){
       anova(lm(x~y))$`Pr(>F)`[1]
     })
   })
@@ -544,12 +596,12 @@ eigengeneClinicalRelation <- function(tissue){
   moduleTraitCor<-NULL
   moduleTraitPvalue<-NULL
   moduleTraitCor[[tissue]]= cor(MEs[[tissue]], dat[[tissue]]$clinical[, bc.quant.var], use = "p");
-  moduleTraitPvalue[[tissue]]= corPvalueStudent(moduleTraitCor[[tissue]], nrow(dat[[tissue]]$clinical));
+  moduleTraitPvalue[[tissue]]= WGCNA::corPvalueStudent(moduleTraitCor[[tissue]], nrow(dat[[tissue]]$clinical));
   cl<-rbind(cl, t(moduleTraitPvalue[[tissue]]))
   
   
   if(tissue == "blood") { 
-    orig.dataset<- laply(MEs[[tissue]], function (x){
+    orig.dataset<- plyr::laply(MEs[[tissue]], function (x){
       anova(lm(x~dat[[tissue]]$clinical[,3]))$`Pr(>F)`[1]
     })
     
@@ -557,8 +609,8 @@ eigengeneClinicalRelation <- function(tissue){
   }
   
   if(tissue == "nblood"){
-    cl <-laply(dat[[tissue]]$clinical[ , n.qual.var], function(y) {
-      laply(MEs[[tissue]], function(x){
+    cl <-plyr::laply(dat[[tissue]]$clinical[ , n.qual.var], function(y) {
+      plyr::laply(MEs[[tissue]], function(x){
         anova(lm(x~y))$`Pr(>F)`[1]})
     })
     
@@ -579,7 +631,7 @@ eigengeneClinicalRelation <- function(tissue){
 computeROICategories <- function(tissue) {
     roi.cat<-NULL
     module.names <- names(bresat[[tissue]])
-    roi.cat[[tissue]]<- mclapply(module.names, function(module) {
+    roi.cat[[tissue]]<- parallel::mclapply(module.names, function(module) {
       define.roi.regions(bresat[[tissue]][[module]], bresat[[tissue]][[module]]$roi)
     })
     names(roi.cat[[tissue]])<-module.names
@@ -606,8 +658,8 @@ roiClinicalRelation <- function(tissue){
   
   cl.roi <- NULL
   # fisher's exact betgween roi and qualitative variables 
-  cl.roi<-laply(dat[[tissue]]$clinical[,bc.qual.var], function(y) {
-      laply(data.frame(roi.cat[[tissue]]), function (x) {
+  cl.roi<-plyr::laply(dat[[tissue]]$clinical[,bc.qual.var], function(y) {
+    plyr::laply(data.frame(roi.cat[[tissue]]), function (x) {
         #fisher.test(y,x, workspace=2e+8,hybrid=TRUE)$p
         chisq.test(table(y,x))$p.value
         }, .parallel=FALSE)
@@ -618,8 +670,8 @@ roiClinicalRelation <- function(tissue){
   
   roiTraitPvalue<-NULL
   
-  roiTraitPvalue[[tissue]]<- laply(dat[[tissue]]$clinical[,bc.quant.var], function(y) {
-    laply(MEs[[tissue]], function (x){
+  roiTraitPvalue[[tissue]]<- plyr::laply(dat[[tissue]]$clinical[,bc.quant.var], function(y) {
+    plyr::laply(MEs[[tissue]], function (x){
       anova(lm(x~y))$`Pr(>F)`[1]
     })
   })
@@ -632,7 +684,7 @@ roiClinicalRelation <- function(tissue){
   
   if(tissue == "blood") { 
     orig.dataset<-NULL
-    orig.dataset<- laply(roi.cat[[tissue]], function (x){
+    orig.dataset<- plyr::laply(roi.cat[[tissue]], function (x){
       fisher.test(x,dat[[tissue]]$clinical[,3])$p
     })
     
@@ -640,13 +692,12 @@ roiClinicalRelation <- function(tissue){
   }
   
   if(tissue == "nblood"){ 
-    cl.roi<-laply(dat[[tissue]]$clinical[,n.qual.var], function(y) {
-      laply(data.frame(roi.cat[[tissue]]), function(x){
+    cl.roi<-plyr::laply(dat[[tissue]]$clinical[,n.qual.var], function(y) {
+      plyr::laply(data.frame(roi.cat[[tissue]]), function(x){
         #fisher.test(y,x, workspace=2e+07, hybrid=TRUE)$p
         chisq.test(table(y,x))$p.value
         })
     })
-  
   
     rownames(cl.roi)<-names(dat[[tissue]]$clinical)[n.quant.var]
     colnames(cl.roi)<-names(roi.cat[[tissue]])
@@ -667,20 +718,14 @@ roiClinicalRelation <- function(tissue){
 #' @export
 getTOMGraphNodes <- function(tissue) {
 
-  edges = net[[tissue]]$edgeData
-  #edges = edges[edges$weight > 0.12, ]
+  edges = getTOMGraphEdges(tissue)
   g = igraph::graph_from_data_frame(edges)
   
-  #g <- igraph::simplify(g)
-  layout = igraph::layout_with_fr(g, weights=edges$weight)#, maxiter=1000)#, weights=edges$weight)
+  layout = igraph::layout_with_fr(g, niter=15)
   nodes <- net[[tissue]]$nodeData
   nodes = nodes[nodes$nodeName %in% igraph::V(g)$name, ]
   nodes = cbind(nodes, layout)
   colnames(nodes) <- c("id", "altId", "color", "x", "y")
-  # g.copy = igraph::delete.edges(g, which(igraph::E(g)$weight < 0.15))
-  # layout.copy = igraph::layout_with_fr(g.copy) 
-  # plot(g.copy,layout.copy)
-  #plot(nodes$x, nodes$y, vertex.colors=nodes$color, vertex.size=1)
   return(nodes)
 }
 
@@ -688,10 +733,10 @@ getTOMGraphNodes <- function(tissue) {
 #' @export
 getTOMGraphEdges <- function(tissue){
   edges = net[[tissue]]$edgeData
-  edges = mutate(edges, id=paste0(fromNode,"-",toNode))
+  edges = dplyr::mutate(edges, id=paste0(fromNode,"-",toNode))
   nodes <- net[[tissue]]$nodeData
-  edges = mutate(edges, module=nodes[nodes$nodeName == fromNode,]$color)
-  edges = edges[edges$weight > 0.15, ]
+  #edges = mutate(edges, module=nodes[nodes$nodeName == fromNode,]$color)
+  #edges = edges[edges$weight > 0.15, ]
   colnames(edges) <- c("source", "target", "weight", "direction", "sourceAltId", "targetAltId", "id")
   return(edges)
 }

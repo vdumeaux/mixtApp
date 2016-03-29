@@ -201,6 +201,18 @@ gene.overlap.test <- function(modules)
   return(ret)
 }
 
+hyper.fisher <- function(pop1, pop2, bckg)
+{
+      s <- length(intersect(pop1, bckg))
+      e <- length(intersect(pop2,bckg))
+      com <- length(intersect(pop1, pop2))
+      #hyper.test(s, length(all.genes) - s, e, com)
+      ## new computation of hypergeometri test so it matches fisher exact test
+      ## ref http://rpackages.ianhowson.com/bioc/GeneOverlap/man/GeneOverlap.html
+      ret<- sum(dhyper(com:e,s,length(bckg)-s, e))
+  return(ret)
+}
+
 
 create.modules.heatmap <- function(bs, exprs, clinical, re.order=TRUE, cl.height=8, bs.order.by, title=title) 
 {
@@ -702,9 +714,14 @@ plot.pat.bs <- function(bs, dat, pat.cohorts, cohort.name="all", patient.ids=NUL
   grid.lines(x = unit(c(last.ind/length(which(rownames(cl) %in% patients)),last.ind/length(which(rownames(cl) %in% patients))), "npc"),gp=gpar(col='yellow',lty = 1, lwd = 2))
   upViewport()
   
+  bc.var<- c("er","her2" ,"pam50.parker","hybrid.parker","cit", "claudin.low", 
+                  "lymph" ,
+                  "menopause","hrt","medication","hospital",
+                  "age","weight", "MKS", "LUMS", "HER2S")
+  
   ### Biopsy heatmap bottom left (with clinical)
   ddrs = heatmap.simple(biopsy.data[, colnames(biopsy.data) %in% patients],
-                        clinical = huc.color.clinical(mclinical)[rownames(mclinical) %in% patients,][,c(1,3:15,17, 21:25, 27, 29:33)], 
+                        clinical = huc.color.clinical(mclinical)[rownames(mclinical) %in% patients,][,bc.var], 
                         layout.mat = layout.m.2, widths = widths, heights = heights, col.clust = FALSE, 
                         row.clust = FALSE, title=paste(cohort.name, biopsy.mod, "biopsy ordered by", biopsy.mod, "biopsy"),
                         row.labels=rownames(biopsy.data),
@@ -781,18 +798,32 @@ plot.pat.bs <- function(bs, dat, pat.cohorts, cohort.name="all", patient.ids=NUL
   upViewport()
 
   ### Bnblood boxplot data
-  bnblood<-data.frame(bl.ranksum=c(bs$bnblood[[blood.mod]]$ranksum[rownames(dat$bnblood$clinical) %in% patients & dat$bnblood$clinical$cancer==TRUE],
-                                bs$bnblood[[blood.mod]]$ranksum[dat$bnblood$clinical$cancer==FALSE]),
+  bnblood<-data.frame(bnbl.ranksum=c(bs$bnblood[[blood.mod]]$ranksum[rownames(dat$bnblood$clinical) %in% patients & dat$bnblood$clinical$cancer==TRUE],
+                                     bs$bnblood[[blood.mod]]$ranksum[dat$bnblood$clinical$cancer==FALSE]),
+                      bl.ranksum=c(bs$blood[[blood.mod]]$ranksum[rownames(dat$blood$clinical) %in% patients],
+                                     rep(NA, length(bs$bnblood[[blood.mod]]$ranksum[dat$bnblood$clinical$cancer==FALSE]))),
                       t.ranksum=c(bs$biopsy[[biopsy.mod]]$ranksum[rownames(dat$biopsy$clinical) %in% patients],
                                   rep(NA, length(which(rownames(dat$bnblood$clinical) %in% patients & dat$bnblood$clinical$cancer==FALSE)))),
-                      cancer=c(rep(cohort.name, length(which(rownames(dat$bnblood$clinical) %in% patients & dat$bnblood$clinical$cancer==TRUE))), 
+                      subtype=c(rep(cohort.name, length(which(rownames(dat$bnblood$clinical) %in% patients & dat$bnblood$clinical$cancer==TRUE))), 
                                rep("normal", length(which(rownames(dat$bnblood$clinical) %in% patients & dat$bnblood$clinical$cancer==FALSE)))))
-  bnblood$roi.cat<-c(roi.cat[rownames(cl) %in% patients], rep(NA, length(which(as.character(bnblood$cancer)=="normal"))))
-  bnblood$cancer<-"control"
-  bnblood$cancer<-ifelse(bnblood$roi.cat==1 & !is.na(bnblood$roi.cat), "low", as.character(bnblood$cancer))
-  bnblood$cancer<-ifelse(bnblood$roi.cat==2 & !is.na(bnblood$roi.cat), "mid", as.character(bnblood$cancer))
-  bnblood$cancer<-ifelse(bnblood$roi.cat==3 & !is.na(bnblood$roi.cat), "high", as.character(bnblood$cancer))
-  bnblood$cancer<-factor(bnblood$cancer, levels=c("low", "mid", "high", "control"), ordered=T)
+  bnblood$roi.cat<-c(roi.cat[rownames(cl) %in% patients], rep(NA, length(which(as.character(bnblood$subtype)=="normal"))))
+  bnblood$cancer<-1
+  bnblood$cancer<-ifelse(bnblood$roi.cat==1 & !is.na(bnblood$roi.cat), 4, as.character(bnblood$cancer))
+  bnblood$cancer<-ifelse(bnblood$roi.cat==2 & !is.na(bnblood$roi.cat), 2, as.character(bnblood$cancer))
+  bnblood$cancer<-ifelse(bnblood$roi.cat==3 & !is.na(bnblood$roi.cat), 1, as.character(bnblood$cancer))
+  bnblood$cancer<-as.numeric(bnblood$cancer)
+  
+  bnblood$tumor.cat<-"control"
+  bnblood$tumor.cat<-ifelse(bnblood$roi.cat==1 & !is.na(bnblood$roi.cat), "low", as.character(bnblood$tumor.cat))
+  bnblood$tumor.cat<-ifelse(bnblood$roi.cat==2 & !is.na(bnblood$roi.cat), "mid", as.character(bnblood$tumor.cat))
+  bnblood$tumor.cat<-ifelse(bnblood$roi.cat==3 & !is.na(bnblood$roi.cat), "high", as.character(bnblood$tumor.cat))
+  bnblood$tumor.cat<-factor(bnblood$tumor.cat, levels=c("low", "mid", "high", "control"), ordered=T)
+  
+  sub.col <- c(normal="white", all="grey", erp="green", ern="firebrick2", her2p="hotpink2", her2n="#21B6A8",
+               erp.her2p="orange", ern.her2p="hotpink2", erp.her2n="blue", ern.her2n="firebrick2",
+              luma="blue4", erp.luma="blue4", lumb="deepskyblue", erp.lumb="deepskyblue", normL="green4", erp.normL="green4", basalL="firebrick2", her2E="hotpink2", erp.her2E="orange", erp.basalL="#7fffd4", 
+              cit.luma="blue4", cit.lumb="deepskyblue", cit.normL="green4", cit.mApo="hotpink2", cit.lumc="#7fffd4",  cit.basalL="firebrick2")
+  bnblood$sub.col<-sub.col[as.character(bnblood$subtype)]
   
   ### plot boxplot top right corner
   elem = 'boxplot'
@@ -802,13 +833,14 @@ plot.pat.bs <- function(bs, dat, pat.cohorts, cohort.name="all", patient.ids=NUL
                layout.pos.col=unique(idx[,2]))
   pushViewport(vp)
   
-  p<-ggplot(data = bnblood, aes(x=cancer, y=bl.ranksum, fill=cancer)) + 
-    geom_boxplot(outlier.shape ="+", outlier.size = 1)+ 
+  p<-ggplot(data = bnblood, aes(x=tumor.cat, y=bnbl.ranksum)) + 
+    geom_boxplot(aes(fill=sub.col, alpha=1/cancer))+
+    geom_boxplot(colour="black", outlier.shape ="+", outlier.size = 1, fill=NA)+
     geom_point(shape="+")+
-    scale_fill_grey(start=0.8, end=0.2)+
+    scale_fill_manual(values=levels(factor(bnblood$sub.col)))+
     labs(x="tumor module category",
          y="blood module ranksum", 
-         title=paste(cohort.name, " patients and controls\n(aov p=", as.character(signif(anova(lm(bnblood$bl.ranksum~bnblood$cancer))$`Pr(>F)`[1], digits=1)), ")", sep=""))+
+         title=paste(cohort.name, " patients and controls\n(aov p=", as.character(signif(anova(lm(bnblood$bnbl.ranksum~bnblood$cancer))$`Pr(>F)`[1], digits=1)), ")", sep=""))+
     theme(legend.position="none",
           panel.background = element_rect(fill = "transparent",colour = NA),
           axis.line   = element_line(colour="grey60"),
@@ -827,9 +859,11 @@ plot.pat.bs <- function(bs, dat, pat.cohorts, cohort.name="all", patient.ids=NUL
                layout.pos.col=unique(idx[,2]))
   pushViewport(vp1)
   
-  p1<-ggplot(bnblood[bnblood$cancer != "control",], aes(x=bl.ranksum,y=t.ranksum, color=cancer))+
-    geom_point(size=2)+
-    scale_colour_manual(values=c("#CCCCCC","#ABABAB","#818181"))+
+  p1<-ggplot(bnblood[bnblood$tumor.cat != "control",], aes(x=bl.ranksum,y=t.ranksum))+
+    geom_smooth(method="lm", colour="white", alpha=0.2, size=0.4)+
+    geom_point(aes(colour=sub.col, alpha=1/cancer), size=2)+
+    geom_point(shape = 1,size = 2,colour = "black")+
+    scale_colour_manual(values=levels(factor(bnblood$sub.col)))+
     labs(y="Tumor module ranksum",
          x="Blood module ranksum",
          title=paste(cohort.name, " patients", " (cor=",as.character(signif(cor.test(bnblood[bnblood$cancer != "control",]$bl.ranksum, bnblood[bnblood$cancer != "control",]$t.ranksum)$estimate, digits=1)), ", p=",
@@ -843,6 +877,5 @@ plot.pat.bs <- function(bs, dat, pat.cohorts, cohort.name="all", patient.ids=NUL
   print(p1, vp=vp1)
   upViewport()
   invisible(NULL)
-  
   
   }

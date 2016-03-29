@@ -1,75 +1,3 @@
-### function to run limma for subtypes and create heatmap
-
-heatmap.limma<-function(dat, n=n, subtypes=c("er", "her2","LumA","LumB", "Normal", "Her2","Basal", 
-                                             "luma.erp", "lumb.erp", "basal.erp", "normal.erp", "her2pam50p.erp", "her2clinicaln.ern", "her2clinicalp.ern"),
-                        scheme=c("pam50.genefu","pam50.inhouse", "cit", "hybrid.genefu"), output.name=NULL) {
-  
-  if (length(scheme)>1) stop("you must specify only one genomic subtyping scheme")
-  if(any(table(dat$clinical[,match(scheme, colnames(dat$clinical))])<5)){
-    subtype.excluded<-names(table(dat$clinical[,match(scheme, colnames(dat$clinical))]))[table(dat$clinical[,match(scheme, colnames(dat$clinical))])<5]
-    print(paste(subtype.excluded, "includes less than 5 patients", sep=" "))
-    subtypes<-subtypes[!table(dat$clinical[,match(scheme, colnames(dat$clinical))])<5]
-  } 
-  
-  gene.table<-vector("list", length(subtypes)+1)
-  names(gene.table)<-c(subtypes,"union")
-  pop<-vector("list", length(subtypes))
-  
-  if (!is.null(output.name)) {
-    pdf(file.path("output", paste(output.name, "pdf", sep=".")))}
-  
-  for (s in 1:length(subtypes)){
-    if ("er" %in% subtypes[s]){
-      pop[[s]]$pop1<-colnames(dat$exprs)[dat$clinical[,match("er", colnames(dat$clinical))]==T]
-      pop[[s]]$pop2<-colnames(dat$exprs)[dat$clinical[,match("er", colnames(dat$clinical))]==F]}
-    else if ("her2" %in% subtypes[s]){
-      pop[[s]]$pop1<-colnames(dat$exprs)[dat$clinical[,match("her2", colnames(dat$clinical))]==T]
-      pop[[s]]$pop2<-colnames(dat$exprs)[dat$clinical[,match("her2", colnames(dat$clinical))]==F]}
-    else {
-      pop[[s]]$pop1<-colnames(dat$exprs)[dat$clinical[,match(scheme, colnames(dat$clinical))]==subtypes[s]]
-      pop[[s]]$pop2<-colnames(dat$exprs)[!dat$clinical[,match(scheme, colnames(dat$clinical))]==subtypes[s]]}
-    
-    gene.table[[s]]<-topTable(limma.simple(dat=dat, pop1=pop[[s]]$pop1, pop2=pop[[s]]$pop2), n=nrow(dat$exprs))
-    gene.table[[s]]<-gene.table[[s]][,colnames(gene.table[[s]]) %in% c("row.idx","gene.name", "logFC", "P.Value", "adj.P.Val")]
-    gene.table[[s]]$rank<-1:nrow(dat$exprs)
-    gene.table[[(length(subtypes))+1]]<-unique(c(gene.table[[(length(subtypes))+1]],gene.table[[s]]$gene.name[1:n]))
-    
-    if (!is.null(output.name)){
-      genes<-gene.table[[s]]$gene.name[1:n]
-      exprs<-dat$exprs[gene.table[[s]]$row.idx[1:n],]
-      bresat <- sig.ranksum(exprs, ns=1:nrow(exprs), full.return=TRUE)
-      cc.heatmap.clinical <- huc.color.clinical(clinical=dat$clinical)
-      ## order expression matrix and clinical info
-      exprs <- exprs[bresat$gene.order, bresat$pat.order, drop=FALSE]
-      clinical <- cc.heatmap.clinical[bresat$pat.order, ]
-      plot.new()
-      heatmap.simple(exprs,
-                     row.labels=rownames(exprs),
-                     row.clust=FALSE,
-                     col.clust=FALSE,
-                     title=paste(print(subtypes[s]), "markers in blood", sep=" "),
-                     clinical=clinical)
-    }  
-  }
-  if (!is.null(output.name)){
-    exprs<-dat$exprs[rownames(dat$exprs) %in% gene.table$union,]
-    bresat <- sig.ranksum(exprs, ns=1:nrow(exprs), full.return=TRUE)
-    cc.heatmap.clinical <- huc.color.clinical(clinical=idc$clinical)
-    ## order expression matrix and clinical info
-    exprs<- exprs[bresat$gene.order, bresat$pat.order, drop=FALSE]
-    clinical <- cc.heatmap.clinical[bresat$pat.order, ]
-    grid.newpage()
-    heatmap.simple(exprs,
-                   row.labels=rownames(exprs),
-                   row.clust=FALSE,
-                   col.clust=FALSE,
-                   title="union all markers in blood",
-                   clinical=clinical)}
-  
-  return(gene.table)
-}
-
-
 
 ### function to compute go enrichment analyses
 
@@ -165,7 +93,7 @@ load.MSigDB.I <- function(file=NULL) {
 
 load.MSigDB.H <- function(file=NULL) {
   if (is.null(file)) {
-    file = "../../data/h.all.v5.0.symbols.gmt"
+    file = "../../data/h.all.v5.1.symbols.gmt"
   }
   
   inputFile <- file
@@ -192,7 +120,7 @@ load.MSigDB.H <- function(file=NULL) {
 
 load.MSigDB.C2 <- function(file=NULL) {
   if (is.null(file)) {
-    file = "../../data/c2.all.v5.0.symbols.gmt"
+    file = "../../data/c2.all.v5.1.symbols.gmt"
   }
   inputFile <- file
   con  <- file(inputFile, open = "r")
@@ -218,7 +146,7 @@ load.MSigDB.C2 <- function(file=NULL) {
 
 load.MSigDB.C2.cp <- function(file=NULL) {
   if (is.null(file)) {
-    file = "../../data/c2.cp.v5.0.symbols.gmt"
+    file = "../../data/c2.cp.v5.1.symbols.gmt"
   }
   inputFile <- file
   con  <- file(inputFile, open = "r")
@@ -244,7 +172,7 @@ load.MSigDB.C2.cp <- function(file=NULL) {
 
 load.MSigDB.C2.cgp <- function(file=NULL) {
   if (is.null(file)) {
-    file = "../../data/c2.cgp.v5.0.symbols.gmt"
+    file = "../../data/c2.cgp.v5.1.symbols.gmt"
   }
   inputFile <- file
   con  <- file(inputFile, open = "r")
@@ -270,7 +198,7 @@ load.MSigDB.C2.cgp <- function(file=NULL) {
 
 load.MSigDB.C3 <- function(file=NULL) {
   if (is.null(file)) {
-    file = "../../data/c3.all.v5.0.symbols.gmt"
+    file = "../../data/c3.all.v5.1.symbols.gmt"
   }
   inputFile <- file
   con  <- file(inputFile, open = "r")
@@ -296,7 +224,7 @@ load.MSigDB.C3 <- function(file=NULL) {
 
 load.MSigDB.C5 <- function(file=NULL) {
   if (is.null(file)) {
-    file = "../../data/c5.all.v5.0.symbols.gmt"
+    file = "../../data/c5.all.v5.1.symbols.gmt"
   }
   
   inputFile <- file
@@ -323,7 +251,7 @@ load.MSigDB.C5 <- function(file=NULL) {
 
 load.MSigDB.C6 <- function(file=NULL) {
   if (is.null(file)) {
-    file = "../../data/c6.all.v5.0.symbols.gmt"
+    file = "../../data/c6.all.v5.1.symbols.gmt"
   }
   
   inputFile <- file
@@ -350,7 +278,7 @@ load.MSigDB.C6 <- function(file=NULL) {
 
 load.MSigDB.C7 <- function(file=NULL) {
   if (is.null(file)) {
-    file = "../../data/c7.all.v5.0.symbols.gmt"
+    file = "../../data/c7.all.v5.1.symbols.gmt"
   }
   
   inputFile <- file

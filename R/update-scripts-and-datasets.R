@@ -1,11 +1,11 @@
 update_scripts_and_datasets <- function() {
-  datasets = c("merged_bresat.RData", "merged_moduleColors.RData", "topGO_merged_mod.RData", "msigdb.RData", "combat_data.RData")
-  scripts = c("bresat.R", "common.R", "huc.R", "modules.R", "pathway_analyses.R")
+  datasets = c("merged_bresat.RData", "merged_moduleColors.RData", "topGO_merged_mod.RData", "msigdb.RData", "combat_data.RData", "merged_TOM.RData")
+  scripts = c("bresat.R", "common.R", "huc.R", "modules.R", "pathway_analyses.R", "plots.R")
   
-  datadir = "/home/mixt/data/mixt/"
-  scriptdir = "/home/mixt/src/"
+  datadir = "/home/bjorn/mixt/data/mixt/"
+  scriptdir = "/home/bjorn/mixt/src/"
   
-  setwd("/home/rstudio/mixt/")
+  setwd("/home/bjorn/mixt-r-package/")
   
   for (script in scripts) {
     filename = paste0("R/", script)
@@ -26,7 +26,7 @@ update_scripts_and_datasets <- function() {
 }
 
 saveTOMgraph <- function(){
-  datadir = "/home/mixt/data/mixt/"
+  datadir = "/home/bjorn/mixt/data/mixt/"
   load(paste0(datadir,"merged_TOM.RData"))
   
   tom<-NULL
@@ -74,7 +74,7 @@ initparallel <- function(){
 
 initDev <- function(){ 
   datasets = c("merged_bresat.RData", "merged_moduleColors.RData", "topGO_merged_mod.RData", "msigdb.RData", "combat_data.RData")
-  scripts = c("bresat.R", "common.R", "huc.R", "heatmap.R" , "modules.R", "pathway_analyses.R")
+  scripts = c("bresat.R", "common.R", "huc.R", "heatmap.R" , "modules.R", "pathway_analyses.R", "plots.R")
   datadir = "/home/mixt/data/mixt/"
   scriptdir = "/home/mixt/src/"
   
