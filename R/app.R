@@ -152,10 +152,16 @@ getGeneList <- function(tissue,module){
 #' @param genesets is a vector of genesets we want to retrieve scores from. unspecified will return all gene sets
 #' @export  
 getEnrichmentScores <- function(tissue, module,genesets=c()) {
+  res = NULL
   if(length(genesets) < 1 ){ 
-    return (subset(msigdb.enrichment[[tissue]][[module]]$results, updn.pval != 1))
+    res = subset(msigdb.enrichment[[tissue]][[module]]$results, updn.pval != 1)
+  } else { 
+    res = subset(msigdb.enrichment[[tissue]][[module]]$results[genesets,], updn.pval != 1)
   }
-  return (subset(msigdb.enrichment[[tissue]][[module]]$results[genesets,], updn.pval != 1))
+  # force ordering on p-val
+  res$updn.pval = as.numeric(as.character(res$updn.pval))
+  res = res[with(res, order(updn.pval)), ]
+  return(res)
 }
 
 #' Get gene set names available to the MIxT app
