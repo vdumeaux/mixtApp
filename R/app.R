@@ -554,7 +554,9 @@ comparisonAnalyses <- function(tissueA, tissueB, moduleA, moduleB){
   rank = patientRankCorrelation(tissueA,tissueB)
   overlap = moduleHypergeometricTest(tissueA, tissueB) 
   roi = roiTest(tissueA, tissueB) 
+  ranksum = patientRankSum(tissueA,tissueB,"all")
   
+  analyses$ranksum = as.numeric(ranksum[ranksum[,1] == moduleA, colnames(ranksum) == moduleB])
   analyses$eigen =  as.numeric(eigen[eigen[,1] == moduleA , colnames(eigen) == moduleB])
   analyses$rank =  as.numeric(rank[rank[,1] == moduleA , colnames(rank) == moduleB])
   analyses$overlap =  as.numeric(overlap[overlap[,1] == moduleA , colnames(overlap) == moduleB])

@@ -1,5 +1,5 @@
 update_scripts_and_datasets <- function() {
-  datasets = c("merged_bresat.RData", "merged_moduleColors.RData", "topGO_merged_mod.RData", "msigdb.RData", "combat_data.RData", "merged_TOM.RData")
+  datasets = c("merged_bresat.RData", "merged_moduleColors.RData", "topGO_merged_mod.RData", "go_common.RData", "msigdb.RData", "combat_data.RData", "merged_TOM.RData")
   scripts = c("bresat.R", "common.R", "huc.R", "modules.R", "pathway_analyses.R", "plots.R")
   
   datadir = "/home/bjorn/mixt/data/mixt/"
@@ -51,13 +51,14 @@ saveTOMgraph <- function(){
 
 saveGOTerms <- function(){
   load("data/topGO_merged_mod.RData") 
+  load("data/go_common.RData")
   goterms <- all.single
   for (tissue in names(goterms)){
     for(module in names(goterms[[tissue]])){
       goterms[[tissue]][[module]]$GO.data <- NULL
       goterms[[tissue]][[module]]$resultFisher <- NULL
       goterms[[tissue]][[module]]$common <- NULL
-      #goterms[[tissue]][[module]]$common <- go.common[[tissue]][[module]]
+      goterms[[tissue]][[module]]$common <- go.common[[tissue]][[module]]
     }
   }
   save(goterms, file="data/goterms.RData") 
@@ -75,8 +76,8 @@ initparallel <- function(){
 initDev <- function(){ 
   datasets = c("merged_bresat.RData", "merged_moduleColors.RData", "topGO_merged_mod.RData", "msigdb.RData", "combat_data.RData")
   scripts = c("bresat.R", "common.R", "huc.R", "heatmap.R" , "modules.R", "pathway_analyses.R", "plots.R")
-  datadir = "/home/mixt/data/mixt/"
-  scriptdir = "/home/mixt/src/"
+  datadir = "/home/bjorn/mixt/data/mixt/"
+  scriptdir = "/home/bjorn/mixt/src/"
   
   setwd(datadir)
   for(dataset in datasets){
