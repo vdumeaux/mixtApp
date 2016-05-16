@@ -235,12 +235,14 @@ cohort_scatterplot<-function (x.tissue, x.module, y.tissue, y.module, cohort.nam
   ### data for scatterplot
   plot.data<-data.frame(x.ranksum=bresat[[x.tissue]][[x.module]]$ranksum[rownames(dat$blood$clinical) %in% patients],
                         y.ranksum=bresat[[y.tissue]][[y.module]]$ranksum[rownames(dat$blood$clinical) %in% patients],
-                        subtype=rep(cohort.name, length(which(rownames(dat$blood$clinical) %in% patients))))
+                        cohort=rep(cohort.name, length(which(rownames(dat$blood$clinical) %in% patients))),
+                        subtype=huc.color.clinical(dat$blood$clinical)$hybrid.parker[rownames(dat$blood$clinical) %in% patients])
   sub.col <- c(normal="white", all="grey", erp="green", ern="firebrick2", her2p="hotpink2", her2n="#21B6A8",
                erp.her2p="orange", ern.her2p="hotpink2", erp.her2n="blue", ern.her2n="firebrick2",
                luma="blue4", erp.luma="blue4", lumb="deepskyblue", erp.lumb="deepskyblue", normL="green4", erp.normL="green4", basalL="firebrick2", her2E="hotpink2", erp.her2E="orange", erp.basalL="#7fffd4", 
                cit.luma="blue4", cit.lumb="deepskyblue", cit.normL="green4", cit.mApo="hotpink2", cit.lumc="#7fffd4",  cit.basalL="firebrick2")
-  plot.data$sub.col<-sub.col[as.character(plot.data$subtype)]
+  plot.data$sub.col<-sub.col[as.character(plot.data$cohort)]
+  plot.data$sub.col<-ifelse(plot.data$sub.col=="grey", as.character(plot.data$subtype), plot.data$sub.col)
   
   p1<-ggplot(plot.data, aes(x=x.ranksum,y=y.ranksum))+
     geom_smooth(method="lm", colour="white", alpha=0.2, size=0.4)+
