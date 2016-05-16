@@ -62,7 +62,7 @@ clinical_variables <- function(tissue){
   
   if(tissue == "biopsy" || tissue=="blood"){
     bc.var<- c("er","her2" ,"pam50.parker","hybrid.parker","cit", "claudin.low", 
-               "lymph" ,
+               "lymph" , "t.size",
                "menopause","hrt","medication","hospital",
                "age","weight", "MKS", "LUMS", "HER2S")
     return (bc.var)
@@ -131,7 +131,7 @@ cohort_heatmap <- function(tissue, module, cohort.name="all", patient.ids=NULL, 
     
     bc.var<- c("er","her2" ,"pam50.parker","hybrid.parker","cit", "claudin.low", 
                "lymph" , "t.size",
-               "menopause","hrt","medication","hospital",
+               "menopause","hrt","medication",
                "age","weight", "MKS", "LUMS", "HER2S")
     
     ## plot blood heatmap top left (no clinical)
@@ -219,7 +219,47 @@ cohort_heatmap <- function(tissue, module, cohort.name="all", patient.ids=NULL, 
 }
 
 
+cohort_scatterplot<-function (x.tissue, x.module, y.tissue, y.module, cohort.name="all", patient.ids=NULL){
+  require(ggplot2)
+  
+  ## define patients to include
+  if (is.null(patient.ids))
+  {
+    patients<-pat.cohorts(dat$blood)[[cohort.name]]
+  }
+  else
+  {
+    patients<-patient.ids
+  }
 
+  ### data for scatterplot
+  plot.data<-data.frame(x.ranksum=bresat[[x.tissue]][[x.module]]$ranksum[rownames(dat$blood$clinical) %in% patients],
+                        y.ranksum=bresat[[y.tissue]][[y.module]]$ranksum[rownames(dat$blood$clinical) %in% patients],
+                        subtype=rep(cohort.name, length(which(rownames(dat$blood$clinical) %in% patients))))
+  sub.col <- c(normal="white", all="grey", erp="green", ern="firebrick2", her2p="hotpink2", her2n="#21B6A8",
+               erp.her2p="orange", ern.her2p="hotpink2", erp.her2n="blue", ern.her2n="firebrick2",
+               luma="blue4", erp.luma="blue4", lumb="deepskyblue", erp.lumb="deepskyblue", normL="green4", erp.normL="green4", basalL="firebrick2", her2E="hotpink2", erp.her2E="orange", erp.basalL="#7fffd4", 
+               cit.luma="blue4", cit.lumb="deepskyblue", cit.normL="green4", cit.mApo="hotpink2", cit.lumc="#7fffd4",  cit.basalL="firebrick2")
+  plot.data$sub.col<-sub.col[as.character(plot.data$subtype)]
+  
+  p1<-ggplot(plot.data, aes(x=x.ranksum,y=y.ranksum))+
+    geom_smooth(method="lm", colour="white", alpha=0.2, size=0.4)+
+    geom_point(aes(colour=sub.col), size=2)+
+    scale_colour_manual(values=levels(factor(plot.data$sub.col)))+
+    labs(y=paste(y.module, y.tissue, "module ranksum"),
+         x=paste(x.module, x.tissue, "module ranksum"),
+         title=paste(cohort.name, " patients", " (cor=",as.character(signif(cor.test(plot.data$x.ranksum, plot.data$y.ranksum)$estimate, digits=1)), ", p=",
+                     as.character(signif(cor.test(plot.data$x.ranksum, plot.data$y.ranksum)$p.value, digits=1)), ")",sep="")) +
+    theme(legend.position="none",
+          panel.background = element_rect(fill = "transparent",colour = NA),
+          axis.line.x   = element_line(colour="grey60"),
+          axis.line.y   = element_line(colour="grey60"),
+          axis.title = element_text(size=10),
+          plot.title = element_text(hjust=0, vjust=1, size=12))
+  
+  print(p1)
+}  
+  
 
 #' Returns a list of modules found for the given tissue
 #' @param tissue tissue we want to retrieve modules for 
