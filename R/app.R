@@ -53,9 +53,101 @@ heatmap <- function(tissue, module, re.order=FALSE, orderByModule=NULL, orderByT
                            clinical = clinical,
                            re.order = re.order,
                            bs.order.by = bresat[[orderByTissue]][[orderByModule]],
+                           
                            title = title)
     #dev.off() 
 }
+
+clinical_variables <- function(tissue){
+  
+  if(tissue == "biopsy" || tissue=="blood"){
+    bc.var<- c("er","her2" ,"pam50.parker","hybrid.parker","cit", "claudin.low", 
+               "lymph" ,
+               "menopause","hrt","medication","hospital",
+               "age","weight", "MKS", "LUMS", "HER2S")
+    return (bc.var)
+  }
+  
+}
+
+cohort_heatmap <- function(tissue="blood", module, cohort.name="all"){
+  
+  #heatmap variables
+  cl.height=8
+  col.clust = FALSE
+  layout.m = matrix(c("key","title","","",""  ,  "","","","",""  ,"ranksum.text","ranksum.line","","",""  ,  "row.labels.rjust","heatmap","","",""  ,  "","col.labels.rjust","","",""  ,  "","","","",""  ,  "","","","",""  ,  "clinical.labels.rjust","clinical","","",""  ,  "","","","",""),nrow=9,ncol=5,byrow=TRUE)
+  layout.m.sum = matrix(c("","","","",""  ,  "","","","",""  ,"","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "row.labels.rjust","heatmap","","",""  ,  "","","","",""  ,   "","","","",""  ,  "","","","",""),nrow=9,ncol=5,byrow=TRUE)
+  #layout.m.dist.cdf = matrix(c("","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","col.labels.ljust","","",""  ,  "row.labels.rjust","heatmap","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""),nrow=11,ncol=5,byrow=TRUE)
+  layout.m.updn = matrix(c("","","","",""  ,  "","","","",""  ,"","","","",""  ,  "","","","heatmap",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""),nrow=9,ncol=5,byrow=TRUE)
+  widths = c(2,5,0.25,0.25,0.25)
+  heights = c(1,0.25,0.5,3,0.25,0.25,0.25,cl.height,0.25)
+  
+  scale = "none"
+  min.val=-5
+  max.val=5
+  key.min=-5
+  key.max=5
+  
+  
+  bs = NULL
+  bs[[tissue]][[module]] = bresat[[tissue]][[module]]
+  
+  
+  ordering = bs[[tissue]][[module]]$pat.order
+  bs[[tissue]][[module]]$ranksum = bresat[[tissue]][[module]]$ranksum[ordering]
+  bs[[tissue]][[module]]$rank = bresat[[tissue]][[module]]$rank[ordering]
+  bs[[tissue]][[module]]$roi = bresat[[tissue]][[module]]$roi[ordering]
+  bs[[tissue]][[module]]$roi.cat = bresat[[tissue]][[module]]$roi.cat[ordering]
+  bs[[tissue]][[module]]$dat = bresat[[tissue]][[module]]$dat#[, ordering]
+  bs[[tissue]][[module]]$pat.order = bresat[[tissue]][[module]]$pat.order
+  
+  ranks = bs[[tissue]][[module]]$pat.order
+  names(ranks) = 1:length(bs[[tissue]][[module]]$pat.order)
+  ranks = as.integer(names(sort(ranks)))
+  ranksum = t(as.matrix(ranks))[,bs[[tissue]][[module]]$pat.order,drop=FALSE]
+  rownames(ranksum) = "ranks"
+  
+  # Extract data for our patients
+  patients<-pat.cohorts(dat$blood)[[cohort.name]]
+  
+  # patientIndices is used to extract data for our patients. it assumes that
+  # the data in the bs$tissue$module list is ordered the same for all entries.
+  patientIndicies = names(bresat[[tissue]][[module]]$ranksum) %in% patients
+  
+  bs[[tissue]][[module]]$ranksum = bresat[[tissue]][[module]]$ranksum[patientIndicies]
+  bs[[tissue]][[module]]$rank = bresat[[tissue]][[module]]$rank[patientIndicies]
+  bs[[tissue]][[module]]$pat.order = bresat[[tissue]][[module]]$pat.order[patientIndicies]
+  bs[[tissue]][[module]]$roi = bresat[[tissue]][[module]]$roi[patientIndicies]
+  bs[[tissue]][[module]]$roi.cat = bresat[[tissue]][[module]]$roi.cat[patientIndicies]
+  bs[[tissue]][[module]]$dat = bresat[[tissue]][[module]]$dat[, colnames(bresat[[tissue]][[module]]$dat) %in% patients]
+  
+  # fetch the ranksum for our patients 
+  ranksum = ranksum[patientIndicies]
+  ranksum = t(as.matrix(ranksum))
+  rownames(ranksum) = "ranks"
+  
+  # Get clinical information for our patients 
+  clinical <- dat[[tissue]]$clinical[ordering, ]
+  clinical = huc.color.clinical(clinical)[,clinical_variables(tissue)]
+  #clinical <- clinical[ordering, ]
+  clinical = clinical[rownames(clinical) %in% patients,]
+
+  exprs = dat[[tissue]]$exprs
+  data = exprs[bs[[tissue]][[module]]$gene.order, bs[[tissue]][[module]]$pat.order, drop=FALSE]
+  
+  
+  plot.new()
+  ddrs = heatmap.simple(data,layout.mat = layout.m, widths = widths, heights = heights, col.clust = FALSE, 
+                        clinical = clinical, row.clust = FALSE, title=title,row.labels=rownames(data), 
+                        col.labels=rep("", ncol(data)))
+  
+
+  # ranksum 
+  heatmap.simple(-ranksum, layout.mat = layout.m.sum, widths = widths, heights = heights, col.clust = FALSE, row.clust = FALSE)
+
+}
+
+
 
 
 #' Returns a list of modules found for the given tissue
@@ -669,7 +761,7 @@ roiClinicalRelation <- function(tissue){
   cl.roi<-plyr::laply(dat[[tissue]]$clinical[,bc.qual.var], function(y) {
     plyr::laply(data.frame(roi.cat[[tissue]]), function (x) {
         #fisher.test(y,x, workspace=2e+8,hybrid=TRUE)$p
-        chisq.test(table(y,x))$p.value
+        suppressWarnings(chisq.test(table(y,x))$p.value)
         }, .parallel=FALSE)
     }, .parallel=FALSE)
     
@@ -693,7 +785,9 @@ roiClinicalRelation <- function(tissue){
   if(tissue == "blood") { 
     orig.dataset<-NULL
     orig.dataset<- plyr::laply(roi.cat[[tissue]], function (x){
-      fisher.test(x,dat[[tissue]]$clinical[,3])$p
+      #fisher.test(x,dat[[tissue]]$clinical[,3])$p
+      suppressWarnings(chisq.test( table(x, dat[[tissue]]$clinical[,3]))$p.value)
+      #chisq.test(table(y,x))$p.value
     })
     
     cl.roi<-rbind(cl.roi, orig.dataset)
@@ -729,11 +823,27 @@ getTOMGraphNodes <- function(tissue) {
   edges = getTOMGraphEdges(tissue)
   g = igraph::graph_from_data_frame(edges)
   
-  layout = igraph::layout_with_fr(g, niter=15)
-  nodes <- net[[tissue]]$nodeData
-  nodes = nodes[nodes$nodeName %in% igraph::V(g)$name, ]
+  # edgeColors = apply(edges, 1, getEdgeColor, tissue=tissue )
+  # edges$color = edgeColors
+  
+  nodes = igraph::V(g)
+  nodes = as.matrix(nodes)
+  nodes = cbind(rownames(nodes), nodes)
+  nodes = as.data.frame(apply(nodes, 1, getNodeColor, tissue=tissue))
+  nodes = cbind(rownames(nodes), nodes)
+  colnames(nodes) = c("gene", "module")
+  rownames(nodes) = NULL
+  
+  layout = igraph::layout_with_kk(g, weights=edges$weights*100, epsilon=0, maxiter=200*igraph::vcount(g))
+  # plot(layout[,1], layout[,2],col=as.character(nodes$module))
+  
+  igraph::V(g)$color = as.character(nodes$module)
+  #igraph::plot.igraph(g, layout=layout_with_kk, #vertex.color=rev(as.character(nodes$module)),
+  #                    vertex.label=NA, vertex.size=2, edge.width=1, edge.arrow.size=0, edge.color=edges$color)
+ 
   nodes = cbind(nodes, layout)
-  colnames(nodes) <- c("id", "altId", "color", "x", "y")
+  
+  colnames(nodes) <- c("id","color", "x", "y")
   return(nodes)
 }
 
@@ -744,9 +854,21 @@ getTOMGraphEdges <- function(tissue){
   edges = dplyr::mutate(edges, id=paste0(fromNode,"-",toNode))
   nodes <- net[[tissue]]$nodeData
   #edges = mutate(edges, module=nodes[nodes$nodeName == fromNode,]$color)
-  #edges = edges[edges$weight > 0.15, ]
+  #edges = edges[edges$weight > 0.1, ]
   colnames(edges) <- c("source", "target", "weight", "direction", "sourceAltId", "targetAltId", "id")
   return(edges)
 }
 
+getEdgeColor <- function(edge,tissue){
+  color = as.character(moduleColors[[tissue]][[edge[1]]])
+  color2 = as.character(moduleColors[[tissue]][[edge[2]]])
+  return (color)
+}
 
+getNodeColor <- function(node, tissue){
+  color = as.character(moduleColors[[tissue]][[node[1]]])
+}
+
+edgeColors <- function(a){
+  return(a)
+}
