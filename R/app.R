@@ -262,6 +262,72 @@ cohort_scatterplot<-function (x.tissue, x.module, y.tissue, y.module, cohort.nam
   print(p1)
 }  
   
+cohort_boxplot<-function (blood.module, orderByTissue, orderByModule, cohort.name="all", patient.ids=NULL){
+  require(ggplot2)
+  
+  
+  if(is.null(orderByModule)){
+    orderByModule = module
+  }
+  if(is.null(orderByTissue)){
+    orderByTissue = tissue
+  }
+  roi.cat<-bresat[[orderByTissue]][[orderByModule]]$roi.cat
+  
+  ## define patients to include
+  if (is.null(patient.ids))
+  {
+    patients<-pat.cohorts(dat$blood)[[cohort.name]]
+  }
+  else
+  {
+    patients<-patient.ids
+  }
+  
+  ### data for scatterplot
+  plot.data<-data.frame(bnbl.ranksum=c(bresat$bnblood[[blood.module]]$ranksum[rownames(dat$bnblood$clinical) %in% patients & dat$bnblood$clinical$cancer==TRUE],
+                                                 bresat$bnblood[[blood.module]]$ranksum[dat$bnblood$clinical$cancer==FALSE]),
+                        cohort=c(rep(cohort.name, length(which(rownames(dat$bnblood$clinical) %in% patients & dat$bnblood$clinical$cancer==TRUE))), 
+                                            rep("normal", length(which(dat$bnblood$clinical$cancer==FALSE)))),
+                        roi.cat=c(roi.cat[rownames(dat$blood$clinical) %in% patients], rep(NA, length(which(dat$bnblood$clinical$cancer==FALSE)))))
+
+  plot.data$cancer<-1
+  plot.data$cancer<-ifelse( plot.data$roi.cat==1 & !is.na(plot.data$roi.cat), 4, as.character(plot.data$cancer))
+  plot.data$cancer<-ifelse(plot.data$roi.cat==2 & !is.na(plot.data$roi.cat), 2, as.character(plot.data$cancer))
+  plot.data$cancer<-ifelse(plot.data$roi.cat==3 & !is.na(plot.data$roi.cat), 1, as.character(plot.data$cancer))
+  plot.data$cancer<-as.numeric(plot.data$cancer)
+
+  plot.data$tumor.cat<-"control"
+  plot.data$tumor.cat<-ifelse(plot.data$roi.cat==1 & !is.na(plot.data$roi.cat), "low", as.character(plot.data$tumor.cat))
+  plot.data$tumor.cat<-ifelse(plot.data$roi.cat==2 & !is.na(plot.data$roi.cat), "mid", as.character(plot.data$tumor.cat))
+  plot.data$tumor.cat<-ifelse(plot.data$roi.cat==3 & !is.na(plot.data$roi.cat), "high", as.character(plot.data$tumor.cat))
+  plot.data$tumor.cat<-factor(plot.data$tumor.cat, levels=c("low", "mid", "high", "control"))
+  plot.data$tumor.cat.ordered<-factor(plot.data$tumor.cat, levels=c("low", "mid", "high", "control"), ordered=T)
+
+  sub.col <- c(normal="white", all="grey", erp="green", ern="firebrick2", her2p="hotpink2", her2n="#21B6A8",
+               erp.her2p="orange", ern.her2p="hotpink2", erp.her2n="blue", ern.her2n="firebrick2",
+               luma="blue4", erp.luma="blue4", lumb="deepskyblue", erp.lumb="deepskyblue", normL="green4", erp.normL="green4", basalL="firebrick2", her2E="hotpink2", erp.her2E="orange", erp.basalL="#7fffd4", 
+               cit.luma="blue4", cit.lumb="deepskyblue", cit.normL="green4", cit.mApo="hotpink2", cit.lumc="#7fffd4",  cit.basalL="firebrick2")
+  plot.data$sub.col<-sub.col[as.character(plot.data$cohort)]
+  
+  p<-ggplot(data = plot.data, aes(x=tumor.cat.ordered, y=bnbl.ranksum)) + 
+    geom_boxplot(aes(fill=sub.col, alpha=1/cancer))+
+    geom_boxplot(colour="black", outlier.shape ="+", outlier.size = 1, fill=NA)+
+    geom_point(shape="+")+
+    scale_fill_manual(values=levels(factor(plot.data$sub.col)))+
+    labs(x=paste(orderByModule, orderByTissue, "ROI module category"),
+         y=paste(blood.module, "blood module ranksum"), 
+         title=paste(cohort.name, " patients and controls\n(aov p=", as.character(signif(anova(lm(plot.data$bnbl.ranksum~plot.data$tumor.cat))$`Pr(>F)`[1], digits=1)), ")", sep=""))+
+    theme(legend.position="none",
+          panel.background = element_rect(fill = "transparent",colour = NA),
+          axis.line.x = element_line(colour="grey60"),
+          axis.line.y = element_line(colour="grey60"),
+          axis.title.x=element_text(hjust=0.2),
+          axis.title=element_text(size=10),
+          plot.title = element_text(hjust=0,vjust=1, size=12)
+    )
+  print(p)
+}  
 
 #' Returns a list of modules found for the given tissue
 #' @param tissue tissue we want to retrieve modules for 
