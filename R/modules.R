@@ -817,7 +817,8 @@ plot.pat.bs <- function(bs, dat, pat.cohorts, cohort.name="all", patient.ids=NUL
   bnblood$tumor.cat<-ifelse(bnblood$roi.cat==1 & !is.na(bnblood$roi.cat), "low", as.character(bnblood$tumor.cat))
   bnblood$tumor.cat<-ifelse(bnblood$roi.cat==2 & !is.na(bnblood$roi.cat), "mid", as.character(bnblood$tumor.cat))
   bnblood$tumor.cat<-ifelse(bnblood$roi.cat==3 & !is.na(bnblood$roi.cat), "high", as.character(bnblood$tumor.cat))
-  bnblood$tumor.cat<-factor(bnblood$tumor.cat, levels=c("low", "mid", "high", "control"), ordered=T)
+  bnblood$tumor.cat<-factor(bnblood$tumor.cat, levels=c("low", "mid", "high", "control"))
+  bnblood$tumor.cat.ordered<-factor(bnblood$tumor.cat, levels=c("low", "mid", "high", "control"), ordered=T)
   
   sub.col <- c(normal="white", all="grey", erp="green", ern="firebrick2", her2p="hotpink2", her2n="#21B6A8",
                erp.her2p="orange", ern.her2p="hotpink2", erp.her2n="blue", ern.her2n="firebrick2",
@@ -833,17 +834,18 @@ plot.pat.bs <- function(bs, dat, pat.cohorts, cohort.name="all", patient.ids=NUL
                layout.pos.col=unique(idx[,2]))
   pushViewport(vp)
   
-  p<-ggplot(data = bnblood, aes(x=tumor.cat, y=bnbl.ranksum)) + 
+  p<-ggplot(data = bnblood, aes(x=tumor.cat.ordered, y=bnbl.ranksum)) + 
     geom_boxplot(aes(fill=sub.col, alpha=1/cancer))+
     geom_boxplot(colour="black", outlier.shape ="+", outlier.size = 1, fill=NA)+
     geom_point(shape="+")+
     scale_fill_manual(values=levels(factor(bnblood$sub.col)))+
     labs(x="tumor module category",
          y="blood module ranksum", 
-         title=paste(cohort.name, " patients and controls\n(aov p=", as.character(signif(anova(lm(bnblood$bnbl.ranksum~bnblood$cancer))$`Pr(>F)`[1], digits=1)), ")", sep=""))+
+         title=paste(cohort.name, " patients and controls\n(aov p=", as.character(signif(anova(lm(bnblood$bnbl.ranksum~bnblood$tumor.cat))$`Pr(>F)`[1], digits=1)), ")", sep=""))+
     theme(legend.position="none",
           panel.background = element_rect(fill = "transparent",colour = NA),
-          axis.line   = element_line(colour="grey60"),
+          axis.line.x = element_line(colour="grey60"),
+          axis.line.y = element_line(colour="grey60"),
           axis.title.x=element_text(hjust=0.2),
           axis.title=element_text(size=10),
           plot.title = element_text(hjust=0,vjust=1, size=12)
@@ -870,7 +872,8 @@ plot.pat.bs <- function(bs, dat, pat.cohorts, cohort.name="all", patient.ids=NUL
                      as.character(signif(cor.test(bnblood[bnblood$cancer != "control",]$bl.ranksum, bnblood[bnblood$cancer != "control",]$t.ranksum)$p.value, digits=1)), ")",sep="")) +
     theme(legend.position="none",
           panel.background = element_rect(fill = "transparent",colour = NA),
-          axis.line   = element_line(colour="grey60"),
+          axis.line.x   = element_line(colour="grey60"),
+          axis.line.y   = element_line(colour="grey60"),
           axis.title = element_text(size=10),
           plot.title = element_text(hjust=0, vjust=1, size=12))
   

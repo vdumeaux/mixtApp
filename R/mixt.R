@@ -1,3 +1,3 @@
 .onLoad <- function(libname, pkgname) {
-  data("merged_bresat","merged_moduleColors", "goterms", "combat_data","msigdb", "TOM",package=pkgname, envir=parent.env(environment()))
+  data("bresat","moduleColors", "goterms", "combat_data","msigdb", "TOM-net",package=pkgname, envir=parent.env(environment()))
 }

@@ -118,6 +118,32 @@ load.MSigDB.H <- function(file=NULL) {
   return (MSigDB.h)
 }
 
+load.MSigDB.C1 <- function(file=NULL) {
+  if (is.null(file)) {
+    file = "../../data/c1.all.v5.1.symbols.gmt"
+  }
+  inputFile <- file
+  con  <- file(inputFile, open = "r")
+  
+  MSigDB.c1 <- list()
+  current.line = 1
+  while (length(line <- readLines(con, n = 1, warn = FALSE)) > 0) {
+    line.vector <- strsplit(line, "\t")[[1]]
+    name = line.vector[1]
+    line <- paste(c(paste(line.vector[3:(length(line.vector)-1)],'\t',sep=""),line.vector[length(line.vector)]),collapse="")
+    line.vector <- strsplit(gsub("/"," ",gsub("\t"," ", line,fixed=TRUE),fixed=TRUE)," ")[[1]]
+    line.vector = line.vector[line.vector != ""]
+    MSigDB.c1[[current.line]] <- line.vector
+    names(MSigDB.c1)[current.line] = name
+    
+    current.line = current.line + 1
+  }
+  
+  close(con)
+  
+  return (MSigDB.c1)
+}  
+
 load.MSigDB.C2 <- function(file=NULL) {
   if (is.null(file)) {
     file = "../../data/c2.all.v5.1.symbols.gmt"

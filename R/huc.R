@@ -2,7 +2,7 @@
 ### on the data sets that we use in this project.
 
 huc.variable.categorical <- function(variable) {
-  variable %in% c("lymph","grade","er","her2","stage","event","event.5",
+  variable %in% c("lymph","grade","t.size", "er","her2","stage","event","event.5",
                   "pam50.parker","hybrid.parker","aims","intclust","claudin.low","chemo","tamoxifen","herceptin",
                   "lum", "lumN", "prolif", "basalL",
                   "lumC", "lumaNormL", "basLmApo", "lumBlumC",
@@ -36,6 +36,7 @@ huc.clinical.colors <- function() {
   #names(heatmap.clinical[["intclust"]]) <- paste("intclust", 1:10, sep="")
   heatmap.clinical[["claudin.low"]] <- c(No="white", Yes="yellow3")
   heatmap.clinical[["grade"]] <- c(Low="white",Intermediate="pink",High="red")
+  heatmap.clinical[["t.size"]] <- c(lessthan2="pink",morethan2="red")
   heatmap.clinical[["lymph"]] <- c(Negative="white",Positive="red")
   heatmap.clinical[["type"]] <- c(IDC="red","IDC/ILC"="purple",ILC="blue",Other="green")
   heatmap.clinical[["orig.dataset"]] <- c(cc1.blood="red", cc2.blood="purple",cc3.blood="blue",cc4.blood="green", biopsy="orange", cc.blood="firebrick2")
@@ -2694,6 +2695,24 @@ huc.clinical.info <- function(clinical, readable.names=TRUE) {
         grade.2	<- paste(grade.2, g1, sep=" ")
         grade.3	<- paste(grade.3, g2, sep=" ")
     }
+    
+    if(all(is.na(clinical$t.size))==TRUE) {
+      t.size.1 <- NA
+      t.size.2 <- NA
+      t.size.3 <- NA
+    } else {
+      t.size.1 <- length(which(clinical$t.size == 1))
+      t.size.2 <- length(which(clinical$t.size == 2))
+      t.size.3 <- length(which(clinical$t.size == 3))
+      
+      t <- paste("(", format(t.size.1/samples * 100, digits=4), "%", ")", sep="")
+      t1 <- paste("(", format(t.size.2/samples * 100, digits=4), "%", ")", sep="")
+      t2 <- paste("(", format(t.size.3/samples * 100, digits=4), "%", ")", sep="")
+      
+      t.size.1 <- paste(t.size.1, t, sep=" ")
+      t.size.2  <- paste(t.size.2, t1, sep=" ")
+      t.size.3	<- paste(t.size.3, t2, sep=" ")
+    }
 
     if(all(is.na(clinical$er))==TRUE) {
         er.p <- NA
@@ -2945,7 +2964,9 @@ huc.clinical.info <- function(clinical, readable.names=TRUE) {
     }
 
     all <- c(samples=samples, size.2 = size.2, size.2.plus = size.2.plus, size.mean = size.mean, size.SD=size.SD, grade.1=grade.1,
-             grade.2=grade.2, grade.3=grade.3, er.p=er.p, er.n=er.n, her2.p=her2.p, her2.n=her2.n,
+             grade.2=grade.2, grade.3=grade.3, 
+             t.size.1=t.size.1,t.size.2=t.size.2, t.size.3=t.size.3,
+             er.p=er.p, er.n=er.n, her2.p=her2.p, her2.n=her2.n,
              node.p=node.p, node.n=node.n,
              pam50.la=pam50[["LumA"]], pam50.lb=pam50[["LumB"]], pam50.b=pam50[["Basal"]],
              pam50.h=pam50[["Her2"]], pam50.n=pam50[["Normal"]],
@@ -2970,6 +2991,9 @@ huc.clinical.info <- function(clinical, readable.names=TRUE) {
                       grade.1="Grade 1",
                       grade.2="Grade 2",
                       grade.3="Grade 3",
+                      t.size.1="Size (< 20mm)",
+                      t.size.2="Size (> 20mm , < 50mm)",
+                      t.size.3="Size (> 50mm)",
                       er.p="ER positive",
                       er.n="ER negative",
                       her2.p="HER2 positive",

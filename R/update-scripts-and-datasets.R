@@ -1,5 +1,5 @@
 update_scripts_and_datasets <- function() {
-  datasets = c("merged_bresat.RData", "merged_moduleColors.RData", "topGO_merged_mod.RData", "go_common.RData", "msigdb.RData", "combat_data.RData", "merged_TOM.RData")
+  datasets = c("bresat.RData", "moduleColors.RData", "topGO_mod.RData", "go_common.RData", "msigdb.RData", "combat_data.RData", "TOM.RData")
   scripts = c("bresat.R", "common.R", "huc.R", "modules.R", "pathway_analyses.R", "plots.R")
   
   datadir = "/home/bjorn/mixt/data/mixt/"
@@ -27,7 +27,7 @@ update_scripts_and_datasets <- function() {
 
 saveTOMgraph <- function(){
   datadir = "/home/bjorn/mixt/data/mixt/"
-  load(paste0(datadir,"merged_TOM.RData"))
+  load(paste0(datadir,"TOM.RData"))
   
   tom<-NULL
   for (tissue in c("blood","biopsy", "nblood")){
@@ -35,7 +35,7 @@ saveTOMgraph <- function(){
   tom$nblood<- TOM$nblood[moduleColors$blood != "grey", moduleColors$blood !="grey"]
   
   net<-NULL
-  for (tissue in c("blood", "biopsy", "nblood")){
+  for (tissue in c("blood", "biopsy")){
     net[[tissue]]<-exportNetworkToCytoscape(
       tom[[tissue]],
       edgeFile = paste("data/", tissue, "_smod_tom_01_edge.txt", sep=""),
@@ -45,12 +45,12 @@ saveTOMgraph <- function(){
       nodeAttr = moduleColors[[tissue]][moduleColors[[tissue]] !="grey"])
   }
   
-  save(net, file="data/TOM.RData")
+  save(net, file="data/TOM-net.RData")
   
 }
 
 saveGOTerms <- function(){
-  load("data/topGO_merged_mod.RData") 
+  load("data/topGO_mod.RData") 
   load("data/go_common.RData")
   goterms <- all.single
   for (tissue in names(goterms)){
@@ -74,10 +74,10 @@ initparallel <- function(){
 }
 
 initDev <- function(){ 
-  datasets = c("merged_bresat.RData", "merged_moduleColors.RData", "topGO_merged_mod.RData", "msigdb.RData", "combat_data.RData")
+  datasets = c("bresat.RData", "moduleColors.RData",  "msigdb.RData", "combat_data.RData")#"topGO_mod.RData")
   scripts = c("bresat.R", "common.R", "huc.R", "heatmap.R" , "modules.R", "pathway_analyses.R", "plots.R")
-  datadir = "/home/bjorn/mixt/data/mixt/"
-  scriptdir = "/home/bjorn/mixt/src/"
+  datadir = "/home/bjorn/mixt-r-package/data/"
+  scriptdir = "/home/bjorn/mixt-r-package/R/"
   
   setwd(datadir)
   for(dataset in datasets){

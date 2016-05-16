@@ -1,6 +1,6 @@
 ### Contains functions for frequently used plot types
 
-# source("../../src/heatmap.R")
+#source("../../src/heatmap.R")
 
 ## plot.patient.heatmap()
 ##

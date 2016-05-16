@@ -92,7 +92,7 @@ sig.ranksum <- function(exprdata, up=NULL, dn=NULL, ns=NULL, full.return = FALSE
     {
         ## identify rows in exprdata that have zero variance
         library(matrixStats)
-        tmp <- rowSds(exprdata[ns,,drop=F],na.rm=TRUE) == 0 ## faster
+        tmp <- rowSds(exprdata[ns,,drop=F]) == 0 ## faster
         #tmp <- sapply(ns, function(idx) {sd(exprdata[idx, ], na.rm=TRUE)}) == 0
         zero.sd.idx <- ns[tmp]
         ns <- ns[!tmp]
@@ -291,7 +291,7 @@ random.ranks <- function(bs, n=1000, seed=123456, mc.cores=2)
   nvals.cols <- nrow(datrank) - c(colSums(is.na(datrank)), 0)
   nvals.rows <- ncol(datrank) - rowSums(is.na(datrank))
   set.seed(seed)
-  random.cols <- t(sapply(1:nrow(datrank), function(i) {runif(n, 0, nvals.rows[i] + 1)}))
+  random.cols <- t(sapply(1:nrow(datrank), function(i) {runif(n, 1, nvals.rows[i] + 1)}))
   rand.dist <- unlist(mclapply(1:n, function(i) {
     datrank.rand.col <- cbind(datrank, random.cols[, i])
     datrank.rand.col <- t(apply(datrank.rand.col, 1, function(x) {rank(x, "average", na.last="keep")}))
