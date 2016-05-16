@@ -70,81 +70,152 @@ clinical_variables <- function(tissue){
   
 }
 
-cohort_heatmap <- function(tissue="blood", module, cohort.name="all"){
-  
-  #heatmap variables
-  cl.height=8
-  col.clust = FALSE
-  layout.m = matrix(c("key","title","","",""  ,  "","","","",""  ,"ranksum.text","ranksum.line","","",""  ,  "row.labels.rjust","heatmap","","",""  ,  "","col.labels.rjust","","",""  ,  "","","","",""  ,  "","","","",""  ,  "clinical.labels.rjust","clinical","","",""  ,  "","","","",""),nrow=9,ncol=5,byrow=TRUE)
-  layout.m.sum = matrix(c("","","","",""  ,  "","","","",""  ,"","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "row.labels.rjust","heatmap","","",""  ,  "","","","",""  ,   "","","","",""  ,  "","","","",""),nrow=9,ncol=5,byrow=TRUE)
-  #layout.m.dist.cdf = matrix(c("","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","col.labels.ljust","","",""  ,  "row.labels.rjust","heatmap","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""),nrow=11,ncol=5,byrow=TRUE)
-  layout.m.updn = matrix(c("","","","",""  ,  "","","","",""  ,"","","","",""  ,  "","","","heatmap",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""),nrow=9,ncol=5,byrow=TRUE)
-  widths = c(2,5,0.25,0.25,0.25)
-  heights = c(1,0.25,0.5,3,0.25,0.25,0.25,cl.height,0.25)
-  
-  scale = "none"
-  min.val=-5
-  max.val=5
-  key.min=-5
-  key.max=5
-  
-  
-  bs = NULL
-  bs[[tissue]][[module]] = bresat[[tissue]][[module]]
-  
-  
-  ordering = bs[[tissue]][[module]]$pat.order
-  bs[[tissue]][[module]]$ranksum = bresat[[tissue]][[module]]$ranksum[ordering]
-  bs[[tissue]][[module]]$rank = bresat[[tissue]][[module]]$rank[ordering]
-  bs[[tissue]][[module]]$roi = bresat[[tissue]][[module]]$roi[ordering]
-  bs[[tissue]][[module]]$roi.cat = bresat[[tissue]][[module]]$roi.cat[ordering]
-  bs[[tissue]][[module]]$dat = bresat[[tissue]][[module]]$dat#[, ordering]
-  bs[[tissue]][[module]]$pat.order = bresat[[tissue]][[module]]$pat.order
-  
-  ranks = bs[[tissue]][[module]]$pat.order
-  names(ranks) = 1:length(bs[[tissue]][[module]]$pat.order)
-  ranks = as.integer(names(sort(ranks)))
-  ranksum = t(as.matrix(ranks))[,bs[[tissue]][[module]]$pat.order,drop=FALSE]
-  rownames(ranksum) = "ranks"
-  
-  # Extract data for our patients
-  patients<-pat.cohorts(dat$blood)[[cohort.name]]
-  
-  # patientIndices is used to extract data for our patients. it assumes that
-  # the data in the bs$tissue$module list is ordered the same for all entries.
-  patientIndicies = names(bresat[[tissue]][[module]]$ranksum) %in% patients
-  
-  bs[[tissue]][[module]]$ranksum = bresat[[tissue]][[module]]$ranksum[patientIndicies]
-  bs[[tissue]][[module]]$rank = bresat[[tissue]][[module]]$rank[patientIndicies]
-  bs[[tissue]][[module]]$pat.order = bresat[[tissue]][[module]]$pat.order[patientIndicies]
-  bs[[tissue]][[module]]$roi = bresat[[tissue]][[module]]$roi[patientIndicies]
-  bs[[tissue]][[module]]$roi.cat = bresat[[tissue]][[module]]$roi.cat[patientIndicies]
-  bs[[tissue]][[module]]$dat = bresat[[tissue]][[module]]$dat[, colnames(bresat[[tissue]][[module]]$dat) %in% patients]
-  
-  # fetch the ranksum for our patients 
-  ranksum = ranksum[patientIndicies]
-  ranksum = t(as.matrix(ranksum))
-  rownames(ranksum) = "ranks"
-  
-  # Get clinical information for our patients 
-  clinical <- dat[[tissue]]$clinical[ordering, ]
-  clinical = huc.color.clinical(clinical)[,clinical_variables(tissue)]
-  #clinical <- clinical[ordering, ]
-  clinical = clinical[rownames(clinical) %in% patients,]
-
-  exprs = dat[[tissue]]$exprs
-  data = exprs[bs[[tissue]][[module]]$gene.order, bs[[tissue]][[module]]$pat.order, drop=FALSE]
-  
-  
-  plot.new()
-  ddrs = heatmap.simple(data,layout.mat = layout.m, widths = widths, heights = heights, col.clust = FALSE, 
-                        clinical = clinical, row.clust = FALSE, title=title,row.labels=rownames(data), 
-                        col.labels=rep("", ncol(data)))
-  
-
-  # ranksum 
-  heatmap.simple(-ranksum, layout.mat = layout.m.sum, widths = widths, heights = heights, col.clust = FALSE, row.clust = FALSE)
-
+cohort_heatmap <- function(tissue, module, cohort.name="all", patient.ids=NULL, gene.names=NULL,  orderByModule=NULL, orderByTissue=NULL, cl.height=6, title=title) 
+  {
+    plot.new()
+    title = "" 
+    if(is.null(orderByModule)){
+      orderByModule = module
+    }
+    if(is.null(orderByTissue)){
+      orderByTissue = tissue
+    }
+    
+    #heatmap variables
+    col.clust = FALSE
+    layout.m = matrix(c("key","title","","","",
+                        "","","","","",
+                        "ranksum.text","ranksum.line","","","",
+                        "row.labels.rjust","heatmap","","","" ,
+                        "","","","","",
+                        "ranks.text","ranks","","","",
+                        "","","","","",
+                        "clinical.labels.rjust","clinical","","","",
+                        "","","","",""),nrow=9,ncol=5,byrow=TRUE)
+    
+    layout.m.sum = matrix(c("","","","",""  ,  "","","","",""  ,"","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "row.labels.rjust","heatmap","","",""  ,  "","","","",""  ,   "","","","",""  ,  "","","","",""),nrow=9,ncol=5,byrow=TRUE)
+    layout.m.updn = matrix(c("","","","",""  ,  "","","","",""  ,"","","","",""  ,  "","","","heatmap",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""  ,  "","","","",""),nrow=9,ncol=5,byrow=TRUE)
+    widths = c(2,5,0.25,0.25,0.25,0.25)
+    heights = c(1,0.25,0.5,3,0.25,0.25,0.25,cl.height,0.25)
+    
+    scale = "none"
+    min.val=-5
+    max.val=5
+    key.min=-5
+    key.max=5
+    
+    ## define reordered variables
+    order.by<-bresat[[orderByTissue]][[orderByModule]]$pat.order
+    roi<-bresat[[orderByTissue]][[orderByModule]]$roi
+    roi.cat<-bresat[[orderByTissue]][[orderByModule]]$roi.cat
+    
+    ## define reordered clinical data
+    cl<-dat$blood$clinical
+    mclinical = cl[order.by,]
+    #bnclinical=dat$bnblood$clinical[bresat$bnblood[[blood.mod]]$pat.order, ]
+    
+    ## define blood reordered expression and select genes
+    data = bresat[[tissue]][[module]]$dat[, match(rownames(cl)[order.by], colnames(bresat[[tissue]][[module]]$dat))]
+    if (!is.null(gene.names))
+    {data<-data[rownames(data) %in% gene.names,]}
+        
+    ## define patients to include
+    if (is.null(patient.ids))
+    {
+      patients<-pat.cohorts(dat$blood)[[cohort.name]]
+    }
+    else
+    {
+      patients<-patient.ids
+    }
+    
+    bc.var<- c("er","her2" ,"pam50.parker","hybrid.parker","cit", "claudin.low", 
+               "lymph" , "t.size",
+               "menopause","hrt","medication","hospital",
+               "age","weight", "MKS", "LUMS", "HER2S")
+    
+    ## plot blood heatmap top left (no clinical)
+    ddrs = heatmap.simple(data[, colnames(data) %in% patients],
+                          clinical = huc.color.clinical(mclinical)[rownames(mclinical) %in% patients,][,bc.var], 
+                          layout.mat = layout.m, widths = widths, heights = heights, col.clust = FALSE, 
+                          row.clust = FALSE, title=paste(cohort.name, module, tissue, "ordered by", orderByModule, orderByTissue),
+                          row.labels=rownames(data),
+                          col.labels=rep("", length(which(colnames(data) %in% patients))))
+    
+    ## plot updn top left heatmap
+    up.dn = as.vector(array(1,dim=c(1,length(bresat[[tissue]][[module]]$gene.order))))
+    names(up.dn) = unique(c(bresat[[tissue]][[module]]$up,bresat[[tissue]][[module]]$dn))
+    up.dn[names(up.dn) %in% bresat[[tissue]][[module]]$dn] = -1
+    to.plot = (as.matrix(up.dn,ncol=1)[bresat[[tissue]][[module]]$gene.order,,drop=FALSE])
+    color.scheme = heatmap.color.scheme(low.breaks=c(-1.5,0),high.breaks=c(0,1.5))
+    heatmap.simple(to.plot, scale=scale, layout.mat = layout.m.updn, widths = widths, heights = heights, col.clust = FALSE, row.clust = FALSE, color.scheme = color.scheme)
+       
+    ## plot ranks for top left heatmap
+    the.layout <- grid.layout(nrow(layout.m), ncol(layout.m), widths=widths, heights=heights)
+    mid.vp <- viewport(layout=the.layout, name="heatmap.mid.vp")
+    pushViewport(mid.vp)
+    elem = 'ranks'
+    idx <- which(layout.m == elem, arr.ind=TRUE)
+    pushViewport(viewport(name=elem,
+                          layout.pos.row=unique(idx[,1]),
+                          layout.pos.col=unique(idx[,2])))
+    
+    rank.colors<-rev(diverge_hcl(n=ncol(bresat[[tissue]][[module]]$dat)))
+    names(rank.colors)<-colnames(bresat[[tissue]][[module]]$dat)
+    rank.colors<-rank.colors[match(rownames(cl)[order.by], colnames(bresat[[tissue]][[module]]$dat))]
+    ranksum = t(as.matrix(rank.colors))[,names(rank.colors) %in% patients,drop=FALSE]
+    heatmap.clinical(ranksum)
+    upViewport()
+    
+    elem = 'ranks.text'
+    idx <- which(layout.m == elem, arr.ind=TRUE)
+    pushViewport(viewport(name=elem,
+                          layout.pos.row=unique(idx[,1]),
+                          layout.pos.col=unique(idx[,2])))
+    heatmap.labels('ranks', type="row.labels", just="right")
+    upViewport()
+    
+    ## plot ranksum line top left heatmap
+    the.layout <- grid.layout(nrow(layout.m), ncol(layout.m), widths=widths, heights=heights)
+    top.vp <- viewport(layout=the.layout, name="heatmap.top.vp")
+    pushViewport(top.vp)
+    
+    elem = 'ranksum.line'
+    idx <- which(layout.m == elem, arr.ind=TRUE)
+    pushViewport(viewport(name=elem,
+                          layout.pos.row=unique(idx[,1]),
+                          layout.pos.col=unique(idx[,2])))
+    ranksum.plot = bresat[[tissue]][[module]]$ranksum[order.by][colnames(data) %in% patients]
+    par(new=TRUE, fig=gridFIG(), mar=c(0,0,0,0))
+    plot(1:length(ranksum.plot), ranksum.plot, ann=FALSE, xaxs='i', yaxt='n', xaxt='n',bty='n',type='l')
+    upViewport()
+    
+    elem = 'ranksum.text'
+    idx <- which(layout.m == elem, arr.ind=TRUE)
+    pushViewport(viewport(name=elem,
+                          layout.pos.row=unique(idx[,1]),
+                          layout.pos.col=unique(idx[,2])))
+    
+    heatmap.labels('ranksum', type="row.labels", just="right")
+    upViewport()
+    
+    ## plot roi lines top left heatmap
+    first.ind = length(which(roi.cat[rownames(cl) %in% patients]==3))
+    last.ind = first.ind + length(which(roi.cat[rownames(cl) %in% patients]==2))
+    
+    res.random.dist.begin = first.ind
+    res.random.dist.end = last.ind
+    
+    elem = 'heatmap'
+    idx <- which(layout.m == elem, arr.ind=TRUE)
+    pushViewport(viewport(name=elem,
+                          layout.pos.row=unique(idx[,1]),
+                          layout.pos.col=unique(idx[,2])))
+    
+    par(new=TRUE, fig=gridFIG(), mar=c(0,0,0,0))
+    grid.lines(x = unit(c(first.ind/length(which(rownames(cl) %in% patients)),first.ind/length(which(rownames(cl) %in% patients))), "npc"),gp=gpar(col='yellow',lty = 1, lwd = 2))
+    grid.lines(x = unit(c(last.ind/length(which(rownames(cl) %in% patients)),last.ind/length(which(rownames(cl) %in% patients))), "npc"),gp=gpar(col='yellow',lty = 1, lwd = 2))
+    upViewport()
 }
 
 
