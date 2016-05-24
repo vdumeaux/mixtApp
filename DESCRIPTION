@@ -34,5 +34,7 @@ Imports:
     plyr,
     colorspace,
     dplyr,
-    igraph
+    igraph,
+    GGally,
+    network
 RoxygenNote: 5.0.1

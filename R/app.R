@@ -999,30 +999,19 @@ roiClinicalRelation <- function(tissue){
 #' @export
 getTOMGraphNodes <- function(tissue) {
 
-  edges = getTOMGraphEdges(tissue)
-  g = igraph::graph_from_data_frame(edges)
+  n<-network(net[[tissue]]$edgeData[,1:2], directed=F)
   
-  # edgeColors = apply(edges, 1, getEdgeColor, tissue=tissue )
-  # edges$color = edgeColors
+  n %e% "weight"<-net[[tissue]]$edgeData$weight
   
-  nodes = igraph::V(g)
-  nodes = as.matrix(nodes)
-  nodes = cbind(rownames(nodes), nodes)
-  nodes = as.data.frame(apply(nodes, 1, getNodeColor, tissue=tissue))
-  nodes = cbind(rownames(nodes), nodes)
-  colnames(nodes) = c("gene", "module")
-  rownames(nodes) = NULL
+  x = network.vertex.names(n)
+  n %v% "module"<- moduleColors[[tissue]][match(x,names(moduleColors[[tissue]]))]
   
-  layout = igraph::layout_with_kk(g, weights=edges$weights*100, epsilon=0, maxiter=200*igraph::vcount(g))
-  # plot(layout[,1], layout[,2],col=as.character(nodes$module))
-  
-  igraph::V(g)$color = as.character(nodes$module)
-  #igraph::plot.igraph(g, layout=layout_with_kk, #vertex.color=rev(as.character(nodes$module)),
-  #                    vertex.label=NA, vertex.size=2, edge.width=1, edge.arrow.size=0, edge.color=edges$color)
- 
-  nodes = cbind(nodes, layout)
-  
-  colnames(nodes) <- c("id","color", "x", "y")
+  g = ggnet2(n, color="module",mode = "fruchtermanreingold", label=T, label.size=1,label.color="grey60", layout.par = list(cell.jitter = 0.2),edge.size="weight", alpha=0.75, size=3)
+
+  nodes = NULL
+  nodes = cbind(g$data$label, g$data$color, g$data$x, g$data$y)
+  colnames(nodes) <- c("id", "color", "x", "y")
+
   return(nodes)
 }
 
