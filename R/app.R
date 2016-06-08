@@ -59,15 +59,15 @@ heatmap <- function(tissue, module, re.order=FALSE, orderByModule=NULL, orderByT
 }
 
 clinical_variables <- function(tissue){
-  
+  bc.var<- c("er","her2" ,"pam50.parker","hybrid.parker","cit", "claudin.low", 
+             "lymph" , "t.size",
+             "menopause","hrt","medication","hospital",
+             "age","weight", "MKS", "LUMS", "HER2S")
   if(tissue == "biopsy" || tissue=="blood"){
-    bc.var<- c("er","her2" ,"pam50.parker","hybrid.parker","cit", "claudin.low", 
-               "lymph" , "t.size",
-               "menopause","hrt","medication","hospital",
-               "age","weight", "MKS", "LUMS", "HER2S")
     return (bc.var)
+  } else if(tissue == "bnblood"){
+    return(c("cancer", bc.var))
   }
-  
 }
 
 # Generate module heatmap for given cohort 
@@ -112,7 +112,7 @@ cohort_heatmap <- function(tissue, module, cohort.name="all", patient.ids=NULL, 
     roi.cat<-bresat[[orderByTissue]][[orderByModule]]$roi.cat
     
     ## define reordered clinical data
-    cl<-dat$blood$clinical
+    cl<-clinical_variables(tissue) 
     mclinical = cl[order.by,]
     #bnclinical=dat$bnblood$clinical[bresat$bnblood[[blood.mod]]$pat.order, ]
     
@@ -283,8 +283,7 @@ cohort_boxplot<-function (blood.module, orderByTissue, orderByModule, cohort.nam
   if (is.null(patient.ids))
   {
     patients<-pat.cohorts(dat$blood)[[cohort.name]]
-  }
-  else
+  }else
   {
     patients<-patient.ids
   }
