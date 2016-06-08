@@ -111,10 +111,19 @@ cohort_heatmap <- function(tissue, module, cohort.name="all", patient.ids=NULL, 
     roi<-bresat[[orderByTissue]][[orderByModule]]$roi
     roi.cat<-bresat[[orderByTissue]][[orderByModule]]$roi.cat
     
+    mclinical = NULL
+    cl = NULL
+    if(tissue== "blood" || tissue=="biopsy"){
+      cl<-dat$blood$clinical
+      #cl<-clinical_variables(tissue) 
+      mclinical = cl[order.by,]
+    } else {
+      cl = dat$bnblood$clinical
+      mclinical = cl[order.by,]
+      #mclinical=dat$bnblood$clinical[bresat$bnblood[[module]]$pat.order, ]
+    }
     ## define reordered clinical data
-    cl<-clinical_variables(tissue) 
-    mclinical = cl[order.by,]
-    #bnclinical=dat$bnblood$clinical[bresat$bnblood[[blood.mod]]$pat.order, ]
+    #
     
     ## define blood reordered expression and select genes
     data = bresat[[tissue]][[module]]$dat[, match(rownames(cl)[order.by], colnames(bresat[[tissue]][[module]]$dat))]
@@ -124,7 +133,7 @@ cohort_heatmap <- function(tissue, module, cohort.name="all", patient.ids=NULL, 
     ## define patients to include
     if (is.null(patient.ids))
     {
-      patients<-pat.cohorts(dat$blood)[[cohort.name]]
+      patients<-pat.cohorts(dat[[tissue]])[[cohort.name]]
     }
     else
     {
@@ -135,6 +144,9 @@ cohort_heatmap <- function(tissue, module, cohort.name="all", patient.ids=NULL, 
                "lymph" , "t.size",
                "menopause","hrt","medication",
                "age","weight", "MKS", "LUMS", "HER2S")
+    if(tissue=="bnblood"){
+      bc.var = c("cancer",bc.var)
+    }
     
     ## plot blood heatmap top left (no clinical)
     ddrs = heatmap.simple(data[, colnames(data) %in% patients],

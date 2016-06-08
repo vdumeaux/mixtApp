@@ -1,5 +1,5 @@
 update_scripts_and_datasets <- function() {
-  datasets = c("bresat.RData", "moduleColors.RData", "topGO_merged_mod.RData", "go_common.RData", "msigdb.RData", "combat_data.RData", "merged_TOM.RData")
+  datasets = c("bresat.RData", "moduleColors.RData", "topGO_mod.RData", "go_common.RData", "msigdb.RData", "combat_data.RData", "TOM.RData")
   scripts = c("bresat.R", "common.R", "huc.R", "modules.R", "pathway_analyses.R", "plots.R")
   
   datadir = "/home/bjorn/mixt/data/mixt/"
@@ -27,7 +27,7 @@ update_scripts_and_datasets <- function() {
 
 saveTOMgraph <- function(){
   datadir = "/home/bjorn/mixt/data/mixt/"
-  load(paste0(datadir,"merged_TOM.RData"))
+  load(paste0(datadir,"TOM.RData"))
   
   tom<-NULL
   for (tissue in c("blood","biopsy", "nblood")){
@@ -50,7 +50,7 @@ saveTOMgraph <- function(){
 }
 
 saveGOTerms <- function(){
-  load("data/topGO_merged_mod.RData") 
+  load("data/topGO_mod.RData") 
   load("data/go_common.RData")
   goterms <- all.single
   for (tissue in names(goterms)){
