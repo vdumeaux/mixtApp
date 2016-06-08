@@ -9,7 +9,10 @@ Maintainer: Bjorn Fjukstad <bjorn@cs.uit.no>
 Description: Package for doing Matched Interaction across Tissues (MIxT) data
     analysis and visualization. (more to come)
 License: MIT
+Depends:
+  ggplot2,
 Imports:
+    utils,
     Biobase,
     DBI,
     RSQLite,
@@ -19,7 +22,6 @@ Imports:
     latticeExtra,
     munsell,
     scales,
-    ggplot2,
     Hmisc,
     reshape,
     preprocessCore,
@@ -36,5 +38,6 @@ Imports:
     dplyr,
     igraph,
     GGally,
-    network
+    network, 
+    sna, 
 RoxygenNote: 5.0.1

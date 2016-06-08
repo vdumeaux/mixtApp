@@ -70,6 +70,8 @@ clinical_variables <- function(tissue){
   
 }
 
+# Generate module heatmap for given cohort 
+#'@export
 cohort_heatmap <- function(tissue, module, cohort.name="all", patient.ids=NULL, gene.names=NULL,  orderByModule=NULL, orderByTissue=NULL, cl.height=6, title=title) 
   {
     plot.new()
@@ -218,9 +220,10 @@ cohort_heatmap <- function(tissue, module, cohort.name="all", patient.ids=NULL, 
     upViewport()
 }
 
-
+# Generate cohort scatterplot. 
+# Needs some refactoring re: variable names etc. 
+#' @export
 cohort_scatterplot<-function (x.tissue, x.module, y.tissue, y.module, cohort.name="all", patient.ids=NULL){
-  require(ggplot2)
   
   ## define patients to include
   if (is.null(patient.ids))
@@ -244,15 +247,15 @@ cohort_scatterplot<-function (x.tissue, x.module, y.tissue, y.module, cohort.nam
   plot.data$sub.col<-sub.col[as.character(plot.data$cohort)]
   plot.data$sub.col<-ifelse(plot.data$sub.col=="grey", as.character(plot.data$subtype), plot.data$sub.col)
   
-  p1<-ggplot(plot.data, aes(x=x.ranksum,y=y.ranksum))+
-    geom_smooth(method="lm", colour="white", alpha=0.2, size=0.4)+
-    geom_point(aes(colour=sub.col), size=2)+
-    scale_colour_manual(values=levels(factor(plot.data$sub.col)))+
-    labs(y=paste(y.module, y.tissue, "module ranksum"),
+  p1<-ggplot2::ggplot(plot.data, ggplot2::aes(x=x.ranksum,y=y.ranksum))+
+    ggplot2::geom_smooth(method="lm", colour="white", alpha=0.2, size=0.4)+
+    ggplot2::geom_point(ggplot2::aes(colour=sub.col), size=2)+
+    ggplot2::scale_colour_manual(values=levels(factor(plot.data$sub.col)))+
+    ggplot2::labs(y=paste(y.module, y.tissue, "module ranksum"),
          x=paste(x.module, x.tissue, "module ranksum"),
          title=paste(cohort.name, " patients", " (cor=",as.character(signif(cor.test(plot.data$x.ranksum, plot.data$y.ranksum)$estimate, digits=1)), ", p=",
                      as.character(signif(cor.test(plot.data$x.ranksum, plot.data$y.ranksum)$p.value, digits=1)), ")",sep="")) +
-    theme(legend.position="none",
+    ggplot2::theme(legend.position="none",
           panel.background = element_rect(fill = "transparent",colour = NA),
           axis.line.x   = element_line(colour="grey60"),
           axis.line.y   = element_line(colour="grey60"),
@@ -262,8 +265,10 @@ cohort_scatterplot<-function (x.tissue, x.module, y.tissue, y.module, cohort.nam
   print(p1)
 }  
   
+#' Generate boxplot. 
+#' @export 
 cohort_boxplot<-function (blood.module, orderByTissue, orderByModule, cohort.name="all", patient.ids=NULL){
-  require(ggplot2)
+  #require(ggplot2)
   
   
   if(is.null(orderByModule)){
@@ -310,15 +315,15 @@ cohort_boxplot<-function (blood.module, orderByTissue, orderByModule, cohort.nam
                cit.luma="blue4", cit.lumb="deepskyblue", cit.normL="green4", cit.mApo="hotpink2", cit.lumc="#7fffd4",  cit.basalL="firebrick2")
   plot.data$sub.col<-sub.col[as.character(plot.data$cohort)]
   
-  p<-ggplot(data = plot.data, aes(x=tumor.cat.ordered, y=bnbl.ranksum)) + 
-    geom_boxplot(aes(fill=sub.col, alpha=1/cancer))+
-    geom_boxplot(colour="black", outlier.shape ="+", outlier.size = 1, fill=NA)+
-    geom_point(shape="+")+
-    scale_fill_manual(values=levels(factor(plot.data$sub.col)))+
-    labs(x=paste(orderByModule, orderByTissue, "ROI module category"),
+  p<-ggplot2::ggplot(data = plot.data, ggplot2::aes(x=tumor.cat.ordered, y=bnbl.ranksum)) + 
+    ggplot2::geom_boxplot(ggplot2::aes(fill=sub.col, alpha=1/cancer))+
+    ggplot2::geom_boxplot(colour="black", outlier.shape ="+", outlier.size = 1, fill=NA)+
+    ggplot2::geom_point(shape="+")+
+    ggplot2::scale_fill_manual(values=levels(factor(plot.data$sub.col)))+
+    ggplot2::labs(x=paste(orderByModule, orderByTissue, "ROI module category"),
          y=paste(blood.module, "blood module ranksum"), 
          title=paste(cohort.name, " patients and controls\n(aov p=", as.character(signif(anova(lm(plot.data$bnbl.ranksum~plot.data$tumor.cat))$`Pr(>F)`[1], digits=1)), ")", sep=""))+
-    theme(legend.position="none",
+    ggplot2::theme(legend.position="none",
           panel.background = element_rect(fill = "transparent",colour = NA),
           axis.line.x = element_line(colour="grey60"),
           axis.line.y = element_line(colour="grey60"),
@@ -438,7 +443,7 @@ getEnrichmentScores <- function(tissue, module,genesets=c()) {
 #' Get gene set names available to the MIxT app
 #' @export 
 getGeneSetNames <- function() {
-  return (names(msigdb.enrichment[[1]][[1]][[1]]$sig.set))
+  return (names(msigdb.enrichment[[1]][[1]]$updn.common))
 }
 
 #' Get enrichment scores for all modules 
@@ -999,18 +1004,22 @@ roiClinicalRelation <- function(tissue){
 #' @export
 getTOMGraphNodes <- function(tissue) {
 
-  n<-network(net[[tissue]]$edgeData[,1:2], directed=F)
+  n<-network::network(net[[tissue]]$edgeData[,1:2], directed=F)
   
-  n %e% "weight"<-net[[tissue]]$edgeData$weight
+  #  n %e% "weight" <- net[[tissue]]$edgeData$weight
+  network::set.edge.attribute(n, "weight", net[[tissue]]$edgeData$weight)
   
-  x = network.vertex.names(n)
-  n %v% "module"<- moduleColors[[tissue]][match(x,names(moduleColors[[tissue]]))]
+  x = network::network.vertex.names(n)
+  #n %v% "module"<- moduleColors[[tissue]][match(x,names(moduleColors[[tissue]]))]
+  network::set.vertex.attribute(n, "module", moduleColors[[tissue]][match(x,names(moduleColors[[tissue]]))])
   
-  g = ggnet2(n, color="module",mode = "fruchtermanreingold", label=T, label.size=1,label.color="grey60", layout.par = list(cell.jitter = 0.2),edge.size="weight", alpha=0.75, size=3)
+  g = GGally::ggnet2(n, color="module", mode = "fruchtermanreingold", label=T, label.size=1,label.color="grey60", layout.par = list(cell.jitter = 0.2),edge.size="weight", alpha=0.75, size=3)
 
   nodes = NULL
   nodes = cbind(g$data$label, g$data$color, g$data$x, g$data$y)
   colnames(nodes) <- c("id", "color", "x", "y")
+  
+  nodes = as.data.frame(nodes)
 
   return(nodes)
 }

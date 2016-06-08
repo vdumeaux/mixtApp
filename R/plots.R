@@ -1,7 +1,5 @@
 ### Contains functions for frequently used plot types
 
-#source("../../src/heatmap.R")
-
 ## plot.patient.heatmap()
 ##
 ## plots heatmaps showing correct/incorrect predictions. The rows of the
