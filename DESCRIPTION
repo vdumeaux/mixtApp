@@ -10,6 +10,9 @@ Description: Package for doing Matched Interaction across Tissues (MIxT) data
     analysis and visualization. (more to come)
 License: MIT
 Depends:
+  BCIutils,
+  huc, 
+  colorspace,
   ggplot2,
 Imports:
     utils,
@@ -34,10 +37,13 @@ Imports:
     WGCNA,
     parallel,
     plyr,
-    colorspace,
     dplyr,
     igraph,
     GGally,
     network, 
     sna, 
+    breastCancerVDX, 
+    hgu133a.db, 
+    genefu,
+    iC10, 
 RoxygenNote: 5.0.1

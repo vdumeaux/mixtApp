@@ -9,12 +9,13 @@
 #' @param orderByTissue the tissue where the orderByModule module is found. Default is the same tissue. 
 #' @param re.order set to true if patients should be re ordered. Defaults to FALSE. 
 #' @import colorspace
+#' @import BCIutils
+#' @import huc
 #' @export
 #' @examples
 #' heatmap("blood", "green")
 #' heatmap("biopsy", "blue") 
 #' 
-
 heatmap <- function(tissue, module, re.order=FALSE, orderByModule=NULL, orderByTissue=NULL, subtypes=NULL) { 
     plot.new()
     title = "" 
@@ -26,18 +27,18 @@ heatmap <- function(tissue, module, re.order=FALSE, orderByModule=NULL, orderByT
     }
     
     if(tissue == "blood"){
-      clinical=huc.color.clinical(dat$blood$clinical)[,c(1,3:15, 17, 19,21:25, 27, 29:33)]
+      clinical=huc::huc.color.clinical(dat$blood$clinical)[,c(1,3:15, 17, 19,21:25, 27, 29:33)]
     }
     if(tissue =="biopsy"){
-      clinical=huc.color.clinical(dat$biopsy$clinical)[,c(1,3:15,17, 21:25, 27, 29:33)]
+      clinical=huc::huc.color.clinical(dat$biopsy$clinical)[,c(1,3:15,17, 21:25, 27, 29:33)]
     }
     
     if(tissue == "nblood") {
-      clinical=huc.color.clinical(dat$nblood$clinical)[, c(19,22:27)]
+      clinical=huc::huc.color.clinical(dat$nblood$clinical)[, c(19,22:27)]
     }
     
     if(tissue == "bnblood") {
-      clinical=huc.color.clinical(dat$nblood$clinical)[, c(1,3:15,17, 19,21:25,26, 27, 29:33)]
+      clinical=huc::huc.color.clinical(dat$nblood$clinical)[, c(1,3:15,17, 19,21:25,26, 27, 29:33)]
     }
           
     if(re.order == FALSE || (orderByTissue==tissue && orderByModule==module)){
@@ -59,7 +60,7 @@ heatmap <- function(tissue, module, re.order=FALSE, orderByModule=NULL, orderByT
 }
 
 clinical_variables <- function(tissue){
-  bc.var<- c("er","her2" ,"pam50.parker","hybrid.parker","cit", "claudin.low", 
+  bc.var<- c("er","her2" ,"pam50.parker","hybrid","cit", "claudin.low", 
              "lymph" , "t.size",
              "menopause","hrt","medication","hospital",
              "age","weight", "MKS", "LUMS", "HER2S")
@@ -68,6 +69,23 @@ clinical_variables <- function(tissue){
   } else if(tissue == "bnblood"){
     return(c("cancer", bc.var))
   }
+}
+
+
+getClinicalVariables  <- function(tissue, type) {
+    bc.var <-c("er","her2" ,"pam50.parker","hybrid","cit", "claudin.low",
+    "basalL","lumC", "MKS", "LUMS", "HER2S", "lymph","t.size", "age",
+    "menopause","hrt","weight","medication")
+
+    n.var<- c("age", "menopause","hrt","weight","medication")
+
+    bn.var<- c("cancer", bc.var) 
+
+    if(tissue == "biopsy" || tissue=="blood"){
+        return (bc.var)
+    } else if(tissue == "bnblood"){
+        return(bn.var)
+    }
 }
 
 # Generate module heatmap for given cohort 
@@ -140,7 +158,7 @@ cohort_heatmap <- function(tissue, module, cohort.name="all", patient.ids=NULL, 
       patients<-patient.ids
     }
     
-    bc.var<- c("er","her2" ,"pam50.parker","hybrid.parker","cit", "claudin.low", 
+    bc.var<- c("er","her2" ,"pam50.parker","hybrid","cit", "claudin.low", 
                "lymph" , "t.size",
                "menopause","hrt","medication",
                "age","weight", "MKS", "LUMS", "HER2S")
@@ -150,7 +168,7 @@ cohort_heatmap <- function(tissue, module, cohort.name="all", patient.ids=NULL, 
     
     ## plot blood heatmap top left (no clinical)
     ddrs = heatmap.simple(data[, colnames(data) %in% patients],
-                          clinical = huc.color.clinical(mclinical)[rownames(mclinical) %in% patients,][,bc.var], 
+                          clinical = huc::huc.color.clinical(mclinical)[rownames(mclinical) %in% patients,][,bc.var], 
                           layout.mat = layout.m, widths = widths, heights = heights, col.clust = FALSE, 
                           row.clust = FALSE, title=paste(cohort.name, module, tissue, "ordered by", orderByModule, orderByTissue),
                           row.labels=rownames(data),
@@ -251,7 +269,7 @@ cohort_scatterplot<-function (x.tissue, x.module, y.tissue, y.module, cohort.nam
   plot.data<-data.frame(x.ranksum=bresat[[x.tissue]][[x.module]]$ranksum[rownames(dat$blood$clinical) %in% patients],
                         y.ranksum=bresat[[y.tissue]][[y.module]]$ranksum[rownames(dat$blood$clinical) %in% patients],
                         cohort=rep(cohort.name, length(which(rownames(dat$blood$clinical) %in% patients))),
-                        subtype=huc.color.clinical(dat$blood$clinical)$hybrid.parker[rownames(dat$blood$clinical) %in% patients])
+                        subtype=huc::huc.color.clinical(dat$blood$clinical)$hybrid[rownames(dat$blood$clinical) %in% patients])
   sub.col <- c(normal="white", all="grey", erp="green", ern="firebrick2", her2p="hotpink2", her2n="#21B6A8",
                erp.her2p="orange", ern.her2p="hotpink2", erp.her2n="blue", ern.her2n="firebrick2",
                luma="blue4", erp.luma="blue4", lumb="deepskyblue", erp.lumb="deepskyblue", normL="green4", erp.normL="green4", basalL="firebrick2", her2E="hotpink2", erp.her2E="orange", erp.basalL="#7fffd4", 
@@ -448,6 +466,7 @@ getEnrichmentScores <- function(tissue, module,genesets=c()) {
   # force ordering on p-val
   res$updn.pval = as.numeric(as.character(res$updn.pval))
   res = res[with(res, order(updn.pval)), ]
+  res$updn.pval = as.character(res$updn.pval)
   return(res)
 }
 
@@ -865,7 +884,7 @@ comparisonAnalyses <- function(tissueA, tissueB, moduleA, moduleB){
 #' @export 
 eigengeneClinicalRelation <- function(tissue){
   
-  bc.qual.var<- c("er","her2" ,"pam50.parker","hybrid.parker","cit", "claudin.low", 
+  bc.qual.var<- c("er","her2" ,"pam50.parker","hybrid","cit", "claudin.low", 
                   "lum" ,"lumN","prolif" ,"basalL",
                   "lumC" ,"lumaNormL" ,"basLmApo","lumBlumC", 
                   "lymph" ,
@@ -940,7 +959,7 @@ roiClinicalRelation <- function(tissue){
   roi.cat <- computeROICategories(tissue) 
   MEs = computeEigengenes(tissue) 
   
-  bc.qual.var<- c("er","her2" ,"pam50.parker","hybrid.parker","cit", "claudin.low", 
+  bc.qual.var<- c("er","her2" ,"pam50.parker","hybrid","cit", "claudin.low", 
                   "lum" ,"lumN","prolif" ,"basalL",
                   "lumC" ,"lumaNormL" ,"basLmApo","lumBlumC", 
                   "lymph" ,
@@ -1010,6 +1029,54 @@ roiClinicalRelation <- function(tissue){
   
   return(cl.roi)
 }
+
+#' Compute clinical ranksum for given tissue 
+#' @export 
+clinicalRanksum <- function(tissue) { 
+
+    bc.qual.var<- c("event.5", "er","her2" ,"pam50.parker","hybrid","cit",
+                    "claudin.low", "lum" ,"lumN","prolif" ,"basalL", "lumC",
+                    "lumaNormL" ,"basLmApo","lumBlumC", "t.size", "lymph", 
+                    "menopause","hrt","weight.70.plus","age.55.plus",
+                    "medication","hospital")
+
+    bc.quant.var<-c("time","age","weight", "MKS", "ERS", "LUMS", "HER2S")
+    n.qual.var<- c("menopause","hrt","weight.70.plus","age.55.plus", "medication","orig.dataset")
+    bn.qual.var<- c("cancer", bc.qual.var, "orig.dataset")
+
+    if(tissue=="blood" || tissue=="biopsy"){ 
+        patient.ordering<-NULL
+        patient.ordering[[tissue]]<-lapply(bresat[[tissue]],function(x) x$ranksum) 
+        
+        # qualitative
+        cl.mergedmod.patient<-NULL
+        cl.mergedmod.patient[[tissue]]<- plyr::laply(dat[[tissue]]$clinical[,bc.qual.var], function(y) {
+                                                 plyr::laply(patient.ordering[[tissue]], function (x){
+                                                       anova(lm(x~y))$`Pr(>F)`[1]
+                                                   })
+                                         })
+
+
+          rownames(cl.mergedmod.patient[[tissue]]) <- bc.qual.var
+          colnames(cl.mergedmod.patient[[tissue]]) <- names(bresat[[tissue]])
+
+        # quantitiative
+        
+        merged.moduleTraitCor.patient<-NULL
+        merged.moduleTraitPvalue.patient<-NULL
+
+        merged.moduleTraitCor.patient[[tissue]]= cor(data.frame(patient.ordering[[tissue]]), dat[[tissue]]$clinical[, bc.quant.var], use = "p");
+        merged.moduleTraitPvalue.patient[[tissue]]= WGCNA::corPvalueStudent(merged.moduleTraitCor.patient[[tissue]], nrow(dat[[tissue]]$clinical));
+        cl.mergedmod.patient[[tissue]]<-rbind(cl.mergedmod.patient[[tissue]], t(merged.moduleTraitPvalue.patient[[tissue]]))
+
+        clinicalVars = row.names(cl.mergedmod.patient[[tissue]])
+        cols = colnames(cl.mergedmod.patient[[tissue]]) 
+        cl.mergedmod.patient[[tissue]] = cbind(clinicalVars, cl.mergedmod.patient[[tissue]])
+        colnames(cl.mergedmod.patient[[tissue]]) = c("Clinical", cols) 
+       return(cl.mergedmod.patient[[tissue]])
+    }
+
+} 
 
 #' Get graph nodes for a TOM graph for a given tissue 
 #' @export
