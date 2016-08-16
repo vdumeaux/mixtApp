@@ -555,11 +555,16 @@ userEnrichmentScores <- function(tissue, genelist) {
   intersections = lapply(modules, function(module) {
     intersect(bresat[[tissue]][[module]]$gene.order, genelist)
   }) 
+
+  k = lapply(modules, function(module){
+    length(bresat[[tissue]][[module]]$gene.order)
+  }) 
+  names(k) <- modules 
+  k <- as.integer(k)
   
   names(intersections) <- modules 
   
-  q = sapply(intersections, length) - 1
-  k = sapply(modules, length)
+  q = sapply(intersections, length) -1
   m = length(genelist)
   n = length(all_genes) - length(genelist) 
   
