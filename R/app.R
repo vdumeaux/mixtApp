@@ -867,17 +867,11 @@ patientRankSum <- function(tissueA="blood",tissueB="biopsy",cohort="all") {
 comparisonAnalyses <- function(tissueA, tissueB, moduleA, moduleB){
   
   analyses = NULL
-  eigen = eigengeneCorrelation(tissueA,tissueB) 
-  rank = patientRankCorrelation(tissueA,tissueB)
   overlap = moduleHypergeometricTest(tissueA, tissueB) 
-  roi = roiTest(tissueA, tissueB) 
   ranksum = patientRankSum(tissueA,tissueB,"all")
   
   analyses$ranksum = as.numeric(ranksum[ranksum[,1] == moduleA, colnames(ranksum) == moduleB])
-  analyses$eigen =  as.numeric(eigen[eigen[,1] == moduleA , colnames(eigen) == moduleB])
-  analyses$rank =  as.numeric(rank[rank[,1] == moduleA , colnames(rank) == moduleB])
   analyses$overlap =  as.numeric(overlap[overlap[,1] == moduleA , colnames(overlap) == moduleB])
-  analyses$roi =  as.numeric(roi[roi[,1] == moduleA , colnames(roi) == moduleB])
   
   analyses$common =  intersect(bresat[[tissueA]][[moduleA]]$gene.order,bresat[[tissueB]][[moduleB]]$gene.order)
   return(analyses)
@@ -1039,7 +1033,7 @@ roiClinicalRelation <- function(tissue){
 #' @export 
 clinicalRanksum <- function(tissue) { 
 
-    bc.qual.var<- c("event.5", "er","her2" ,"pam50.parker","hybrid","cit",
+    bc.qual.var<- c("er","her2" ,"pam50.parker","hybrid","cit",
                     "claudin.low", "lum" ,"lumN","prolif" ,"basalL", "lumC",
                     "lumaNormL" ,"basLmApo","lumBlumC", "t.size", "lymph", 
                     "menopause","hrt","weight.70.plus","age.55.plus",
@@ -1049,24 +1043,29 @@ clinicalRanksum <- function(tissue) {
     n.qual.var<- c("menopause","hrt","weight.70.plus","age.55.plus", "medication","orig.dataset")
     bn.qual.var<- c("cancer", bc.qual.var, "orig.dataset")
 
-    if(tissue=="blood" || tissue=="biopsy"){ 
+    if(tissue=="blood" || tissue=="biopsy" || tissue=="bnblood"){ 
         patient.ordering<-NULL
         patient.ordering[[tissue]]<-lapply(bresat[[tissue]],function(x) x$ranksum) 
-        
+  
+        if (tissue == "blood " || tissue == "biopsy") {
+            qual.var = bc.qual.var
+        } else {
+            qual.var = bn.qual.var
+        }
+
         # qualitative
         cl.mergedmod.patient<-NULL
-        cl.mergedmod.patient[[tissue]]<- plyr::laply(dat[[tissue]]$clinical[,bc.qual.var], function(y) {
+        cl.mergedmod.patient[[tissue]]<- plyr::laply(dat[[tissue]]$clinical[,qual.var], function(y) {
                                                  plyr::laply(patient.ordering[[tissue]], function (x){
                                                        anova(lm(x~y))$`Pr(>F)`[1]
                                                    })
                                          })
 
 
-          rownames(cl.mergedmod.patient[[tissue]]) <- bc.qual.var
+          rownames(cl.mergedmod.patient[[tissue]]) <- qual.var
           colnames(cl.mergedmod.patient[[tissue]]) <- names(bresat[[tissue]])
 
         # quantitiative
-        
         merged.moduleTraitCor.patient<-NULL
         merged.moduleTraitPvalue.patient<-NULL
 
@@ -1077,11 +1076,18 @@ clinicalRanksum <- function(tissue) {
         clinicalVars = row.names(cl.mergedmod.patient[[tissue]])
         cols = colnames(cl.mergedmod.patient[[tissue]]) 
         cl.mergedmod.patient[[tissue]] = cbind(clinicalVars, cl.mergedmod.patient[[tissue]])
-        colnames(cl.mergedmod.patient[[tissue]]) = c("Clinical", cols) 
-       return(cl.mergedmod.patient[[tissue]])
-    }
+        colnames(cl.mergedmod.patient[[tissue]]) = c("Clinical", cols)
+        select.var<-c("lymph", "er", "MKS","pam50.parker", "hybrid", "cit",
+                      "lumC", "t.size", "claudin.low", "weight", "LUMS", "hrt",
+                      "her2", "HER2S", "age", "menopause", "medication")
+    
+        tmp = NULL
+        tmp = cl.mergedmod.patient[[tissue]] 
+        tmp = tmp[rownames(tmp) %in% select.var, ]
 
-} 
+       return(tmp)
+    }
+}
 
 #' Get graph nodes for a TOM graph for a given tissue 
 #' @export
