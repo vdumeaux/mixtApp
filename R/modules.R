@@ -714,8 +714,8 @@ plot.pat.bs <- function(bs, dat, pat.cohorts, cohort.name="all", patient.ids=NUL
   grid.lines(x = unit(c(last.ind/length(which(rownames(cl) %in% patients)),last.ind/length(which(rownames(cl) %in% patients))), "npc"),gp=gpar(col='yellow',lty = 1, lwd = 2))
   upViewport()
   
-  bc.var<- c("er","her2" ,"pam50.parker","hybrid.parker","cit", "claudin.low", 
-                  "lymph" ,
+  bc.var<- c("er","her2" ,"pam50.parker","hybrid","cit", "claudin.low", 
+                  "lymph" ,"t.size",
                   "menopause","hrt","medication","hospital",
                   "age","weight", "MKS", "LUMS", "HER2S")
   

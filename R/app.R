@@ -256,16 +256,26 @@ cohort_heatmap <- function(tissue, module, cohort.name="all", patient.ids=NULL, 
 cohort_scatterplot<-function (x.tissue, x.module, y.tissue, y.module, cohort.name="all", patient.ids=NULL){
   
   ## define patients to include
-  if (is.null(patient.ids))
-  {
-    patients<-pat.cohorts(dat$blood)[[cohort.name]]
-  }
-  else
-  {
-    patients<-patient.ids
+  if (is.null(patient.ids)) {
+    patients <- pat.cohorts(dat$blood)[[cohort.name]]
+  } else {
+    patients <- patient.ids
   }
 
-  ### data for scatterplot
+  # we need to swap around these to fix accessing the per.cor.p object
+  if(x.tissue != "blood"){
+      tmp = NULL 
+      xmodule = NULL
+      ymodule = NULL 
+      tmp = x.module
+      xmodule = y.module
+      ymodule = tmp
+  } else { 
+    xmodule=x.module
+    ymodule = y.module
+  }
+
+    ### data for scatterplot
   plot.data<-data.frame(x.ranksum=bresat[[x.tissue]][[x.module]]$ranksum[rownames(dat$blood$clinical) %in% patients],
                         y.ranksum=bresat[[y.tissue]][[y.module]]$ranksum[rownames(dat$blood$clinical) %in% patients],
                         cohort=rep(cohort.name, length(which(rownames(dat$blood$clinical) %in% patients))),
@@ -283,8 +293,8 @@ cohort_scatterplot<-function (x.tissue, x.module, y.tissue, y.module, cohort.nam
     ggplot2::scale_colour_manual(values=levels(factor(plot.data$sub.col)))+
     ggplot2::labs(y=paste(y.module, y.tissue, "module ranksum"),
          x=paste(x.module, x.tissue, "module ranksum"),
-         title=paste(cohort.name, " patients", " (cor=",as.character(signif(cor.test(plot.data$x.ranksum, plot.data$y.ranksum)$estimate, digits=1)), ", p=",
-                     as.character(signif(cor.test(plot.data$x.ranksum, plot.data$y.ranksum)$p.value, digits=1)), ")",sep="")) +
+         title=paste(cohort.name, " patients", "
+                     (cor=",as.character(signif(cor.test(plot.data$x.ranksum, plot.data$y.ranksum)$estimate, digits=1)), ", p=", signif(perm.cor.p[[cohort.name]][xmodule, ymodule], digits=3), ")" , sep=""))+
     ggplot2::theme(legend.position="none",
           panel.background = element_rect(fill = "transparent",colour = NA),
           axis.line.x   = element_line(colour="grey60"),
@@ -702,27 +712,20 @@ moduleHypergeometricTest <- function(tissueA, tissueB){
 }
 
 #' Compute gene overlap between genes from two tissues 
-#'@export 
-geneOverlapTest <- function(modules, tissueA="blood", tissueB="biopsy"){
-  all.genes <- names(moduleColors$blood)
-  
-  pvals <- sapply(bresat[[tissueB]], function(tissueB.mod) {
-    sapply(bresat[[tissueA]], function(tissueA.mod) {
-      
-      white <- length(intersect(tissueB.mod$gene.order, all.genes))
-      black <- length(all.genes) - white
-      total.drawn <- length(intersect(tissueA.mod$gene.order, all.genes))
-      white.drawn <- length(intersect(tissueA.mod$gene.order, tissueB.mod$gene.order))
-      
-      phyper(white.drawn - 1, white, black, total.drawn, log.p = FALSE, lower.tail=FALSE)
-    })
-  })
-  
-  
-  ret <- p.adjust(pvals, method="BH")
-  dim(ret) <- dim(pvals)
-  dimnames(ret) <- dimnames(pvals)
-  return(ret)
+#' @import WGCNA
+#' @export 
+geneOverlapTest <- function(tissueA="blood", tissueB="biopsy"){
+    tissue.overlap = NULL
+    tissue.overlap = WGCNA::overlapTable(moduleColors[[tissueA]], moduleColors[[tissueB]])
+    adjusted = NULL
+    adjusted = matrix(p.adjust(tissue.overlap$pTable, method="BH"),
+                         nrow = nrow(tissue.overlap$pTable),
+                         ncol=ncol(tissue.overlap$pTable)) 
+    adjusted = as.data.frame(adjusted) 
+    rownames(adjusted) = rownames(tissue.overlap$pTable) 
+    adjusted = cbind(rownames(adjusted), adjusted)
+    colnames(adjusted) = c("module", colnames(tissue.overlap$pTable))
+    return(adjusted)
 }
 
 #' ROI fisher's exact test
@@ -825,7 +828,7 @@ patientRankSum <- function(tissueA="blood",tissueB="biopsy",cohort="all") {
     pat.dat <- NULL  
     for(tissue in tissues){
       pat.dat[[tissue]]$cohorts <- pat.cohorts(dat[[tissue]])
-    }
+   }
     
     cohorts<- names(pat.dat[[tissue]]$cohorts)
     ranksum<-NULL
@@ -867,13 +870,13 @@ patientRankSum <- function(tissueA="blood",tissueB="biopsy",cohort="all") {
 comparisonAnalyses <- function(tissueA, tissueB, moduleA, moduleB){
   
   analyses = NULL
-  overlap = moduleHypergeometricTest(tissueA, tissueB) 
+  overlap = geneOverlapTest(tissueA, tissueB) 
   ranksum = patientRankSum(tissueA,tissueB,"all")
   
   analyses$ranksum = as.numeric(ranksum[ranksum[,1] == moduleA, colnames(ranksum) == moduleB])
   analyses$overlap =  as.numeric(overlap[overlap[,1] == moduleA , colnames(overlap) == moduleB])
-  
   analyses$common =  intersect(bresat[[tissueA]][[moduleA]]$gene.order,bresat[[tissueB]][[moduleB]]$gene.order)
+
   return(analyses)
 }
 
