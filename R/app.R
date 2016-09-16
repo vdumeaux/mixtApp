@@ -125,10 +125,11 @@ cohort_heatmap <- function(tissue, module, cohort.name="all", patient.ids=NULL, 
     key.max=5
     
     ## define reordered variables
-    order.by<-bresat[[orderByTissue]][[orderByModule]]$pat.order
-    roi<-bresat[[orderByTissue]][[orderByModule]]$roi
-    roi.cat<-bresat[[orderByTissue]][[orderByModule]]$roi.cat
+    order.by<-bresat[[orderByTissue]][[orderByModule]][[cohort.name]]$pat.order
+    roi<-bresat[[orderByTissue]][[orderByModule]][[cohort.name]]$roi
+    roi.cat<-bresat[[orderByTissue]][[orderByModule]][[cohort.name]]$roi.cat
     
+<<<<<<< HEAD
     mclinical = NULL
     cl = NULL
     if(tissue== "blood" || tissue=="biopsy"){
@@ -148,6 +149,8 @@ cohort_heatmap <- function(tissue, module, cohort.name="all", patient.ids=NULL, 
     if (!is.null(gene.names))
     {data<-data[rownames(data) %in% gene.names,]}
         
+=======
+>>>>>>> update heatmap_cohort(), scatterplot() and boxplot()
     ## define patients to include
     if (is.null(patient.ids))
     {
@@ -158,7 +161,21 @@ cohort_heatmap <- function(tissue, module, cohort.name="all", patient.ids=NULL, 
       patients<-patient.ids
     }
     
+<<<<<<< HEAD
     bc.var<- c("er","her2" ,"pam50.parker","hybrid","cit", "claudin.low", 
+=======
+    ## define reordered clinical data
+    cl<-dat$blood$clinical[rownames(dat$blood$clinical) %in% patients,]
+    mclinical = cl[order.by,]
+    
+    ## define blood reordered expression and select genes
+    bs <- bresat[[tissue]][[module]][[cohort.name]]
+    data = bs$dat[, match(rownames(mclinical), colnames(bs$dat))]
+    if (!is.null(gene.names))
+    {data<-data[rownames(data) %in% gene.names,]}
+        
+    bc.var<- c("er","her2" ,"pam50.parker","hybrid.parker","cit", "claudin.low", 
+>>>>>>> update heatmap_cohort(), scatterplot() and boxplot()
                "lymph" , "t.size",
                "menopause","hrt","medication",
                "age","weight", "MKS", "LUMS", "HER2S")
@@ -166,22 +183,29 @@ cohort_heatmap <- function(tissue, module, cohort.name="all", patient.ids=NULL, 
       bc.var = c("cancer",bc.var)
     }
     
+<<<<<<< HEAD
     ## plot blood heatmap top left (no clinical)
     ddrs = heatmap.simple(data[, colnames(data) %in% patients],
                           clinical = huc::huc.color.clinical(mclinical)[rownames(mclinical) %in% patients,][,bc.var], 
+=======
+    ## plot heatmap
+    ddrs = heatmap.simple(data,
+                          clinical = huc.color.clinical(mclinical)[rownames(mclinical) %in% patients,][,bc.var], 
+>>>>>>> update heatmap_cohort(), scatterplot() and boxplot()
                           layout.mat = layout.m, widths = widths, heights = heights, col.clust = FALSE, 
                           row.clust = FALSE, title=paste(cohort.name, module, tissue, "ordered by", orderByModule, orderByTissue),
                           row.labels=rownames(data),
-                          col.labels=rep("", length(which(colnames(data) %in% patients))))
+                          col.labels=rep("", length(colnames(data))))
     
     ## plot updn top left heatmap
-    up.dn = as.vector(array(1,dim=c(1,length(bresat[[tissue]][[module]]$gene.order))))
-    names(up.dn) = unique(c(bresat[[tissue]][[module]]$up,bresat[[tissue]][[module]]$dn))
-    up.dn[names(up.dn) %in% bresat[[tissue]][[module]]$dn] = -1
-    to.plot = (as.matrix(up.dn,ncol=1)[bresat[[tissue]][[module]]$gene.order,,drop=FALSE])
+    up.dn = as.vector(array(1,dim=c(1,length(bs$gene.order))))
+    names(up.dn) = rownames(bs$dat)
+    if(length(bs$dn)>0){
+      up.dn[names(up.dn) %in% rownames(dat[[tissue]]$exprs)[bs$dn]] = -1}
+    to.plot = (as.matrix(up.dn,ncol=1))
     color.scheme = heatmap.color.scheme(low.breaks=c(-1.5,0),high.breaks=c(0,1.5))
     heatmap.simple(to.plot, scale=scale, layout.mat = layout.m.updn, widths = widths, heights = heights, col.clust = FALSE, row.clust = FALSE, color.scheme = color.scheme)
-       
+    
     ## plot ranks for top left heatmap
     the.layout <- grid.layout(nrow(layout.m), ncol(layout.m), widths=widths, heights=heights)
     mid.vp <- viewport(layout=the.layout, name="heatmap.mid.vp")
@@ -192,9 +216,9 @@ cohort_heatmap <- function(tissue, module, cohort.name="all", patient.ids=NULL, 
                           layout.pos.row=unique(idx[,1]),
                           layout.pos.col=unique(idx[,2])))
     
-    rank.colors<-rev(diverge_hcl(n=ncol(bresat[[tissue]][[module]]$dat)))
-    names(rank.colors)<-colnames(bresat[[tissue]][[module]]$dat)
-    rank.colors<-rank.colors[match(rownames(cl)[order.by], colnames(bresat[[tissue]][[module]]$dat))]
+    rank.colors<-rev(diverge_hcl(n=ncol(bs$dat)))
+    names(rank.colors)<-colnames(bs$dat)
+    rank.colors<-rank.colors[match(rownames(mcl), colnames(bs$dat))]
     ranksum = t(as.matrix(rank.colors))[,names(rank.colors) %in% patients,drop=FALSE]
     heatmap.clinical(ranksum)
     upViewport()
@@ -211,16 +235,24 @@ cohort_heatmap <- function(tissue, module, cohort.name="all", patient.ids=NULL, 
     the.layout <- grid.layout(nrow(layout.m), ncol(layout.m), widths=widths, heights=heights)
     top.vp <- viewport(layout=the.layout, name="heatmap.top.vp")
     pushViewport(top.vp)
-    
+
+    ranksum.plot = bs$ranksum[order.by][colnames(data) %in% patients]
+
     elem = 'ranksum.line'
     idx <- which(layout.m == elem, arr.ind=TRUE)
     pushViewport(viewport(name=elem,
                           layout.pos.row=unique(idx[,1]),
-                          layout.pos.col=unique(idx[,2])))
-    ranksum.plot = bresat[[tissue]][[module]]$ranksum[order.by][colnames(data) %in% patients]
-    par(new=TRUE, fig=gridFIG(), mar=c(0,0,0,0))
-    plot(1:length(ranksum.plot), ranksum.plot, ann=FALSE, xaxs='i', yaxt='n', xaxt='n',bty='n',type='l')
+                          layout.pos.col=unique(idx[,2]),
+                          xscale=c(0.5, length(ranksum.plot) + 0.5),
+                          yscale=range(ranksum.plot)))
+    
+    grid.rect(gp=gpar(lwd=0.1))
+    grid.polyline(rep(c(0, 1), 4), rep(c(0.2, 0.4, 0.6, 0.8), each=2), id.lengths=rep(2, 4), gp=gpar(lwd=0.1, col="grey70"))
+    xrange <- range(1:length(ranksum.plot))
+    n <- length(ranksum.plot)
+    grid.segments(unit(1:length(ranksum.plot),"native"), rep(0,n), unit(1:length(ranksum.plot),"native"),unit(ranksum.plot, "native"))
     upViewport()
+    
     
     elem = 'ranksum.text'
     idx <- which(layout.m == elem, arr.ind=TRUE)
@@ -275,11 +307,19 @@ cohort_scatterplot<-function (x.tissue, x.module, y.tissue, y.module, cohort.nam
     ymodule = y.module
   }
 
+<<<<<<< HEAD
     ### data for scatterplot
   plot.data<-data.frame(x.ranksum=bresat[[x.tissue]][[x.module]]$ranksum[rownames(dat$blood$clinical) %in% patients],
                         y.ranksum=bresat[[y.tissue]][[y.module]]$ranksum[rownames(dat$blood$clinical) %in% patients],
                         cohort=rep(cohort.name, length(which(rownames(dat$blood$clinical) %in% patients))),
                         subtype=huc::huc.color.clinical(dat$blood$clinical)$hybrid[rownames(dat$blood$clinical) %in% patients])
+=======
+  ### data for scatterplot
+  plot.data<-data.frame(x.ranksum=bresat[[x.tissue]][[x.module]][[cohort.name]]$ranksum,
+                        y.ranksum=bresat[[y.tissue]][[y.module]][[cohort.name]]$ranksum,
+                        cohort=rep(cohort.name, length(patients)),
+                        subtype=huc.color.clinical(dat$blood$clinical)$hybrid.parker[rownames(dat$blood$clinical) %in% patients])
+>>>>>>> update heatmap_cohort(), scatterplot() and boxplot()
   sub.col <- c(normal="white", all="grey", erp="green", ern="firebrick2", her2p="hotpink2", her2n="#21B6A8",
                erp.her2p="orange", ern.her2p="hotpink2", erp.her2n="blue", ern.her2n="firebrick2",
                luma="blue4", erp.luma="blue4", lumb="deepskyblue", erp.lumb="deepskyblue", normL="green4", erp.normL="green4", basalL="firebrick2", her2E="hotpink2", erp.her2E="orange", erp.basalL="#7fffd4", 
@@ -293,9 +333,15 @@ cohort_scatterplot<-function (x.tissue, x.module, y.tissue, y.module, cohort.nam
     ggplot2::scale_colour_manual(values=levels(factor(plot.data$sub.col)))+
     ggplot2::labs(y=paste(y.module, y.tissue, "module ranksum"),
          x=paste(x.module, x.tissue, "module ranksum"),
+<<<<<<< HEAD
          title=paste(cohort.name, " patients", "
                      (cor=",as.character(signif(cor.test(plot.data$x.ranksum, plot.data$y.ranksum)$estimate, digits=1)), ", p=", signif(perm.cor.p[[cohort.name]][xmodule, ymodule], digits=3), ")" , sep=""))+
     ggplot2::theme(legend.position="none",
+=======
+         title=paste(cohort.name, " patients", " (cor=",as.character(signif(cor.test(plot.data$x.ranksum, plot.data$y.ranksum)$estimate, digits=1)), ", p=",
+                     signif(perm.cor.p[[cohort.name]][x.module, y.module], digits = 3),")",sep="")) +
+    theme(legend.position="none",
+>>>>>>> update heatmap_cohort(), scatterplot() and boxplot()
           panel.background = element_rect(fill = "transparent",colour = NA),
           axis.line.x   = element_line(colour="grey60"),
           axis.line.y   = element_line(colour="grey60"),
@@ -317,7 +363,7 @@ cohort_boxplot<-function (blood.module, orderByTissue, orderByModule, cohort.nam
   if(is.null(orderByTissue)){
     orderByTissue = tissue
   }
-  roi.cat<-bresat[[orderByTissue]][[orderByModule]]$roi.cat
+  roi.cat<-bresat[[orderByTissue]][[orderByModule]][[cohort.name]]$roi.cat
   
   ## define patients to include
   if (is.null(patient.ids))
@@ -328,12 +374,16 @@ cohort_boxplot<-function (blood.module, orderByTissue, orderByModule, cohort.nam
     patients<-patient.ids
   }
   
+  bs <- bresat$bnblood[[blood.module]][[cohort.name]]
+  bnclinical=dat$bnblood$clinical[rownames(dat$bnblood$clinical) %in% patients, ]
+  
+  
   ### data for scatterplot
-  plot.data<-data.frame(bnbl.ranksum=c(bresat$bnblood[[blood.module]]$ranksum[rownames(dat$bnblood$clinical) %in% patients & dat$bnblood$clinical$cancer==TRUE],
-                                                 bresat$bnblood[[blood.module]]$ranksum[dat$bnblood$clinical$cancer==FALSE]),
-                        cohort=c(rep(cohort.name, length(which(rownames(dat$bnblood$clinical) %in% patients & dat$bnblood$clinical$cancer==TRUE))), 
-                                            rep("normal", length(which(dat$bnblood$clinical$cancer==FALSE)))),
-                        roi.cat=c(roi.cat[rownames(dat$blood$clinical) %in% patients], rep(NA, length(which(dat$bnblood$clinical$cancer==FALSE)))))
+  
+  plot.data<-data.frame(bnbl.ranksum=bs$ranksum[c(which(bnclinical$cancer==TRUE), which(bnclinical$cancer==FALSE))],
+                      cohort=c(rep(cohort.name, length(which(bnclinical$cancer==TRUE))), 
+                                rep("normal", length(which(bnclinical$cancer==FALSE)))),
+                      roi.cat=c(roi.cat[rownames(dat$blood$clinical) %in% patients], rep(NA, length(which(dat$bnblood$clinical$cancer==FALSE)))))
 
   plot.data$cancer<-1
   plot.data$cancer<-ifelse( plot.data$roi.cat==1 & !is.na(plot.data$roi.cat), 4, as.character(plot.data$cancer))
@@ -346,7 +396,7 @@ cohort_boxplot<-function (blood.module, orderByTissue, orderByModule, cohort.nam
   plot.data$tumor.cat<-ifelse(plot.data$roi.cat==2 & !is.na(plot.data$roi.cat), "mid", as.character(plot.data$tumor.cat))
   plot.data$tumor.cat<-ifelse(plot.data$roi.cat==3 & !is.na(plot.data$roi.cat), "high", as.character(plot.data$tumor.cat))
   plot.data$tumor.cat<-factor(plot.data$tumor.cat, levels=c("low", "mid", "high", "control"))
-  plot.data$tumor.cat.ordered<-factor(plot.data$tumor.cat, levels=c("low", "mid", "high", "control"), ordered=T)
+  plot.data$tumor.cat.ordered<-factor(plot.data$tumor.cat, levels=c("high", "mid", "low", "control"), ordered=T)
 
   sub.col <- c(normal="white", all="grey", erp="green", ern="firebrick2", her2p="hotpink2", her2n="#21B6A8",
                erp.her2p="orange", ern.her2p="hotpink2", erp.her2n="blue", ern.her2n="firebrick2",
