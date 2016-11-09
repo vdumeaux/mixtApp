@@ -8,6 +8,7 @@
 #' @param orderByModule which module we want to order patients by. Default is order by module. 
 #' @param orderByTissue the tissue where the orderByModule module is found. Default is the same tissue. 
 #' @param re.order set to true if patients should be re ordered. Defaults to FALSE. 
+#' @param cohort the patient cohort we select patients from, defaults to all patients
 #' @import colorspace
 #' @import BCIutils
 #' @import huc
@@ -15,80 +16,6 @@
 #' @examples
 #' heatmap("blood", "green")
 #' heatmap("biopsy", "blue") 
-#' 
-heatmap <- function(tissue, module, re.order=FALSE, orderByModule=NULL, orderByTissue=NULL, subtypes=NULL) { 
-    plot.new()
-    title = "" 
-    if(is.null(orderByModule)){
-      orderByModule = module
-    }
-    if(is.null(orderByTissue)){
-      orderByTissue = tissue
-    }
-    
-    if(tissue == "blood"){
-      clinical=huc::huc.color.clinical(dat$blood$clinical)[,c(1,3:15, 17, 19,21:25, 27, 29:33)]
-    }
-    if(tissue =="biopsy"){
-      clinical=huc::huc.color.clinical(dat$biopsy$clinical)[,c(1,3:15,17, 21:25, 27, 29:33)]
-    }
-    
-    if(tissue == "nblood") {
-      clinical=huc::huc.color.clinical(dat$nblood$clinical)[, c(19,22:27)]
-    }
-    
-    if(tissue == "bnblood") {
-      clinical=huc::huc.color.clinical(dat$nblood$clinical)[, c(1,3:15,17, 19,21:25,26, 27, 29:33)]
-    }
-          
-    if(re.order == FALSE || (orderByTissue==tissue && orderByModule==module)){
-      title = paste(module," module from ",tissue, sep="") 
-    }  else {
-      title = paste(paste(module, " module from ",tissue ,sep=""), "ordered by", orderByModule, "module from", orderByTissue, sep=" ") 
-    }
-    
-
-    
-    create.modules.heatmap(bs = bresat[[tissue]][[module]], 
-                           exprs = dat[[tissue]]$exprs, 
-                           clinical = clinical,
-                           re.order = re.order,
-                           bs.order.by = bresat[[orderByTissue]][[orderByModule]],
-                           
-                           title = title)
-    #dev.off() 
-}
-
-clinical_variables <- function(tissue){
-  bc.var<- c("er","her2" ,"pam50.parker","hybrid","cit", "claudin.low", 
-             "lymph" , "t.size",
-             "menopause","hrt","medication","hospital",
-             "age","weight", "MKS", "LUMS", "HER2S")
-  if(tissue == "biopsy" || tissue=="blood"){
-    return (bc.var)
-  } else if(tissue == "bnblood"){
-    return(c("cancer", bc.var))
-  }
-}
-
-
-getClinicalVariables  <- function(tissue, type) {
-    bc.var <-c("er","her2" ,"pam50.parker","hybrid","cit", "claudin.low",
-    "basalL","lumC", "MKS", "LUMS", "HER2S", "lymph","t.size", "age",
-    "menopause","hrt","weight","medication")
-
-    n.var<- c("age", "menopause","hrt","weight","medication")
-
-    bn.var<- c("cancer", bc.var) 
-
-    if(tissue == "biopsy" || tissue=="blood"){
-        return (bc.var)
-    } else if(tissue == "bnblood"){
-        return(bn.var)
-    }
-}
-
-# Generate module heatmap for given cohort 
 #'@export
 cohort_heatmap <- function(tissue, module, cohort.name="all", patient.ids=NULL, gene.names=NULL,  orderByModule=NULL, orderByTissue=NULL, cl.height=6, title=title) 
   {
@@ -99,6 +26,12 @@ cohort_heatmap <- function(tissue, module, cohort.name="all", patient.ids=NULL, 
     }
     if(is.null(orderByTissue)){
       orderByTissue = tissue
+    }
+    
+    if(orderByModule == module && orderByTissue == tissue) {
+        title = paste(module," module from ",tissue, sep="") 
+    } else {
+      title = paste(cohort.name, module, tissue, "ordered by", orderByModule, orderByTissue)
     }
     
     #heatmap variables
@@ -125,9 +58,9 @@ cohort_heatmap <- function(tissue, module, cohort.name="all", patient.ids=NULL, 
     key.max=5
     
     ## define reordered variables
-    order.by<-bresat[[orderByTissue]][[orderByModule]]$pat.order
-    roi<-bresat[[orderByTissue]][[orderByModule]]$roi
-    roi.cat<-bresat[[orderByTissue]][[orderByModule]]$roi.cat
+    order.by<-bresat[[orderByTissue]][[orderByModule]][[cohort.name]]$pat.order
+    roi<-bresat[[orderByTissue]][[orderByModule]][[cohort.name]]$roi
+    roi.cat<-bresat[[orderByTissue]][[orderByModule]][[cohort.name]]$roi.cat
     
     mclinical = NULL
     cl = NULL
@@ -144,17 +77,14 @@ cohort_heatmap <- function(tissue, module, cohort.name="all", patient.ids=NULL, 
     #
     
     ## define blood reordered expression and select genes
-    data = bresat[[tissue]][[module]]$dat[, match(rownames(cl)[order.by], colnames(bresat[[tissue]][[module]]$dat))]
+    data = bresat[[tissue]][[module]][[cohort.name]]$dat[, match(rownames(cl)[order.by], colnames(bresat[[tissue]][[module]][[cohort.name]]$dat))]
     if (!is.null(gene.names))
     {data<-data[rownames(data) %in% gene.names,]}
         
     ## define patients to include
-    if (is.null(patient.ids))
-    {
+    if (is.null(patient.ids)){
       patients<-pat.cohorts(dat[[tissue]])[[cohort.name]]
-    }
-    else
-    {
+    } else {
       patients<-patient.ids
     }
     
@@ -170,15 +100,15 @@ cohort_heatmap <- function(tissue, module, cohort.name="all", patient.ids=NULL, 
     ddrs = heatmap.simple(data[, colnames(data) %in% patients],
                           clinical = huc::huc.color.clinical(mclinical)[rownames(mclinical) %in% patients,][,bc.var], 
                           layout.mat = layout.m, widths = widths, heights = heights, col.clust = FALSE, 
-                          row.clust = FALSE, title=paste(cohort.name, module, tissue, "ordered by", orderByModule, orderByTissue),
+                          row.clust = FALSE, title= title,
                           row.labels=rownames(data),
                           col.labels=rep("", length(which(colnames(data) %in% patients))))
     
     ## plot updn top left heatmap
-    up.dn = as.vector(array(1,dim=c(1,length(bresat[[tissue]][[module]]$gene.order))))
-    names(up.dn) = unique(c(bresat[[tissue]][[module]]$up,bresat[[tissue]][[module]]$dn))
-    up.dn[names(up.dn) %in% bresat[[tissue]][[module]]$dn] = -1
-    to.plot = (as.matrix(up.dn,ncol=1)[bresat[[tissue]][[module]]$gene.order,,drop=FALSE])
+    up.dn = as.vector(array(1,dim=c(1,length(bresat[[tissue]][[module]][[cohort.name]]$gene.order))))
+    names(up.dn) = unique(c(bresat[[tissue]][[module]][[cohort.name]]$up,bresat[[tissue]][[module]][[cohort.name]]$dn))
+    up.dn[names(up.dn) %in% bresat[[tissue]][[module]][[cohort.name]]$dn] = -1
+    to.plot = (as.matrix(up.dn,ncol=1)[as.character(bresat[[tissue]][[module]][[cohort.name]]$gene.order),,drop=FALSE])
     color.scheme = heatmap.color.scheme(low.breaks=c(-1.5,0),high.breaks=c(0,1.5))
     heatmap.simple(to.plot, scale=scale, layout.mat = layout.m.updn, widths = widths, heights = heights, col.clust = FALSE, row.clust = FALSE, color.scheme = color.scheme)
        
@@ -192,9 +122,9 @@ cohort_heatmap <- function(tissue, module, cohort.name="all", patient.ids=NULL, 
                           layout.pos.row=unique(idx[,1]),
                           layout.pos.col=unique(idx[,2])))
     
-    rank.colors<-rev(diverge_hcl(n=ncol(bresat[[tissue]][[module]]$dat)))
-    names(rank.colors)<-colnames(bresat[[tissue]][[module]]$dat)
-    rank.colors<-rank.colors[match(rownames(cl)[order.by], colnames(bresat[[tissue]][[module]]$dat))]
+    rank.colors<-rev(diverge_hcl(n=ncol(bresat[[tissue]][[module]][[cohort.name]]$dat)))
+    names(rank.colors)<-colnames(bresat[[tissue]][[module]][[cohort.name]]$dat)
+    rank.colors<-rank.colors[match(rownames(cl)[order.by], colnames(bresat[[tissue]][[module]][[cohort.name]]$dat))]
     ranksum = t(as.matrix(rank.colors))[,names(rank.colors) %in% patients,drop=FALSE]
     heatmap.clinical(ranksum)
     upViewport()
@@ -212,22 +142,40 @@ cohort_heatmap <- function(tissue, module, cohort.name="all", patient.ids=NULL, 
     top.vp <- viewport(layout=the.layout, name="heatmap.top.vp")
     pushViewport(top.vp)
     
+    
+    # TODO: LOOK AT MODULES.R LINE 806, MOVE RANKSUM.PLOT FIRST AND THEN PUSH
+    # VIEWPORT, THEN NOT A LINE BUT BAR CHART 
+    
+    
     elem = 'ranksum.line'
     idx <- which(layout.m == elem, arr.ind=TRUE)
+    ranksum.plot = bresat[[tissue]][[module]][[cohort.name]]$ranksum[order.by][colnames(data) %in% patients]
+    
     pushViewport(viewport(name=elem,
                           layout.pos.row=unique(idx[,1]),
-                          layout.pos.col=unique(idx[,2])))
-    ranksum.plot = bresat[[tissue]][[module]]$ranksum[order.by][colnames(data) %in% patients]
-    par(new=TRUE, fig=gridFIG(), mar=c(0,0,0,0))
-    plot(1:length(ranksum.plot), ranksum.plot, ann=FALSE, xaxs='i', yaxt='n', xaxt='n',bty='n',type='l')
+                          layout.pos.col=unique(idx[,2]),
+                          xscale=c(0.5, length(ranksum.plot) + 0.5),
+                          yscale=range(ranksum.plot)))
+                     
+    grid.rect(gp=gpar(lwd=0.1))
+    grid.polyline(rep(c(0, 1), 4), rep(c(0.2, 0.4, 0.6, 0.8), each=2), id.lengths=rep(2, 4), gp=gpar(lwd=0.1, col="grey70"))
+    xrange <- range(1:length(ranksum.plot))
+    n <- length(ranksum.plot)
+    grid.segments(unit(1:length(ranksum.plot),"native"), rep(0,n), unit(1:length(ranksum.plot),"native"),unit(ranksum.plot, "native"))
     upViewport()
     
-    elem = 'ranksum.text'
-    idx <- which(layout.m == elem, arr.ind=TRUE)
-    pushViewport(viewport(name=elem,
-                          layout.pos.row=unique(idx[,1]),
-                          layout.pos.col=unique(idx[,2])))
     
+         
+   #  par(new=TRUE, fig=gridFIG(), mar=c(0,0,0,0))
+   #  plot(1:length(ranksum.plot), ranksum.plot, ann=FALSE, xaxs='i', yaxt='n', xaxt='n',bty='n',type='l')
+   #  upViewport()
+     
+     elem = 'ranksum.text'
+     idx <- which(layout.m == elem, arr.ind=TRUE)
+     pushViewport(viewport(name=elem,
+                           layout.pos.row=unique(idx[,1]),
+                           layout.pos.col=unique(idx[,2])))
+     
     heatmap.labels('ranksum', type="row.labels", just="right")
     upViewport()
     
@@ -276,8 +224,8 @@ cohort_scatterplot<-function (x.tissue, x.module, y.tissue, y.module, cohort.nam
   }
 
     ### data for scatterplot
-  plot.data<-data.frame(x.ranksum=bresat[[x.tissue]][[x.module]]$ranksum[rownames(dat$blood$clinical) %in% patients],
-                        y.ranksum=bresat[[y.tissue]][[y.module]]$ranksum[rownames(dat$blood$clinical) %in% patients],
+  plot.data<-data.frame(x.ranksum=bresat[[x.tissue]][[x.module]][[cohort.name]]$ranksum[rownames(dat$blood$clinical) %in% patients],
+                        y.ranksum=bresat[[y.tissue]][[y.module]][[cohort.name]]$ranksum[rownames(dat$blood$clinical) %in% patients],
                         cohort=rep(cohort.name, length(which(rownames(dat$blood$clinical) %in% patients))),
                         subtype=huc::huc.color.clinical(dat$blood$clinical)$hybrid[rownames(dat$blood$clinical) %in% patients])
   sub.col <- c(normal="white", all="grey", erp="green", ern="firebrick2", her2p="hotpink2", her2n="#21B6A8",
@@ -308,16 +256,13 @@ cohort_scatterplot<-function (x.tissue, x.module, y.tissue, y.module, cohort.nam
 #' Generate boxplot. 
 #' @export 
 cohort_boxplot<-function (blood.module, orderByTissue, orderByModule, cohort.name="all", patient.ids=NULL){
-  #require(ggplot2)
-  
-  
   if(is.null(orderByModule)){
     orderByModule = module
   }
   if(is.null(orderByTissue)){
     orderByTissue = tissue
   }
-  roi.cat<-bresat[[orderByTissue]][[orderByModule]]$roi.cat
+  roi.cat<-bresat[[orderByTissue]][[orderByModule]][[cohort.name]]$roi.cat
   
   ## define patients to include
   if (is.null(patient.ids))
@@ -329,8 +274,8 @@ cohort_boxplot<-function (blood.module, orderByTissue, orderByModule, cohort.nam
   }
   
   ### data for scatterplot
-  plot.data<-data.frame(bnbl.ranksum=c(bresat$bnblood[[blood.module]]$ranksum[rownames(dat$bnblood$clinical) %in% patients & dat$bnblood$clinical$cancer==TRUE],
-                                                 bresat$bnblood[[blood.module]]$ranksum[dat$bnblood$clinical$cancer==FALSE]),
+  plot.data<-data.frame(bnbl.ranksum=c(bresat$bnblood[[blood.module]][[cohort.name]]$ranksum[rownames(dat$bnblood$clinical) %in% patients & dat$bnblood$clinical$cancer==TRUE],
+                                                 bresat$bnblood[[blood.module]][[cohort.name]]$ranksum[dat$bnblood$clinical$cancer==FALSE]),
                         cohort=c(rep(cohort.name, length(which(rownames(dat$bnblood$clinical) %in% patients & dat$bnblood$clinical$cancer==TRUE))), 
                                             rep("normal", length(which(dat$bnblood$clinical$cancer==FALSE)))),
                         roi.cat=c(roi.cat[rownames(dat$blood$clinical) %in% patients], rep(NA, length(which(dat$bnblood$clinical$cancer==FALSE)))))
@@ -401,7 +346,7 @@ getAllModules <- function(gene) {
 
 #' Retrieves an overview of all genes and the modules they participate in.
 #' @export  
-getAllGenesAndModules <- function() {
+getAllGenesAndModules <- function(cohort="all") {
   res <- NULL
   tissues <- getAllTissues()
   for (tissue in tissues){
@@ -409,8 +354,9 @@ getAllGenesAndModules <- function() {
       if(module == "grey"){
         next 
       }
-      gs <- bresat[[tissue]][[module]]$gene.order
+      gs <- bresat[[tissue]][[module]][[cohort]]$gene.order
       for(gene in gs){
+        gene = as.character(gene)
         if(length(res[[gene]])==0) {
           res[[gene]] = list()
           for (ti in tissues){ 
@@ -440,21 +386,19 @@ getAllTissues <- function() {
 #' @param module is the module we want to get the genes from
 #' @return matrix with columns: gene name, up.dn, cor 
 #' @export  
-getGeneList <- function(tissue,module){
-  genes <- bresat[[tissue]][[module]]$gene.order
-  up.dn <- bresat[[tissue]][[module]]$up.dn
+getGeneList <- function(tissue, module, cohort="all"){
+  genes <- rownames(bresat[[tissue]][[module]][[cohort]]$dat)
+  up.dn <- bresat[[tissue]][[module]][[cohort]]$up.dn
 
   res <- matrix(c(genes,up.dn), nrow=length(genes))
   colnames(res) <- c("Gene", "up.dn")
   res = data.frame(res)
   
   # get correlation and merge  
-  a = matrix(unlist(c(bresat[[tissue]][[module]]$up.cor, bresat[[tissue]][[module]]$dn.cor)))
+  a = matrix(unlist(c(bresat[[tissue]][[module]][[cohort]]$up.cor, bresat[[tissue]][[module]][[cohort]]$dn.cor)))
   colnames(a) <- c("cor")
   df = data.frame(a) 
-  df$Gene = names(c(bresat[[tissue]][[module]]$up.cor, bresat[[tissue]][[module]]$dn.cor))
-  
-  res = merge(res, df, by="Gene", sort=FALSE) 
+  res = cbind(res, df)
   return(res)
 } 
 
@@ -628,45 +572,6 @@ getGOScoresForTissue <- function(tissue, term) {
     return(res)
 }
 
-#' Calculates eigengene correlations between tissue A and tissue B. Returns
-#' the p-values. 
-#' @export 
-eigengeneCorrelation <- function(tissueA,tissueB){
-  MEs = computeEigengenes(c(tissueA,tissueB)) 
-  
-  if(tissueA==tissueB){
-    module2Cor<-NULL
-    module2Pvalue<-NULL
-    
-    module2Cor[[tissueA]] = cor(MEs[[tissueA]], use = "p");
-    module2Pvalue[[tissueA]] = WGCNA::corPvalueStudent(module2Cor[[tissueA]], ncol(dat$blood$exprs)); 
-    
-    res <- NULL
-    
-    moduleNames = names(bresat[[tissueA]])
-    
-    res = matrix(unlist(module2Pvalue[[tissueA]]), ncol=length(moduleNames))
-    
-    #log transform 
-    #res = -log10(res) 
-    #res[res > 10] <- 10
-    
-    res = cbind(moduleNames, res)
-    colnames(res) = c("module", moduleNames)
-    return(res) 
-  }
-  
-  ## Correlation analyses of eigengenes across tissues
-  moduleCor = cor(MEs[[tissueA]], MEs[[tissueB]], use = "p");
-  modulePvalue = WGCNA::corPvalueStudent(moduleCor, ncol(dat$blood$exprs));
-  res <- NULL
-  res = matrix(unlist(modulePvalue), ncol=length(names(MEs[[tissueB]])))
-  rownames(res) = NULL
-  res = cbind(names(bresat[[tissueA]]),res)
-  colnames(res) = c("module", names(bresat[[tissueB]]))
-  return(res) 
-}
-
 #' Computes module eigengenes for modules in the given tissues
 #' @param tissues is a vector of tissues 
 #' @return MEs object with module eigengenes for each tissue
@@ -684,32 +589,7 @@ computeEigengenes <- function(tissues) {
   return(MEs)
 }
 
-#' Run gene overlap test between eigengenes in tissueA and tissueB. Returns 
-#' p values 
-#' @param tissueA is the first tissue we are interested in, e.g. "blood"
-#' @param tissueB is the other, e.g. "biopsy" 
-#' @export  
-moduleHypergeometricTest <- function(tissueA, tissueB){
-  
-  MEs = computeEigengenes(c(tissueA,tissueB)) 
-  
-  moduleCor = cor(MEs[[tissueA]], MEs[[tissueB]], use = "p");
-  modulePvalue = WGCNA::corPvalueStudent(moduleCor, ncol(dat[[tissueA]]$exprs));
-  
-  hyper <- geneOverlapTest(mymodules,tissueA,tissueB)
-  hyper <- hyper[match(rownames(modulePvalue), paste("ME", rownames(hyper), sep="")),
-                 match(colnames(modulePvalue), paste("ME", colnames(hyper), sep=""))]
-  
-  #hyper = t(hyper) 
-  cols = colnames(hyper) 
-  ret = NULL
-  ret = as.matrix(hyper, ncol=length(colnames(modulePvalue)))
-  ret = cbind(rownames(hyper), ret)
-  colnames(ret) = c("module", cols)  
-  
-  rownames(ret) = NULL
-  return (ret)
-}
+
 
 #' Compute gene overlap between genes from two tissues 
 #' @import WGCNA
@@ -728,87 +608,6 @@ geneOverlapTest <- function(tissueA="blood", tissueB="biopsy"){
     return(adjusted)
 }
 
-#' ROI fisher's exact test
-#' @export
-roiTest <- function(tissueA="blood", tissueB="biopsy"){
-  
-  MEs = computeEigengenes(c(tissueA,tissueB)) 
-  
-  moduleCor = cor(MEs[[tissueA]], MEs[[tissueB]], use = "p");
-  modulePvalue = WGCNA::corPvalueStudent(moduleCor, ncol(dat[[tissueA]]$exprs));
-  
-  # Define roi categories (from ROI.R) 
-  roi.cat<-NULL
-  for (tissue in c(tissueA, tissueB))
-  {
-    module.names <- names(bresat[[tissue]])
-    roi.cat[[tissue]]<- parallel::mclapply(module.names, function(module) {
-      define.roi.regions(bresat[[tissue]][[module]], bresat[[tissue]][[module]]$roi)
-    })
-    names(roi.cat[[tissue]])<-module.names
-  }  
-  
-  # Fisher's exact teset between roi categories
-  mod.roi <- NULL
-  mod.roi <- plyr::laply(roi.cat[[tissueA]], function(x){
-    plyr::laply(roi.cat[[tissueB]], function(y){
-  
-      fisher.test(x, y, workspace = 2e+07, hybrid=TRUE)$p
-    })
-  })
-  
-  rownames(mod.roi) <- names(roi.cat[[tissueA]])
-  colnames(mod.roi) <- names(roi.cat[[tissueB]]) 
-  
-  mod.roi <- mod.roi[match(rownames(modulePvalue),paste("ME", rownames(mod.roi), sep="")),
-                     match(colnames(modulePvalue), paste("ME", colnames(mod.roi), sep=""))]
-  
-  cols = colnames(mod.roi) 
-  
-  mod.roi = cbind(rownames(mod.roi), mod.roi)
-  colnames(mod.roi) = c("module", cols)  
-  rownames(mod.roi) <- NULL
-  
-  
-  return(mod.roi)
-}
-
-
-
-#' Compute correlation between patient rank in two tissues
-#' @param subtypes is a vector of subtypes
-#' @export 
-patientRankCorrelation <- function(tissueA="blood", tissueB="biopsy"){
-  MEs = computeEigengenes(c(tissueA,tissueB)) 
-  
-  moduleCor = cor(MEs[[tissueA]], MEs[[tissueB]], use = "p");
-  modulePvalue = WGCNA::corPvalueStudent(moduleCor, ncol(dat[[tissueA]]$exprs));
-  
-  rank <- NULL
-  
-  ### relate patient ordering across tissues
-  for (tissue in c(tissueA, tissueB)){
-    rank[[tissue]] <- do.call(cbind, lapply(bresat[[tissue]], '[', "pat.order"))[,]
-  }
-  
-  rank.cor.p<-plyr::laply(rank[[tissueA]], function (x){
-    plyr::laply(rank[[tissueB]], function (y){
-      WGCNA::corPvalueStudent(cor(x,y, use="p"), ncol(dat[[tissueA]]$exprs))
-    })
-  })
-  
-  rownames(rank.cor.p) <- names(rank[[tissueA]])
-  colnames(rank.cor.p) <- names(rank[[tissueB]])
-  
-  rank.cor.p<- rank.cor.p[match(rownames(modulePvalue), paste("ME", rownames(rank.cor.p), sep="")),
-                          match(colnames(modulePvalue), paste("ME", colnames(rank.cor.p), sep=""))] 
-  cols = colnames(rank.cor.p) 
-  rank.cor.p = cbind(rownames(rank.cor.p), rank.cor.p)
-  colnames(rank.cor.p) = c("module", cols)  
-  rownames(rank.cor.p) <- NULL
-  
-  return(rank.cor.p)
-}
 
 #' Get available cohorts
 #' @export
@@ -823,42 +622,24 @@ getCohorts <- function(){
 #' Calculate patient rank sum scores for given tissues. 
 #' @export 
 patientRankSum <- function(tissueA="blood",tissueB="biopsy",cohort="all") { 
-    tissues = c(tissueA,tissueB)
-    
-    pat.dat <- NULL  
-    for(tissue in tissues){
-      pat.dat[[tissue]]$cohorts <- pat.cohorts(dat[[tissue]])
-   }
-    
-    cohorts<- names(pat.dat[[tissue]]$cohorts)
-    ranksum<-NULL
-
-    for(tissue in tissues){
-      ranksum$all[[tissue]]<-do.call(cbind, lapply(bresat[[tissue]], '[', "ranksum"))[,]
-      ranksum[[cohort]][[tissue]]<-lapply(ranksum$all[[tissue]], function(x) x[pat.dat[[tissue]]$cohorts[[cohort]]])
-    }
-    
-    ranksum.cor.p<-NULL
-    ranksum.cor.p[[cohort]]<-plyr::laply(ranksum[[cohort]][[tissueA]], function (x){
-      plyr::laply(ranksum[[cohort]][[tissueB]], function (y){
-        WGCNA::corPvalueStudent(cor(x,y, use="p"), length(pat.dat[[tissue]]$cohorts[[cohort]]))
-      })
-    })
-    rownames(ranksum.cor.p[[cohort]]) <- names(ranksum[[cohort]][[tissueA]])
-    colnames(ranksum.cor.p[[cohort]]) <- names(ranksum[[cohort]][[tissueB]])
-    
-    
-    cols = colnames(ranksum.cor.p[[cohort]]) 
-    ranksum.cor.p[[cohort]] = cbind(rownames(ranksum.cor.p[[cohort]]), ranksum.cor.p[[cohort]])
-    colnames(ranksum.cor.p[[cohort]]) = c("module", cols)  
-    rownames(ranksum.cor.p[[cohort]]) <- NULL
-    
-    #vals<-NULL
-    #vals[[subtype]] <- -log10(ranksum.cor.p[[subtype]])
-    #vals[[subtype]][vals[[subtype]] > 10] <- 10
-    
-    return(ranksum.cor.p[[cohort]])
-    
+  
+  # The p-values have already been computed so we can just extract them 
+  # from the data frame. The data frame has blood modules as rows and 
+  # biopsy modules as columns 
+  
+  correlation_p_value = perm.cor.p[[cohort]]
+  
+  if(tissueA == "biopsy") {
+    correlation_p_value = t(correlation_p_value)
+  }
+  
+  correlation_p_value = as.data.frame(correlation_p_value)
+  
+  cols = colnames(correlation_p_value)
+  correlation_p_value = cbind(rownames(correlation_p_value), correlation_p_value)
+  colnames(correlation_p_value) = c("module", cols)
+  rownames(correlation_p_value) = NULL
+  return(correlation_p_value)
 }
 
 #' Compute all 4 different analyses for modules from two tissues. 
@@ -867,7 +648,7 @@ patientRankSum <- function(tissueA="blood",tissueB="biopsy",cohort="all") {
 #' @param moduleA is a module from the first tissue
 #' @param moduleB is a module from the second tissue
 #' @export 
-comparisonAnalyses <- function(tissueA, tissueB, moduleA, moduleB){
+comparisonAnalyses <- function(tissueA, tissueB, moduleA, moduleB, cohort="all"){
   
   analyses = NULL
   overlap = geneOverlapTest(tissueA, tissueB) 
@@ -875,166 +656,14 @@ comparisonAnalyses <- function(tissueA, tissueB, moduleA, moduleB){
   
   analyses$ranksum = as.numeric(ranksum[ranksum[,1] == moduleA, colnames(ranksum) == moduleB])
   analyses$overlap =  as.numeric(overlap[overlap[,1] == moduleA , colnames(overlap) == moduleB])
-  analyses$common =  intersect(bresat[[tissueA]][[moduleA]]$gene.order,bresat[[tissueB]][[moduleB]]$gene.order)
+  analyses$common =  intersect(rownames(bresat[[tissueA]][[moduleA]][[cohort]]$dat),rownames(bresat[[tissueB]][[moduleB]][[cohort]]$dat))
 
   return(analyses)
 }
 
-#' Computes correlation between eigengenes and quantitative variables
-#' and anova between eigengenes and qualitative variables.  
-#' @param tissue is the tissue from which to get the eigengenes 
-#' @export 
-eigengeneClinicalRelation <- function(tissue){
-  
-  bc.qual.var<- c("er","her2" ,"pam50.parker","hybrid","cit", "claudin.low", 
-                  "lum" ,"lumN","prolif" ,"basalL",
-                  "lumC" ,"lumaNormL" ,"basLmApo","lumBlumC", 
-                  "lymph" ,
-                  "menopause","hrt","weight.70.plus","age.55.plus", "medication","hospital")
-  bc.quant.var<-c("age","weight", "MKS", "ERS", "LUMS", "HER2S")
-  n.qual.var<- c("menopause","hrt","weight.70.plus","age.55.plus", "medication","orig.dataset")
-  bn.qual.var<- c("cancer", bc.qual.var, "orig.dataset")
-  n.quant.var<-c("age","weight")
-  
-  
-  MEs = computeEigengenes(tissue) 
-  
-  ### Qualitative variables 
-  cl <- plyr::laply(dat[[tissue]]$clinical[,bc.qual.var], function(y) {
-    plyr::laply(MEs[[tissue]], function (x){
-      anova(lm(x~y))$`Pr(>F)`[1]
-    })
-  })
-  rownames(cl) <- bc.qual.var
-  colnames(cl) <- names(MEs[[tissue]])
-  
-  ### quantitative variables 
-  moduleTraitCor<-NULL
-  moduleTraitPvalue<-NULL
-  moduleTraitCor[[tissue]]= cor(MEs[[tissue]], dat[[tissue]]$clinical[, bc.quant.var], use = "p");
-  moduleTraitPvalue[[tissue]]= WGCNA::corPvalueStudent(moduleTraitCor[[tissue]], nrow(dat[[tissue]]$clinical));
-  cl<-rbind(cl, t(moduleTraitPvalue[[tissue]]))
-  
-  
-  if(tissue == "blood") { 
-    orig.dataset<- plyr::laply(MEs[[tissue]], function (x){
-      anova(lm(x~dat[[tissue]]$clinical[,3]))$`Pr(>F)`[1]
-    })
-    
-    cl <- rbind(cl, orig.dataset)
-  }
-  
-  if(tissue == "nblood"){
-    cl <-plyr::laply(dat[[tissue]]$clinical[ , n.qual.var], function(y) {
-      plyr::laply(MEs[[tissue]], function(x){
-        anova(lm(x~y))$`Pr(>F)`[1]})
-    })
-    
-    rownames(cl) < -n.qual.var
-    colnames(cl) <- names(MEs[[tissue]])
-    
-  }
-  cols = colnames(cl) 
-  cl = cbind(rownames(cl), cl)
-  colnames(cl) = c("Clinical", cols) 
-  #res[[tissue]] <- -log10(cl)
-  #res[[tissue]][res[[tissue]] > 10] <- 10
-  return (cl) 
-} 
-
-#' Computes ROI for the given tissue
-#' @export 
-computeROICategories <- function(tissue) {
-    roi.cat<-NULL
-    module.names <- names(bresat[[tissue]])
-    roi.cat[[tissue]]<- parallel::mclapply(module.names, function(module) {
-      define.roi.regions(bresat[[tissue]][[module]], bresat[[tissue]][[module]]$roi)
-    })
-    names(roi.cat[[tissue]])<-module.names
-    return(roi.cat) 
-}
-
-#' ROI and clinical categories relation 
-#' @export 
-roiClinicalRelation <- function(tissue){
-  
-  roi.cat <- computeROICategories(tissue) 
-  MEs = computeEigengenes(tissue) 
-  
-  bc.qual.var<- c("er","her2" ,"pam50.parker","hybrid","cit", "claudin.low", 
-                  "lum" ,"lumN","prolif" ,"basalL",
-                  "lumC" ,"lumaNormL" ,"basLmApo","lumBlumC", 
-                  "lymph" ,
-                  "menopause","hrt","weight.70.plus","age.55.plus", "medication","hospital")
-  bc.quant.var<-c("age","weight", "MKS", "ERS", "LUMS", "HER2S")
-  n.qual.var<- c("menopause","hrt","weight.70.plus","age.55.plus", "medication","orig.dataset")
-  bn.qual.var<- c("cancer", bc.qual.var, "orig.dataset")
-  n.quant.var<-c("age","weight")
-  
-  
-  cl.roi <- NULL
-  # fisher's exact betgween roi and qualitative variables 
-  cl.roi<-plyr::laply(dat[[tissue]]$clinical[,bc.qual.var], function(y) {
-    plyr::laply(data.frame(roi.cat[[tissue]]), function (x) {
-        #fisher.test(y,x, workspace=2e+8,hybrid=TRUE)$p
-        suppressWarnings(chisq.test(table(y,x))$p.value)
-        }, .parallel=FALSE)
-    }, .parallel=FALSE)
-    
-  rownames(cl.roi) <- bc.qual.var
-  colnames(cl.roi) <- names(roi.cat[[tissue]])
-  
-  roiTraitPvalue<-NULL
-  
-  roiTraitPvalue[[tissue]]<- plyr::laply(dat[[tissue]]$clinical[,bc.quant.var], function(y) {
-    plyr::laply(MEs[[tissue]], function (x){
-      anova(lm(x~y))$`Pr(>F)`[1]
-    })
-  })
-  
-  rownames(roiTraitPvalue[[tissue]]) <- bc.quant.var
-  colnames(roiTraitPvalue[[tissue]]) <- names(MEs[[tissue]])
-  
-  cl.roi <- rbind(cl.roi, roiTraitPvalue[[tissue]])
-
-  
-  if(tissue == "blood") { 
-    orig.dataset<-NULL
-    orig.dataset<- plyr::laply(roi.cat[[tissue]], function (x){
-      #fisher.test(x,dat[[tissue]]$clinical[,3])$p
-      suppressWarnings(chisq.test( table(x, dat[[tissue]]$clinical[,3]))$p.value)
-      #chisq.test(table(y,x))$p.value
-    })
-    
-    cl.roi<-rbind(cl.roi, orig.dataset)
-  }
-  
-  if(tissue == "nblood"){ 
-    cl.roi<-plyr::laply(dat[[tissue]]$clinical[,n.qual.var], function(y) {
-      plyr::laply(data.frame(roi.cat[[tissue]]), function(x){
-        #fisher.test(y,x, workspace=2e+07, hybrid=TRUE)$p
-        chisq.test(table(y,x))$p.value
-        })
-    })
-  
-    rownames(cl.roi)<-names(dat[[tissue]]$clinical)[n.quant.var]
-    colnames(cl.roi)<-names(roi.cat[[tissue]])
-  }
-  
-  cl.roi <- cl.roi[,match(names(MEs[[tissue]]), paste("ME",colnames(cl.roi), sep=""))]
-  
-  cols = colnames(cl.roi) 
-  cl.roi = cbind(rownames(cl.roi), cl.roi)
-  colnames(cl.roi) = c("Clinical", cols) 
-  
-  
-  
-  return(cl.roi)
-}
-
 #' Compute clinical ranksum for given tissue 
 #' @export 
-clinicalRanksum <- function(tissue) { 
+clinicalRanksum <- function(tissue, cohort="all") { 
 
     bc.qual.var<- c("er","her2" ,"pam50.parker","hybrid","cit",
                     "claudin.low", "lum" ,"lumN","prolif" ,"basalL", "lumC",
@@ -1045,10 +674,19 @@ clinicalRanksum <- function(tissue) {
     bc.quant.var<-c("time","age","weight", "MKS", "ERS", "LUMS", "HER2S")
     n.qual.var<- c("menopause","hrt","weight.70.plus","age.55.plus", "medication","orig.dataset")
     bn.qual.var<- c("cancer", bc.qual.var, "orig.dataset")
-
+    
+    pat.dat<-list()
+    pat.dat[[tissue]]$cohorts <- pat.cohorts(dat[[tissue]])
+    ranksum = NULL 
+    
     if(tissue=="blood" || tissue=="biopsy" || tissue=="bnblood"){ 
         patient.ordering<-NULL
-        patient.ordering[[tissue]]<-lapply(bresat[[tissue]],function(x) x$ranksum) 
+        for (module in names(bresat[[tissue]])){
+          ranksum[[tissue]][[module]]<-do.call(cbind,
+                                                lapply(bresat[[tissue]][[module]],
+                                                       '[', "ranksum"))[,]
+          patient.ordering[[cohort]][[tissue]][[module]] <- ranksum[[tissue]][[module]][[cohort]]
+        }
   
         if (tissue == "blood " || tissue == "biopsy") {
             qual.var = bc.qual.var
@@ -1057,35 +695,40 @@ clinicalRanksum <- function(tissue) {
         }
 
         # qualitative
+        ### BC patients
         cl.mergedmod.patient<-NULL
-        cl.mergedmod.patient[[tissue]]<- plyr::laply(dat[[tissue]]$clinical[,qual.var], function(y) {
-                                                 plyr::laply(patient.ordering[[tissue]], function (x){
-                                                       anova(lm(x~y))$`Pr(>F)`[1]
-                                                   })
-                                         })
-
-
-          rownames(cl.mergedmod.patient[[tissue]]) <- qual.var
-          colnames(cl.mergedmod.patient[[tissue]]) <- names(bresat[[tissue]])
-
+        ## Association between ranksum and qualitative variables
+        patients <- pat.dat[[tissue]]$cohorts[[cohort]]
+        dat.cl <- dat[[tissue]]$clinical[patients, bc.qual.var]
+        sel <- sapply(dat.cl, function(data) length(levels(factor(data)))>1)
+        dat.cl <- dat.cl[,sel]
+        cl.mergedmod.patient[[cohort]][[tissue]]<- plyr::laply(dat.cl, function(y) {
+          plyr::laply(patient.ordering[[cohort]][[tissue]], function (x){
+            anova(lm(x~y))$`Pr(>F)`[1]
+          })
+        })
+        rownames(cl.mergedmod.patient[[cohort]][[tissue]]) <- colnames(dat.cl)
+        colnames(cl.mergedmod.patient[[cohort]][[tissue]]) <- names(bresat[[tissue]])
+       
         # quantitiative
         merged.moduleTraitCor.patient<-NULL
         merged.moduleTraitPvalue.patient<-NULL
+        
+        patients <- pat.dat[[tissue]]$cohorts[[cohort]]
+        merged.moduleTraitCor.patient[[cohort]][[tissue]]= cor(data.frame(patient.ordering[[cohort]][[tissue]]), dat[[tissue]]$clinical[patients, bc.quant.var], use = "p")
+        merged.moduleTraitPvalue.patient[[cohort]][[tissue]]= WGCNA::corPvalueStudent(merged.moduleTraitCor.patient[[cohort]][[tissue]], length(patients))
+        cl.mergedmod.patient[[cohort]][[tissue]]<-rbind(cl.mergedmod.patient[[cohort]][[tissue]], t(merged.moduleTraitPvalue.patient[[cohort]][[tissue]]))
 
-        merged.moduleTraitCor.patient[[tissue]]= cor(data.frame(patient.ordering[[tissue]]), dat[[tissue]]$clinical[, bc.quant.var], use = "p");
-        merged.moduleTraitPvalue.patient[[tissue]]= WGCNA::corPvalueStudent(merged.moduleTraitCor.patient[[tissue]], nrow(dat[[tissue]]$clinical));
-        cl.mergedmod.patient[[tissue]]<-rbind(cl.mergedmod.patient[[tissue]], t(merged.moduleTraitPvalue.patient[[tissue]]))
-
-        clinicalVars = row.names(cl.mergedmod.patient[[tissue]])
-        cols = colnames(cl.mergedmod.patient[[tissue]]) 
-        cl.mergedmod.patient[[tissue]] = cbind(clinicalVars, cl.mergedmod.patient[[tissue]])
-        colnames(cl.mergedmod.patient[[tissue]]) = c("Clinical", cols)
+        clinicalVars = row.names(cl.mergedmod.patient[[cohort]][[tissue]])
+        cols = colnames(cl.mergedmod.patient[[cohort]][[tissue]]) 
+        cl.mergedmod.patient[[cohort]][[tissue]] = cbind(clinicalVars, cl.mergedmod.patient[[cohort]][[tissue]])
+        colnames(cl.mergedmod.patient[[cohort]][[tissue]]) = c("Clinical", cols)
         select.var<-c("lymph", "er", "MKS","pam50.parker", "hybrid", "cit",
                       "lumC", "t.size", "claudin.low", "weight", "LUMS", "hrt",
                       "her2", "HER2S", "age", "menopause", "medication")
     
         tmp = NULL
-        tmp = cl.mergedmod.patient[[tissue]] 
+        tmp = cl.mergedmod.patient[[cohort]][[tissue]] 
         tmp = tmp[rownames(tmp) %in% select.var, ]
 
        return(tmp)

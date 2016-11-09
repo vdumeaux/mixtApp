@@ -1,6 +1,6 @@
 update_scripts_and_datasets <- function() {
   datasets = c("bresat.RData", "moduleColors.RData", "topGO_mod.RData", "go_common.RData", "msigdb.RData", "combat_data.RData", "TOM.RData")
-  scripts = c("bresat.R", "common.R", "huc.R", "modules.R", "pathway_analyses.R", "plots.R")
+  scripts = c("bresat.R", "modules.R", "pathway_analyses.R", "plots.R")
   
   datadir = "/home/bjorn/mixt/data/mixt/"
   scriptdir = "/home/bjorn/mixt/src/"

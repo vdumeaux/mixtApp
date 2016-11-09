@@ -4,7 +4,7 @@
 \alias{clinicalRanksum}
 \title{Compute clinical ranksum for given tissue}
 \usage{
-clinicalRanksum(tissue)
+clinicalRanksum(tissue, cohort = "all")
 }
 \description{
 Compute clinical ranksum for given tissue

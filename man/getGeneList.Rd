@@ -4,7 +4,7 @@
 \alias{getGeneList}
 \title{Get a list of genes for a specific module and tissue.}
 \usage{
-getGeneList(tissue, module)
+getGeneList(tissue, module, cohort = "all")
 }
 \arguments{
 \item{tissue}{is the tissue we're interested in}

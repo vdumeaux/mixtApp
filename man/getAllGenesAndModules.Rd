@@ -4,7 +4,7 @@
 \alias{getAllGenesAndModules}
 \title{Retrieves an overview of all genes and the modules they participate in.}
 \usage{
-getAllGenesAndModules()
+getAllGenesAndModules(cohort = "all")
 }
 \description{
 Retrieves an overview of all genes and the modules they participate in.

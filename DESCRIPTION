@@ -46,4 +46,5 @@ Imports:
     hgu133a.db, 
     genefu,
     iC10, 
+Suggests: testthat
 RoxygenNote: 5.0.1

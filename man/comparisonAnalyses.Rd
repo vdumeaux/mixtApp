@@ -4,7 +4,7 @@
 \alias{comparisonAnalyses}
 \title{Compute all 4 different analyses for modules from two tissues.}
 \usage{
-comparisonAnalyses(tissueA, tissueB, moduleA, moduleB)
+comparisonAnalyses(tissueA, tissueB, moduleA, moduleB, cohort = "all")
 }
 \arguments{
 \item{tissueA}{is the first tissue}
