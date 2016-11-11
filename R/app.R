@@ -34,6 +34,13 @@ cohort_heatmap <- function(tissue, module, cohort.name="all", patient.ids=NULL, 
       title = paste(cohort.name, module, tissue, "ordered by", orderByModule, orderByTissue)
     }
     
+    ## define patients to include
+    if (is.null(patient.ids)) {
+      patients <- pat.cohorts(dat$blood)[[cohort.name]]
+    } else {
+      patients <- patient.ids
+    }
+    
     #heatmap variables
     col.clust = FALSE
     layout.m = matrix(c("key","title","","","",
@@ -124,7 +131,7 @@ cohort_heatmap <- function(tissue, module, cohort.name="all", patient.ids=NULL, 
     
     rank.colors<-rev(diverge_hcl(n=ncol(bs$dat)))
     names(rank.colors)<-colnames(bs$dat)
-    rank.colors<-rank.colors[match(rownames(mcl), colnames(bs$dat))]
+    rank.colors<-rank.colors[match(rownames(mclinical), colnames(bs$dat))]
     
     ranksum = t(as.matrix(rank.colors))[,names(rank.colors) %in% patients,drop=FALSE]
     heatmap.clinical(ranksum)
@@ -267,13 +274,13 @@ cohort_boxplot<-function (blood.module, orderByTissue, orderByModule, cohort.nam
   }
   
   bs <- bresat$bnblood[[blood.module]][[cohort.name]]
-  bnclinical=dat$bnblood$clinical[rownames(dat$bnblood$clinical) %in% patients, ]
+  bnclinical = dat$bnblood$clinical[rownames(dat$bnblood$clinical) %in% patients, ]
   
   
   ### data for scatterplot
  plot.data<-data.frame(bnbl.ranksum=bs$ranksum[c(which(bnclinical$cancer==TRUE), which(bnclinical$cancer==FALSE))],
                                                    cohort=c(rep(cohort.name, length(which(bnclinical$cancer==TRUE))), rep("normal", length(which(bnclinical$cancer==FALSE)))),
-                                                   roi.cat=c(roi.cat[rownames(dat$blood$clinical) %in% patients], rep(NA, length(which(dat$bnblood$clinical$cancer==FALSE)))))
+                                                   roi.cat=c(roi.cat[rownames(dat$blood$clinical) %in% patients]))
 
   plot.data$cancer<-1
   plot.data$cancer<-ifelse( plot.data$roi.cat==1 & !is.na(plot.data$roi.cat), 4, as.character(plot.data$cancer))
@@ -497,16 +504,16 @@ getCommonGOTermGenes <- function(tissue,module,gotermID){
 #' @param tissue is the tissue we're interested in, e.g. "blood"
 #' @param genelist is the genelist as a vector. 
 #' @export
-userEnrichmentScores <- function(tissue, genelist) {
+userEnrichmentScores <- function(tissue, genelist, cohort="all") {
   modules = names(bresat[[tissue]])
   all_genes = names(moduleColors[[tissue]])
   genelist = genelist[genelist %in% all_genes]
   intersections = lapply(modules, function(module) {
-    intersect(bresat[[tissue]][[module]]$gene.order, genelist)
+    intersect(rownames(bresat[[tissue]][[module]][[cohort]]$dat), genelist)
   }) 
 
   k = lapply(modules, function(module){
-    length(bresat[[tissue]][[module]]$gene.order)
+    length(rownames(bresat[[tissue]][[module]][[cohort]]$dat))
   }) 
   names(k) <- modules 
   k <- as.integer(k)
