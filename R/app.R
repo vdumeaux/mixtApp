@@ -36,7 +36,7 @@ cohort_heatmap <- function(tissue, module, cohort.name="all", patient.ids=NULL, 
     
     ## define patients to include
     if (is.null(patient.ids)) {
-      patients <- pat.cohorts(dat$blood)[[cohort.name]]
+      patients <- pat.cohorts(dat[[tissue]])[[cohort.name]]
     } else {
       patients <- patient.ids
     }
@@ -71,19 +71,19 @@ cohort_heatmap <- function(tissue, module, cohort.name="all", patient.ids=NULL, 
     
     mclinical = NULL
     cl = NULL
-    if(tissue== "blood" || tissue=="biopsy"){
-      cl<-dat$blood$clinical
+    if(tissue == "blood" || tissue =="biopsy"){
+      cl<-dat[[tissue]]$clinical
       #cl<-clinical_variables(tissue) 
       mclinical = cl[order.by,]
     } else {
       cl = dat$bnblood$clinical
       mclinical = cl[order.by,]
       #mclinical=dat$bnblood$clinical[bresat$bnblood[[module]]$pat.order, ]
+      ## define reordered clinical data
+      #cl<-dat[[tissue]]$clinical[rownames(dat[[tissue]]$clinical) %in% patients,]
+      #mclinical = cl[order.by,]
     }
         
-    ## define reordered clinical data
-    cl<-dat$blood$clinical[rownames(dat$blood$clinical) %in% patients,]
-    mclinical = cl[order.by,]
     
     ## define blood reordered expression and select genes
     bs <- bresat[[tissue]][[module]][[cohort.name]]
@@ -204,7 +204,7 @@ cohort_scatterplot<-function (x.tissue, x.module, y.tissue, y.module, cohort.nam
   
   ## define patients to include
   if (is.null(patient.ids)) {
-    patients <- pat.cohorts(dat$blood)[[cohort.name]]
+    patients <- pat.cohorts(dat[[tissue]])[[cohort.name]]
   } else {
     patients <- patient.ids
   }
@@ -226,7 +226,7 @@ cohort_scatterplot<-function (x.tissue, x.module, y.tissue, y.module, cohort.nam
   plot.data<-data.frame(x.ranksum=bresat[[x.tissue]][[x.module]][[cohort.name]]$ranksum,
                         y.ranksum=bresat[[y.tissue]][[y.module]][[cohort.name]]$ranksum,
                         cohort=rep(cohort.name, length(patients)),
-                        subtype=huc::huc.color.clinical(dat$blood$clinical)$hybrid[rownames(dat$blood$clinical) %in% patients])
+                        subtype=huc::huc.color.clinical(dat[[tissue.x]]$clinical)$hybrid[rownames(dat[[tissue.x]]$clinical) %in% patients])
   
   sub.col <- c(normal="white", all="grey", erp="green", ern="firebrick2", her2p="hotpink2", her2n="#21B6A8",
                erp.her2p="orange", ern.her2p="hotpink2", erp.her2n="blue", ern.her2n="firebrick2",
