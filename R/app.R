@@ -267,7 +267,7 @@ cohort_boxplot<-function (blood.module, orderByTissue, orderByModule, cohort.nam
   ## define patients to include
   if (is.null(patient.ids))
   {
-    patients<-pat.cohorts(dat$blood)[[cohort.name]]
+    patients<-pat.cohorts(dat$bnblood)[[cohort.name]]
   }else
   {
     patients<-patient.ids
@@ -276,11 +276,10 @@ cohort_boxplot<-function (blood.module, orderByTissue, orderByModule, cohort.nam
   bs <- bresat$bnblood[[blood.module]][[cohort.name]]
   bnclinical = dat$bnblood$clinical[rownames(dat$bnblood$clinical) %in% patients, ]
   
-  
-  ### data for scatterplot
  plot.data<-data.frame(bnbl.ranksum=bs$ranksum[c(which(bnclinical$cancer==TRUE), which(bnclinical$cancer==FALSE))],
                                                    cohort=c(rep(cohort.name, length(which(bnclinical$cancer==TRUE))), rep("normal", length(which(bnclinical$cancer==FALSE)))),
-                                                   roi.cat=c(roi.cat[rownames(dat$blood$clinical) %in% patients]))
+                                                   roi.cat=c(roi.cat[rownames(dat$blood$clinical) %in% patients],  
+                                                             rep(NA, length(which(dat$bnblood$clinical$cancer==FALSE)))))
 
   plot.data$cancer<-1
   plot.data$cancer<-ifelse( plot.data$roi.cat==1 & !is.na(plot.data$roi.cat), 4, as.character(plot.data$cancer))
