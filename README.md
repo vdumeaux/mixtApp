@@ -1,2 +1,4 @@
 # MIxT R Package
-Used in the MIxT web application for executing and retrieving results from different statistical analyses. Used by a [OpenCPU](http://opencpu.org) server. 
+Used in the compute backend for [MIxT](http://mixt-blood-tumor.bci.mcgill.ca).
+We use `git-raw` to manage the data. The `git-raw` store is located in
+`home/data/repositories/mixt-r-package-store`. 
