@@ -36,7 +36,7 @@ cohort_heatmap <- function(tissue, module, cohort.name="all", patient.ids=NULL, 
     
     ## define patients to include
     if (is.null(patient.ids)) {
-      patients <- pat.cohorts(dat[[tissue]])[[cohort.name]]
+      patients <- pat.cohorts(dat$bnblood)[[cohort.name]]
     } else {
       patients <- patient.ids
     }
@@ -69,19 +69,15 @@ cohort_heatmap <- function(tissue, module, cohort.name="all", patient.ids=NULL, 
     roi<-bresat[[orderByTissue]][[orderByModule]][[cohort.name]]$roi
     roi.cat<-bresat[[orderByTissue]][[orderByModule]][[cohort.name]]$roi.cat
     
+    
     mclinical = NULL
     cl = NULL
     if(tissue == "blood" || tissue =="biopsy"){
-      cl<-dat[[tissue]]$clinical
-      #cl<-clinical_variables(tissue) 
+      cl <- dat[[tissue]]$clinical[rownames(dat[[tissue]]$clinical) %in% patients,]
       mclinical = cl[order.by,]
     } else {
       cl = dat$bnblood$clinical
       mclinical = cl[order.by,]
-      #mclinical=dat$bnblood$clinical[bresat$bnblood[[module]]$pat.order, ]
-      ## define reordered clinical data
-      #cl<-dat[[tissue]]$clinical[rownames(dat[[tissue]]$clinical) %in% patients,]
-      #mclinical = cl[order.by,]
     }
         
     
