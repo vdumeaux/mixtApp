@@ -76,12 +76,12 @@ cohort_heatmap <- function(tissue, module, cohort.name="all", patient.ids=NULL, 
       cl <- dat[[tissue]]$clinical[rownames(dat[[tissue]]$clinical) %in% patients,]
       mclinical = cl[order.by,]
     } else {
-      cl = dat$bnblood$clinical
+      cl = dat$bnblood$clinical[rownames(dat$bnblood$clinical) %in% patients,]
       mclinical = cl[order.by,]
     }
         
     
-    ## define blood reordered expression and select genes
+    ## define reordered expression and select genes
     bs <- bresat[[tissue]][[module]][[cohort.name]]
     data = bs$dat[, match(rownames(mclinical), colnames(bs$dat))]
     if (!is.null(gene.names)){
@@ -98,7 +98,7 @@ cohort_heatmap <- function(tissue, module, cohort.name="all", patient.ids=NULL, 
     
     ## plot heatmap
     ddrs = heatmap.simple(data,
-                          clinical = huc.color.clinical(mclinical)[rownames(mclinical) %in% patients,][,bc.var], 
+                          clinical = huc.color.clinical(mclinical)[,bc.var], 
                           layout.mat = layout.m, widths = widths, heights = heights, col.clust = FALSE, 
                           row.clust = FALSE, title= title,
                           row.labels=rownames(data),
@@ -274,7 +274,7 @@ cohort_boxplot<-function (blood.module, orderByTissue, orderByModule, cohort.nam
   
  plot.data<-data.frame(bnbl.ranksum=bs$ranksum[c(which(bnclinical$cancer==TRUE), which(bnclinical$cancer==FALSE))],
                                                    cohort=c(rep(cohort.name, length(which(bnclinical$cancer==TRUE))), rep("normal", length(which(bnclinical$cancer==FALSE)))),
-                                                   roi.cat=c(roi.cat[rownames(dat$blood$clinical) %in% patients],  
+                                                   roi.cat=c(roi.cat,  
                                                              rep(NA, length(which(dat$bnblood$clinical$cancer==FALSE)))))
 
   plot.data$cancer<-1
