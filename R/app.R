@@ -200,7 +200,7 @@ cohort_scatterplot<-function (x.tissue, x.module, y.tissue, y.module, cohort.nam
   
   ## define patients to include
   if (is.null(patient.ids)) {
-    patients <- pat.cohorts(dat[[tissue]])[[cohort.name]]
+    patients <- pat.cohorts(dat[[x.tissue]])[[cohort.name]]
   } else {
     patients <- patient.ids
   }
@@ -608,7 +608,7 @@ geneOverlapTest <- function(tissueA="blood", tissueB="biopsy"){
 
 #' Get available cohorts
 #' @export
-getCohorts <- function(){
+getCohorts <- function(tissue="blood"){
   tissue="blood"
   pat.dat <- NULL  
   pat.dat[[tissue]]$cohorts <- pat.cohorts(dat[[tissue]])
