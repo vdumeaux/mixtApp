@@ -222,7 +222,7 @@ cohort_scatterplot<-function (x.tissue, x.module, y.tissue, y.module, cohort.nam
   plot.data<-data.frame(x.ranksum=bresat[[x.tissue]][[x.module]][[cohort.name]]$ranksum,
                         y.ranksum=bresat[[y.tissue]][[y.module]][[cohort.name]]$ranksum,
                         cohort=rep(cohort.name, length(patients)),
-                        subtype=huc::huc.color.clinical(dat[[tissue.x]]$clinical)$hybrid[rownames(dat[[tissue.x]]$clinical) %in% patients])
+                        subtype=huc::huc.color.clinical(dat[[x.tissue]]$clinical)$hybrid[rownames(dat[[x.tissue]]$clinical) %in% patients])
   
   sub.col <- c(normal="white", all="grey", erp="green", ern="firebrick2", her2p="hotpink2", her2n="#21B6A8",
                erp.her2p="orange", ern.her2p="hotpink2", erp.her2n="blue", ern.her2n="firebrick2",
