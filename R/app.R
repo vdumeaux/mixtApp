@@ -274,7 +274,7 @@ cohort_boxplot<-function (blood.module, orderByTissue, orderByModule, cohort.nam
   
  plot.data<-data.frame(bnbl.ranksum=bs$ranksum[c(which(bnclinical$cancer==TRUE), which(bnclinical$cancer==FALSE))],
                                                    cohort=c(rep(cohort.name, length(which(bnclinical$cancer==TRUE))), rep("normal", length(which(bnclinical$cancer==FALSE)))),
-                                                   roi.cat=c(roi.cat[rownames(dat$blood$clinical) %in% patients],  
+                                                   roi.cat=c(roi.cat,  
                                                              rep(NA, length(which(dat$bnblood$clinical$cancer==FALSE)))))
 
   plot.data$cancer<-1
