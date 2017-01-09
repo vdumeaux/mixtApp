@@ -196,59 +196,119 @@ cohort_heatmap <- function(tissue, module, cohort.name="all", patient.ids=NULL, 
 # Generate cohort scatterplot. 
 # Needs some refactoring re: variable names etc. 
 #' @export
-cohort_scatterplot<-function (x.tissue, x.module, y.tissue, y.module, cohort.name="all", patient.ids=NULL){
-  
-  ## define patients to include
-  if (is.null(patient.ids)) {
-    patients <- pat.cohorts(dat[[x.tissue]])[[cohort.name]]
-  } else {
-    patients <- patient.ids
-  }
-
-  # we need to swap around these to fix accessing the per.cor.p object
-  if(x.tissue != "blood"){
-      tmp = NULL 
+cohort_scatterplot <-
+  function (x.tissue,
+            x.module,
+            y.tissue,
+            y.module,
+            cohort.name = "all",
+            patient.ids = NULL) {
+    ## define patients to include
+    if (is.null(patient.ids)) {
+      patients <- pat.cohorts(dat[[x.tissue]])[[cohort.name]]
+    } else {
+      patients <- patient.ids
+    }
+    # we need to swap around these to fix accessing the per.cor.p object
+    if (x.tissue != "blood") {
+      tmp = NULL
       xmodule = NULL
-      ymodule = NULL 
+      ymodule = NULL
       tmp = x.module
       xmodule = y.module
       ymodule = tmp
-  } else { 
-    xmodule=x.module
-    ymodule = y.module
+    } else {
+      xmodule = x.module
+      ymodule = y.module
+    }
+    
+    ### data for scatterplot
+    plot.data <-
+      data.frame(
+        x.ranksum = bresat[[x.tissue]][[x.module]][[cohort.name]]$ranksum,
+        y.ranksum = bresat[[y.tissue]][[y.module]][[cohort.name]]$ranksum,
+        cohort = rep(cohort.name, length(patients)),
+        subtype = huc::huc.color.clinical(dat[[x.tissue]]$clinical)$hybrid[rownames(dat[[x.tissue]]$clinical) %in% patients]
+      )
+    
+    sub.col <-
+      c(
+        normal = "white",
+        all = "grey",
+        erp = "green",
+        ern = "firebrick2",
+        her2p = "hotpink2",
+        her2n = "#21B6A8",
+        erp.her2p = "orange",
+        ern.her2p = "hotpink2",
+        erp.her2n = "blue",
+        ern.her2n = "firebrick2",
+        luma = "blue4",
+        erp.luma = "blue4",
+        lumb = "deepskyblue",
+        erp.lumb = "deepskyblue",
+        normL = "green4",
+        erp.normL = "green4",
+        basalL = "firebrick2",
+        her2E = "hotpink2",
+        erp.her2E = "orange",
+        erp.basalL = "#7fffd4",
+        cit.luma = "blue4",
+        cit.lumb = "deepskyblue",
+        cit.normL = "green4",
+        cit.mApo = "hotpink2",
+        cit.lumc = "#7fffd4",
+        cit.basalL = "firebrick2"
+      )
+    plot.data$sub.col <- sub.col[as.character(plot.data$cohort)]
+    plot.data$sub.col <-
+      ifelse(plot.data$sub.col == "grey",
+             as.character(plot.data$subtype),
+             plot.data$sub.col)
+    
+    p1 <-
+      ggplot2::ggplot(plot.data, ggplot2::aes(x = x.ranksum, y = y.ranksum)) +
+      ggplot2::geom_smooth(
+        method = "lm",
+        colour = "white",
+        alpha = 0.2,
+        size = 0.4
+      ) +
+      ggplot2::geom_point(ggplot2::aes(colour = sub.col), size = 2) +
+      ggplot2::scale_colour_manual(values = levels(factor(plot.data$sub.col))) +
+      ggplot2::labs(
+        y = paste(y.module, y.tissue, "module ranksum"),
+        x = paste(x.module, x.tissue, "module ranksum"),
+        title = paste(
+          cohort.name,
+          " patients",
+          " (cor=",
+          as.character(signif(
+            cor.test(plot.data$x.ranksum, plot.data$y.ranksum)$estimate,
+            digits = 1
+          )),
+          ", p=",
+          signif(perm.cor.p[[cohort.name]][xmodule, ymodule], digits = 3),
+          ")",
+          sep = ""
+        )
+      ) +
+      ggplot2::theme(
+        legend.position = "none",
+        panel.background = ggplot2::element_rect(fill = "transparent", colour = NA),
+        axis.line.x   = ggplot2::element_line(colour = "grey60"),
+        axis.line.y   = ggplot2::element_line(colour = "grey60"),
+        axis.title = ggplot2::element_text(size = 10),
+        plot.title = ggplot2::element_text(
+          hjust = 0,
+          vjust = 1,
+          size = 12
+        )
+      )
+    
+    print(p1)
   }
 
-  ### data for scatterplot
-  plot.data<-data.frame(x.ranksum=bresat[[x.tissue]][[x.module]][[cohort.name]]$ranksum,
-                        y.ranksum=bresat[[y.tissue]][[y.module]][[cohort.name]]$ranksum,
-                        cohort=rep(cohort.name, length(patients)),
-                        subtype=huc::huc.color.clinical(dat[[x.tissue]]$clinical)$hybrid[rownames(dat[[x.tissue]]$clinical) %in% patients])
-  
-  sub.col <- c(normal="white", all="grey", erp="green", ern="firebrick2", her2p="hotpink2", her2n="#21B6A8",
-               erp.her2p="orange", ern.her2p="hotpink2", erp.her2n="blue", ern.her2n="firebrick2",
-               luma="blue4", erp.luma="blue4", lumb="deepskyblue", erp.lumb="deepskyblue", normL="green4", erp.normL="green4", basalL="firebrick2", her2E="hotpink2", erp.her2E="orange", erp.basalL="#7fffd4", 
-               cit.luma="blue4", cit.lumb="deepskyblue", cit.normL="green4", cit.mApo="hotpink2", cit.lumc="#7fffd4",  cit.basalL="firebrick2")
-  plot.data$sub.col<-sub.col[as.character(plot.data$cohort)]
-  plot.data$sub.col<-ifelse(plot.data$sub.col=="grey", as.character(plot.data$subtype), plot.data$sub.col)
-  
-  p1<-ggplot2::ggplot(plot.data, ggplot2::aes(x=x.ranksum,y=y.ranksum))+
-    ggplot2::geom_smooth(method="lm", colour="white", alpha=0.2, size=0.4)+
-    ggplot2::geom_point(ggplot2::aes(colour=sub.col), size=2)+
-    ggplot2::scale_colour_manual(values=levels(factor(plot.data$sub.col)))+
-    ggplot2::labs(y=paste(y.module, y.tissue, "module ranksum"),
-         x=paste(x.module, x.tissue, "module ranksum"),
-         title=paste(cohort.name, " patients", " (cor=",as.character(signif(cor.test(plot.data$x.ranksum, plot.data$y.ranksum)$estimate, digits=1)), ", p=",
-                     signif(perm.cor.p[[cohort.name]][x.module, y.module], digits = 3),")",sep="")) +
-    ggplot2::theme(legend.position="none",
-          panel.background = ggplot2::element_rect(fill = "transparent",colour = NA),
-          axis.line.x   = ggplot2::element_line(colour="grey60"),
-          axis.line.y   = ggplot2::element_line(colour="grey60"),
-          axis.title = ggplot2::element_text(size=10),
-          plot.title = ggplot2::element_text(hjust=0, vjust=1, size=12))
-  
-  print(p1)
-}  
-  
 #' Generate boxplot. 
 #' @export 
 cohort_boxplot<-function (blood.module, orderByTissue, orderByModule, cohort.name="all", patient.ids=NULL){
