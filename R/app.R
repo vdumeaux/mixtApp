@@ -27,19 +27,13 @@ cohort_heatmap <- function(tissue, module, cohort.name="all", patient.ids=NULL, 
     if(is.null(orderByTissue)){
       orderByTissue = tissue
     }
-    
+
     if(orderByModule == module && orderByTissue == tissue) {
-        title = paste(module," module from ",tissue, sep="") 
+      title = paste(module," module from ",tissue, sep="") 
     } else {
       title = paste(cohort.name, module, tissue, "ordered by", orderByModule, orderByTissue)
     }
     
-    ## define patients to include
-    if (is.null(patient.ids)) {
-      patients <- pat.cohorts(dat$bnblood)[[cohort.name]]
-    } else {
-      patients <- patient.ids
-    }
     
     #heatmap variables
     col.clust = FALSE
@@ -65,21 +59,25 @@ cohort_heatmap <- function(tissue, module, cohort.name="all", patient.ids=NULL, 
     key.max=5
     
     ## define reordered variables
-    order.by<-bresat[[orderByTissue]][[orderByModule]][[cohort.name]]$pat.order
-    roi<-bresat[[orderByTissue]][[orderByModule]][[cohort.name]]$roi
-    roi.cat<-bresat[[orderByTissue]][[orderByModule]][[cohort.name]]$roi.cat
+    bs.order.by <- bs[[orderByTissue]][[orderByModule]][[cohort.name]]
     
+    order.by<-bs.order.by$pat.order
+    roi<-bs.order.by$roi
+    roi.cat<-bs.order.by$roi.cat
     
+    ## define patients to include
+    if (is.null(patient.ids)) {
+      patients <- pat.cohorts(dat$bnblood)[[cohort.name]]
+    } else {
+      patients <- patient.ids
+    }
+
+    # define clinical and exprs ------------------    
+    ## define reordered clinical data    
     mclinical = NULL
     cl = NULL
-    if(tissue == "blood" || tissue =="biopsy"){
-      cl <- dat[[tissue]]$clinical[rownames(dat[[tissue]]$clinical) %in% patients,]
-      mclinical = cl[order.by,]
-    } else {
-      cl = dat$bnblood$clinical[rownames(dat$bnblood$clinical) %in% patients,]
-      mclinical = cl[order.by,]
-    }
-        
+    cl<-dat[[tissue]]$clinical[rownames(dat[[tissue]]$clinical) %in% patients,]
+    mclinical = cl[order.by,]
     
     ## define reordered expression and select genes
     bs <- bresat[[tissue]][[module]][[cohort.name]]
@@ -102,18 +100,16 @@ cohort_heatmap <- function(tissue, module, cohort.name="all", patient.ids=NULL, 
                           layout.mat = layout.m, widths = widths, heights = heights, col.clust = FALSE, 
                           row.clust = FALSE, title= title,
                           row.labels=rownames(data),
-                          col.labels=rep("", length(colnames(data))))
+                          col.labels=rep("", ncol(data)))
     
     ## plot updn top left heatmap
     up.dn = as.vector(array(1,dim=c(1,length(bs$gene.order))))
     names(up.dn) = rownames(bs$dat)
     if(length(bs$dn)>0){
-      up.dn[names(up.dn) %in% rownames(dat[[tissue]]$exprs)[bs$dn]] = -1
-    }
+      up.dn[names(up.dn) %in% rownames(dat[[tissue]]$exprs)[bs$dn]] = -1}
     to.plot = (as.matrix(up.dn,ncol=1))
-    
     color.scheme = heatmap.color.scheme(low.breaks=c(-1.5,0),high.breaks=c(0,1.5))
-    heatmap.simple(to.plot, scale=scale, layout.mat = layout.m.updn, widths = widths, heights = heights, col.clust = FALSE, row.clust = FALSE, color.scheme = color.scheme)
+    heatmap.simple(to.plot, scale=scale, layout.mat = layout.m.updn.2, widths = widths, heights = heights, col.clust = FALSE, row.clust = FALSE, color.scheme = color.scheme)
     
     ## plot ranks for top left heatmap
     the.layout <- grid.layout(nrow(layout.m), ncol(layout.m), widths=widths, heights=heights)
@@ -128,11 +124,9 @@ cohort_heatmap <- function(tissue, module, cohort.name="all", patient.ids=NULL, 
     rank.colors<-rev(diverge_hcl(n=ncol(bs$dat)))
     names(rank.colors)<-colnames(bs$dat)
     rank.colors<-rank.colors[match(rownames(mclinical), colnames(bs$dat))]
-    
     ranksum = t(as.matrix(rank.colors))[,names(rank.colors) %in% patients,drop=FALSE]
     heatmap.clinical(ranksum)
     upViewport()
-    
     elem = 'ranks.text'
     idx <- which(layout.m == elem, arr.ind=TRUE)
     pushViewport(viewport(name=elem,
@@ -141,17 +135,13 @@ cohort_heatmap <- function(tissue, module, cohort.name="all", patient.ids=NULL, 
     heatmap.labels('ranks', type="row.labels", just="right")
     upViewport()
     
-    ## plot ranksum line top left heatmap
+    ## ranksum bottom left
     the.layout <- grid.layout(nrow(layout.m), ncol(layout.m), widths=widths, heights=heights)
     top.vp <- viewport(layout=the.layout, name="heatmap.top.vp")
     pushViewport(top.vp)
-
     ranksum.plot = bs$ranksum[order.by][colnames(data) %in% patients]
-
     elem = 'ranksum.line'
     idx <- which(layout.m == elem, arr.ind=TRUE)
-    ranksum.plot = bresat[[tissue]][[module]][[cohort.name]]$ranksum[order.by][colnames(data) %in% patients]
-    
     pushViewport(viewport(name=elem,
                           layout.pos.row=unique(idx[,1]),
                           layout.pos.col=unique(idx[,2]),
@@ -165,12 +155,12 @@ cohort_heatmap <- function(tissue, module, cohort.name="all", patient.ids=NULL, 
     grid.segments(unit(1:length(ranksum.plot),"native"), rep(0,n), unit(1:length(ranksum.plot),"native"),unit(ranksum.plot, "native"))
     upViewport()
     
-     elem = 'ranksum.text'
-     idx <- which(layout.m == elem, arr.ind=TRUE)
-     pushViewport(viewport(name=elem,
-                           layout.pos.row=unique(idx[,1]),
-                           layout.pos.col=unique(idx[,2])))
-     
+    elem = 'ranksum.text'
+    idx <- which(layout.m == elem, arr.ind=TRUE)
+    pushViewport(viewport(name=elem,
+                          layout.pos.row=unique(idx[,1]),
+                          layout.pos.col=unique(idx[,2])))
+    
     heatmap.labels('ranksum', type="row.labels", just="right")
     upViewport()
     
@@ -563,23 +553,23 @@ userEnrichmentScores <- function(tissue, genelist, cohort="all") {
   modules = names(bresat[[tissue]])
   all_genes = names(moduleColors[[tissue]])
   genelist = genelist[genelist %in% all_genes]
-  intersections = lapply(modules, function(module) {
-    intersect(rownames(bresat[[tissue]][[module]][[cohort]]$dat), genelist)
-  }) 
+  
+  s <- lapply(modules, function(module){
+    length(intersect(module, all_genes))})
+  
+  e <- length(intersect(genelist,all_genes))
 
-  k = lapply(modules, function(module){
-    length(rownames(bresat[[tissue]][[module]][[cohort]]$dat))
-  }) 
-  names(k) <- modules 
-  k <- as.integer(k)
-  
-  names(intersections) <- modules 
-  
-  q = sapply(intersections, length) -1
-  m = length(genelist)
-  n = length(all_genes) - length(genelist) 
-  
-  p_values = p.adjust(phyper(q, m, n, k, lower.tail=FALSE), method="BH") 
+  com <-lapply(modules, function(module) {
+    length(intersect(module, pop2))})
+    
+  intersections <- lapply(modules, function(module) {
+      intersect(module, all_genes)})
+    
+  names(s) <- modules 
+  names(com) <- modules 
+  names(intersections) <- modules
+   
+  p_values = sum(dhyper(com:e,s,length(all_genes)-s, e))
   p_values = as.data.frame(p_values) 
   names(p_values) <- c("p-value")
   p_values$module = row.names(p_values) 
