@@ -561,13 +561,16 @@ userEnrichmentScores <- function(tissue, genelist, cohort="all") {
     com <-length(intersect(mod.genes, genelist))
     intersections <- intersect(mod.genes, genelist)
     p_val<- sum(dhyper(com:e,s,length(all_genes)-s, e))
-    
-    return(c(p_val,intersections))
+  return(list(p_values=p_val, common=intersections))
   })
     
-  p_value...
+  p_values <- unlist(lapply(results, function (x) x$p_values))
+  common <- lapply(results, function (x) x$common)
+  names(common) <- modules
   
-  return(p_values)
+  ret <- data.frame(p_values=p_values, module=modules, stringsAsFactors=F)
+  ret$common <- common
+  return(ret)
 }
   
 
