@@ -5,7 +5,7 @@
 \title{Get p-values from the hypergeometric test between an arbirtrary gene list
 and the modules. User must specify tissue and genelist}
 \usage{
-userEnrichmentScores(tissue, genelist)
+userEnrichmentScores(tissue, genelist, cohort = "all")
 }
 \arguments{
 \item{tissue}{is the tissue we're interested in, e.g. "blood"}

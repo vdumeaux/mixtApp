@@ -59,7 +59,7 @@ cohort_heatmap <- function(tissue, module, cohort.name="all", patient.ids=NULL, 
     key.max=5
     
     ## define reordered variables
-    bs.order.by <- bs[[orderByTissue]][[orderByModule]][[cohort.name]]
+    bs.order.by <- bresat[[orderByTissue]][[orderByModule]][[cohort.name]]
     
     order.by<-bs.order.by$pat.order
     roi<-bs.order.by$roi
@@ -109,7 +109,7 @@ cohort_heatmap <- function(tissue, module, cohort.name="all", patient.ids=NULL, 
       up.dn[names(up.dn) %in% rownames(dat[[tissue]]$exprs)[bs$dn]] = -1}
     to.plot = (as.matrix(up.dn,ncol=1))
     color.scheme = heatmap.color.scheme(low.breaks=c(-1.5,0),high.breaks=c(0,1.5))
-    heatmap.simple(to.plot, scale=scale, layout.mat = layout.m.updn.2, widths = widths, heights = heights, col.clust = FALSE, row.clust = FALSE, color.scheme = color.scheme)
+    heatmap.simple(to.plot, scale=scale, layout.mat = layout.m.updn, widths = widths, heights = heights, col.clust = FALSE, row.clust = FALSE, color.scheme = color.scheme)
     
     ## plot ranks for top left heatmap
     the.layout <- grid.layout(nrow(layout.m), ncol(layout.m), widths=widths, heights=heights)
@@ -551,34 +551,26 @@ getCommonGOTermGenes <- function(tissue,module,gotermID){
 #' @export
 userEnrichmentScores <- function(tissue, genelist, cohort="all") {
   modules = names(bresat[[tissue]])
+  
   all_genes = names(moduleColors[[tissue]])
   genelist = genelist[genelist %in% all_genes]
-  
-  s <- lapply(modules, function(module){
-    length(intersect(module, all_genes))})
-  
-  e <- length(intersect(genelist,all_genes))
-
-  com <-lapply(modules, function(module) {
-    length(intersect(module, pop2))})
+  results <- lapply(modules, function(module){
+    mod.genes <- names(moduleColors[[tissue]])[which(moduleColors[[tissue]]==module)]
+    s <- length(intersect(mod.genes, all_genes))
+    e <- length(intersect(genelist,all_genes))
+    com <-length(intersect(mod.genes, genelist))
+    intersections <- intersect(mod.genes, genelist)
+    p_val<- sum(dhyper(com:e,s,length(all_genes)-s, e))
     
-  intersections <- lapply(modules, function(module) {
-      intersect(module, all_genes)})
+    return(c(p_val,intersections))
+  })
     
-  names(s) <- modules 
-  names(com) <- modules 
-  names(intersections) <- modules
-   
-  p_values = sum(dhyper(com:e,s,length(all_genes)-s, e))
-  p_values = as.data.frame(p_values) 
-  names(p_values) <- c("p-value")
-  p_values$module = row.names(p_values) 
-  row.names(p_values) <- NULL
-  
-  p_values$common = intersections
+  p_value...
   
   return(p_values)
 }
+  
+
 
 #' Get common genes from er analysis with genelist and module
 #' @export 
