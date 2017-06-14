@@ -207,10 +207,21 @@ cohort_scatterplot <-
       tmp = x.module
       xmodule = y.module
       ymodule = tmp
+      xtissue = y.tissue
+      ytissue = x.tissue
     } else {
       xmodule = x.module
       ymodule = y.module
+      xtissue = x.tissue
+      ytissue = y.tissue
     }
+    
+    if(x.tissue==y.tissue){
+      comp=paste0(xtissue, 2)
+    } else {
+      comp=paste0(xtissue, ytissue)
+    }
+    
     
     ### data for scatterplot
     plot.data <-
@@ -278,7 +289,7 @@ cohort_scatterplot <-
             digits = 1
           )),
           ", p=",
-          signif(perm.cor.p[[cohort.name]][xmodule, ymodule], digits = 3),
+          signif(perm.cor.p[[comp]][[cohort.name]][xmodule, ymodule], digits = 3),
           ")",
           sep = ""
         )
@@ -666,13 +677,19 @@ getCohorts <- function(tissue="blood"){
 patientRankSum <- function(tissueA="blood",tissueB="biopsy",cohort="all") { 
   
   # The p-values have already been computed so we can just extract them 
-  # from the data frame. The data frame has blood modules as rows and 
-  # biopsy modules as columns 
+  # from the data frame.
   
-  correlation_p_value = perm.cor.p[[cohort]]
-  
-  if(tissueA == "biopsy") {
-    correlation_p_value = t(correlation_p_value)
+  if(tissueA == "biopsy" & tissueB=="blood") {
+    correlation_p_value = t(perm.cor.p$blood.biopsy[[cohort]])
+  }
+  if(tissueB == "biopsy" & tissueA=="blood") {
+    correlation_p_value = perm.cor.p$blood.biopsy[[cohort]]
+  }
+  if(tissueB == "biopsy" & tissueB=="biopsy") {
+    correlation_p_value = perm.cor.p$biopsy2[[cohort]]
+  }
+  if(tissueA== "blood" & tissueB=="blood") {
+    correlation_p_value = perm.cor.p$blood2[[cohort]]
   }
   
   correlation_p_value = as.data.frame(correlation_p_value)
