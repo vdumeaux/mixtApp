@@ -916,7 +916,7 @@ plot.pat.bs <- function(bs, dat, cohorts, cohort.name="all", patient.ids=NULL, g
     labs(y="Tumor module ranksum",
          x="Blood module ranksum",
          title=paste(cohort.name, " patients", " (cor=",as.character(signif(cor.test(bnblood[bnblood$cancer != "control",]$bl.ranksum, bnblood[bnblood$cancer != "control",]$t.ranksum)$estimate, digits=1)), 
-                     ", p=",signif(perm.cor.p[[cohort.name]][blood.mod, biopsy.mod], digits = 3),")",sep="")) +
+                     ", p=",signif(perm.cor.p$blood.biopsy[[cohort.name]][blood.mod, biopsy.mod], digits = 3),")",sep="")) +
     theme(legend.position="none",
           panel.background = element_rect(fill = "transparent",colour = NA),
           axis.line.x   = element_line(colour="grey60"),
