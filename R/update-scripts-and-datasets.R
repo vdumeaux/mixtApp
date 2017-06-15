@@ -1,5 +1,7 @@
 update_scripts_and_datasets <- function() {
-  datasets = c("bresat.RData", "moduleColors.RData", "topGO_mod.RData", "go_common.RData", "msigdb.RData", "combat_data.RData", "TOM.RData")
+  datasets = c("bresat.RData", "moduleColors.RData", "topGO_mod.RData", 
+               "go_common.RData", "msigdb.RData", "combat_data.RData", "TOM.RData"
+               "mod_clinical_fdr.RData")
   scripts = c("bresat.R", "modules.R", "pathway_analyses.R", "plots.R")
   
   datadir = "/home/bjorn/mixt/data/mixt/"
@@ -74,7 +76,7 @@ initparallel <- function(){
 }
 
 initDev <- function(){ 
-  datasets = c("bresat.RData", "moduleColors.RData",  "msigdb.RData", "combat_data.RData")#"topGO_mod.RData")
+  datasets = c("bresat.RData", "moduleColors.RData",  "msigdb.RData", "combat_data.RData" "mod_clinical_fdr.RData")#"topGO_mod.RData")
   scripts = c("bresat.R", "common.R", "huc.R", "heatmap.R" , "modules.R", "pathway_analyses.R", "plots.R")
   datadir = "/home/bjorn/mixt-r-package/data/"
   scriptdir = "/home/bjorn/mixt-r-package/R/"

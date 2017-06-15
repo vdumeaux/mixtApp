@@ -723,71 +723,17 @@ comparisonAnalyses <- function(tissueA, tissueB, moduleA, moduleB, cohort="all")
 #' Compute clinical ranksum for given tissue 
 #' @export 
 clinicalRanksum <- function(tissue, cohort="all") { 
-
-    bc.qual.var<- c("er","her2" ,"pam50.parker","hybrid","cit",
-                    "claudin.low", "lum" ,"lumN","prolif" ,"basalL", "lumC",
-                    "lumaNormL" ,"basLmApo","lumBlumC", "t.size", "lymph", 
-                    "menopause","hrt","weight.70.plus","age.55.plus",
-                    "medication","hospital")
-
-    bc.quant.var<-c("time","age","weight", "MKS", "ERS", "LUMS", "HER2S")
-    n.qual.var<- c("menopause","hrt","weight.70.plus","age.55.plus", "medication","orig.dataset")
-    bn.qual.var<- c("cancer", bc.qual.var, "orig.dataset")
-    
-    pat.dat<-list()
-    pat.dat[[tissue]]$cohorts <- pat.cohorts(dat[[tissue]])
-    ranksum = NULL 
-    
-    if(tissue=="blood" || tissue=="biopsy" || tissue=="bnblood"){ 
-        patient.ordering<-NULL
-        for (module in names(bresat[[tissue]])){
-          ranksum[[tissue]][[module]]<-do.call(cbind,
-                                                lapply(bresat[[tissue]][[module]],
-                                                       '[', "ranksum"))[,]
-          patient.ordering[[cohort]][[tissue]][[module]] <- ranksum[[tissue]][[module]][[cohort]]
-        }
-  
-        if (tissue == "blood " || tissue == "biopsy") {
-            qual.var = bc.qual.var
-        } else {
-            qual.var = bn.qual.var
-        }
-
-        # qualitative
-        ### BC patients
-        cl.mergedmod.patient<-NULL
-        ## Association between ranksum and qualitative variables
-        patients <- pat.dat[[tissue]]$cohorts[[cohort]]
-        dat.cl <- dat[[tissue]]$clinical[patients, bc.qual.var]
-        sel <- sapply(dat.cl, function(data) length(levels(factor(data)))>1)
-        dat.cl <- dat.cl[,sel]
-        cl.mergedmod.patient[[cohort]][[tissue]]<- plyr::laply(dat.cl, function(y) {
-          plyr::laply(patient.ordering[[cohort]][[tissue]], function (x){
-            anova(lm(x~y))$`Pr(>F)`[1]
-          })
-        })
-        rownames(cl.mergedmod.patient[[cohort]][[tissue]]) <- colnames(dat.cl)
-        colnames(cl.mergedmod.patient[[cohort]][[tissue]]) <- names(bresat[[tissue]])
-       
-        # quantitiative
-        merged.moduleTraitCor.patient<-NULL
-        merged.moduleTraitPvalue.patient<-NULL
-        
-        patients <- pat.dat[[tissue]]$cohorts[[cohort]]
-        merged.moduleTraitCor.patient[[cohort]][[tissue]]= cor(data.frame(patient.ordering[[cohort]][[tissue]]), dat[[tissue]]$clinical[patients, bc.quant.var], use = "p")
-        merged.moduleTraitPvalue.patient[[cohort]][[tissue]]= WGCNA::corPvalueStudent(merged.moduleTraitCor.patient[[cohort]][[tissue]], length(patients))
-        cl.mergedmod.patient[[cohort]][[tissue]]<-rbind(cl.mergedmod.patient[[cohort]][[tissue]], t(merged.moduleTraitPvalue.patient[[cohort]][[tissue]]))
-
-        clinicalVars = row.names(cl.mergedmod.patient[[cohort]][[tissue]])
-        cols = colnames(cl.mergedmod.patient[[cohort]][[tissue]]) 
-        cl.mergedmod.patient[[cohort]][[tissue]] = cbind(clinicalVars, cl.mergedmod.patient[[cohort]][[tissue]])
-        colnames(cl.mergedmod.patient[[cohort]][[tissue]]) = c("Clinical", cols)
+  ### Now results are pre-computed. Preseting now FDR stat adjusted for multiple testing
+        clinicalVars = row.names(fdr[[cohort]][[tissue]])
+        cols = colnames(fdr[[cohort]][[tissue]]) 
+        fdr[[cohort]][[tissue]] = cbind(clinicalVars, fdr[[cohort]][[tissue]])
+        colnames(fdr[[cohort]][[tissue]]) = c("Clinical", cols)
         select.var<-c("lymph", "er", "MKS","pam50.parker", "hybrid", "cit",
                       "lumC", "t.size", "claudin.low", "weight", "LUMS", "hrt",
                       "her2", "HER2S", "age", "menopause", "medication")
     
         tmp = NULL
-        tmp = cl.mergedmod.patient[[cohort]][[tissue]] 
+        tmp = fdr[[cohort]][[tissue]] 
         tmp = tmp[rownames(tmp) %in% select.var, ]
 
        return(tmp)
