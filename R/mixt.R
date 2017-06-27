@@ -1,4 +1,9 @@
+# Loads all datasets into memory when the package gets loaded. This is to 
+# speed up the Kvik Compute Service and OpenCPU calls. 
+
 .onLoad <- function(libname, pkgname) {
-  utils::data("bresat", "moduleColors", "goterms", "combat_data", "msigdb", "perm_cor_p", "TOM-net", package=pkgname, envir=parent.env(environment()))
-  #datasets = c("merged_bresat.RData", "merged_moduleColors.RData", "topGO_merged_mod.RData", "go_common.RData", "msigdb.RData", "combat_data.RData", "merged_TOM.RData")
+  utils::data("bresat", "moduleColors", "goterms", "dat", "msigdb.enrichment", 
+              "perm.cor.p", "fdr", "net", package=pkgname, 
+              envir=parent.env(environment()))
 }
+
