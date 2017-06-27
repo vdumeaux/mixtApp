@@ -738,7 +738,7 @@ clinicalRanksum <- function(tissue, cohort="all") {
 
        return(tmp)
     }
-}
+
 
 #' Get graph nodes for a TOM graph for a given tissue 
 #' @export
