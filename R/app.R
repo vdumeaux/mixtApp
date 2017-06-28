@@ -219,7 +219,7 @@ cohort_scatterplot <-
     if(x.tissue==y.tissue){
       comp=paste0(xtissue, 2)
     } else {
-      comp=paste0(xtissue, ytissue)
+      comp=paste0(xtissue,".", ytissue)
     }
     
     
