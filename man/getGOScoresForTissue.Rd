@@ -9,4 +9,3 @@ getGOScoresForTissue(tissue, term)
 \description{
 Get all scores for a specific term in a tissue
 }
-

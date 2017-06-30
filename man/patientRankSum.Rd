@@ -9,4 +9,3 @@ patientRankSum(tissueA = "blood", tissueB = "biopsy", cohort = "all")
 \description{
 Calculate patient rank sum scores for given tissues.
 }
-

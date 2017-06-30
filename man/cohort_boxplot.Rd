@@ -10,4 +10,3 @@ cohort_boxplot(blood.module, orderByTissue, orderByModule,
 \description{
 Generate boxplot.
 }
-

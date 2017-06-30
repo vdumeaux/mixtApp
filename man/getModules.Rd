@@ -15,4 +15,3 @@ vector of module names
 \description{
 Returns a list of modules found for the given tissue
 }
-

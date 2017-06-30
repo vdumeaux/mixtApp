@@ -15,4 +15,3 @@ MEs object with module eigengenes for each tissue
 \description{
 Computes module eigengenes for modules in the given tissues
 }
-

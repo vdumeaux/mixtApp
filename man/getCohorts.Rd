@@ -9,4 +9,3 @@ getCohorts(tissue = "blood")
 \description{
 Get available cohorts
 }
-

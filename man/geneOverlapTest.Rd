@@ -9,4 +9,3 @@ geneOverlapTest(tissueA = "blood", tissueB = "biopsy")
 \description{
 Compute gene overlap between genes from two tissues
 }
-

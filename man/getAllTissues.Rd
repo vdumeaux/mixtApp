@@ -9,4 +9,3 @@ getAllTissues()
 \description{
 Get available tissues
 }
-

@@ -18,4 +18,3 @@ getGOTerms(tissue, module, terms = c())
 Get go terms for the given module and tissue. Possible to specify
 which specific terms you're interested in.
 }
-

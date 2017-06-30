@@ -9,4 +9,3 @@ getAllGenesAndModules(cohort = "all")
 \description{
 Retrieves an overview of all genes and the modules they participate in.
 }
-

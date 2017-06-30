@@ -9,4 +9,3 @@ getGOTermNames()
 \description{
 Get all go term names
 }
-

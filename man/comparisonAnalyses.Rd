@@ -18,4 +18,3 @@ comparisonAnalyses(tissueA, tissueB, moduleA, moduleB, cohort = "all")
 \description{
 Compute all 4 different analyses for modules from two tissues.
 }
-

@@ -14,4 +14,3 @@ getEnrichmentForTissue(tissue, genesets = c(1))
 \description{
 Get enrichment scores for all modules
 }
-

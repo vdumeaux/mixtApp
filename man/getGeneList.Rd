@@ -17,4 +17,3 @@ matrix with columns: gene name, up.dn, cor
 \description{
 Get a list of genes for a specific module and tissue.
 }
-

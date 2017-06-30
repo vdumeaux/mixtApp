@@ -14,4 +14,3 @@ getCommonGenes(tissue, module, geneset, status = "updn.common")
 \description{
 Get common genes for given tissue, module, geneset and optionally status
 }
-

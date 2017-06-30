@@ -9,4 +9,3 @@ clinicalRanksum(tissue, cohort = "all")
 \description{
 Compute clinical ranksum for given tissue
 }
-

@@ -9,4 +9,3 @@ getTOMGraphNodes(tissue)
 \description{
 Get graph nodes for a TOM graph for a given tissue
 }
-

@@ -9,4 +9,3 @@ getGeneSetNames()
 \description{
 Get gene set names available to the MIxT app
 }
-

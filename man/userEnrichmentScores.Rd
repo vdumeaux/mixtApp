@@ -16,4 +16,3 @@ userEnrichmentScores(tissue, genelist, cohort = "all")
 Get p-values from the hypergeometric test between an arbirtrary gene list
 and the modules. User must specify tissue and genelist
 }
-

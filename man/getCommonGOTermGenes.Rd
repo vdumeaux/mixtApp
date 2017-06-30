@@ -14,4 +14,3 @@ getCommonGOTermGenes(tissue, module, gotermID)
 Get the common genes from the go term anlysis for a specific
 tissue, module and GO term id.
 }
-

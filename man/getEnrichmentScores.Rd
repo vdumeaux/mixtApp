@@ -22,4 +22,3 @@ gene set if applicable. If no gene set is specified it will return
 all gene sets. Only returns genesets with updn pvalue < 1. Since
 p-value is stored as a factor we're checking for != 1.
 }
-

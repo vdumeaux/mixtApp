@@ -9,4 +9,3 @@ commonEnrichmentScoreGenes(tissue, module, genelist)
 \description{
 Get common genes from er analysis with genelist and module
 }
-

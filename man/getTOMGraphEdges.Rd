@@ -9,4 +9,3 @@ getTOMGraphEdges(tissue)
 \description{
 Get graph edges for a TOM graph for a given tissue
 }
-
