@@ -1,17 +1,18 @@
-Package: mixt
+Package: mixtbt
 Type: Package
-Title: Package for doing Matched Interaction across Tissues (MIxT) data analysis
-    and visualization (short line)
+Title: Matched Interactions across Tissues (MIxT) data analysis
+    and visualization application.
 Version: 1.0
-Date: 2015-05-08
-Author: Bjorn Fjukstad
-Maintainer: Bjorn Fjukstad <bjorn@cs.uit.no>
-Description: Package for doing Matched Interaction across Tissues (MIxT) data
-    analysis and visualization. (more to come)
+Date: 2017-06-30
+Author:Vanessa Dumeaux and Bjørn Fjukstad
+Maintainer: Vanessa Dumeaux <vdumeaux@gmail.com>, Bjørn Fjukstad <bjorn.fjukstad@uit.no>
+Description: Matched Interactions across Tissues (MIxT) data
+    analysis and visualization. Package that provides data and analyses to the
+    mixt-blood-tumor.bci.mcgill.ca web application.
 License: MIT
 Depends:
   BCIutils,
-  huc, 
+  huc,
   colorspace,
   ggplot2,
 Imports:
@@ -40,11 +41,12 @@ Imports:
     dplyr,
     igraph,
     GGally,
-    network, 
-    sna, 
-    breastCancerVDX, 
-    hgu133a.db, 
+    network,
+    sna,
+    breastCancerVDX,
+    hgu133a.db,
     genefu,
-    iC10, 
+    iC10,
 Suggests: testthat
-RoxygenNote: 5.0.1
+RoxygenNote: 6.0.1.9000
+Encoding: UTF-8
