@@ -1,56 +1,36 @@
-# Script to import datasets from the larger MIxT Repository into this R package.
+# Fetch Stroma Datasets
 
-# Directory where the MIxT repository is cloned. Note that you may need to run
-# git raw fix within the mixt_dir/data/mixt folder to load the datasets. 
-mixt_dir = "~/mixt"
+dir = 'https://rawgit.com/vdumeaux/mixtData/master'
 
-# Datasets we can include directly. 
-load(paste0(mixt_dir,"/data/mixt/bresat.RData")) 
-devtools::use_data(bresat,  overwrite=TRUE, compress="gzip") 
+# Datasets we can include directly.
+load(url(paste0(dir,"/data/bresat.RData")))
+devtools::use_data(bresat,  overwrite=TRUE, compress="gzip")
 
-load(paste0(mixt_dir,"/data/mixt/moduleColors.RData")) 
-devtools::use_data(moduleColors,  overwrite=TRUE, compress="gzip") 
+load(url(paste0(dir,"/data/moduleColors.RData")))
+devtools::use_data(moduleColors,  overwrite=TRUE, compress="gzip")
 
-load(paste0(mixt_dir,"/data/mixt/msigdb.RData")) 
-devtools::use_data(msigdb.enrichment,  overwrite=TRUE, compress="gzip") 
+load(url(paste0(dir,"/data/msigdb_enrichment.RData")))
+msigdb.enrichment = msigdb_enrichment
+devtools::use_data(msigdb.enrichment,  overwrite=TRUE, compress="gzip")
 
-load(paste0(mixt_dir,"/data/mixt/combat_data.RData")) 
-devtools::use_data(dat,  overwrite=TRUE, compress="gzip") 
+load(url(paste0(dir,"/data/dat.RData")))
+devtools::use_data(dat,  overwrite=TRUE, compress="gzip")
 
-load(paste0(mixt_dir,"/data/mixt/mod_clinical_fdr.RData")) 
-devtools::use_data(fdr,  overwrite=TRUE, compress="gzip") 
+load(url(paste0(dir,"/data/mod_clinical_fdr.RData")))
+fdr = mod_clinical_fdr
+devtools::use_data(fdr,  overwrite=TRUE, compress="gzip")
 
-load(paste0(mixt_dir,"/data/mixt/perm_cor_p.RData")) 
-devtools::use_data(perm.cor.p,  overwrite=TRUE, compress="gzip") 
+load(url(paste0(dir,"/data/perm_cor_p.RData")))
+perm.cor.p = perm_cor_p
+devtools::use_data(perm.cor.p,  overwrite=TRUE, compress="gzip")
 
+load(url(paste0(dir,"/data/TOM_net.RData")))
+net = TOM_net
+devtools::use_data(net, overwrite=TRUE, compress="gzip")
 
-# Datasets we need to wrangle a bit to include 
-load(paste0(mixt_dir,"/data/mixt/TOM.RData")) 
-
-tom<-NULL
-for (tissue in c("blood","biopsy", "nblood")){
-  tom[[tissue]] <- TOM[[tissue]][moduleColors[[tissue]] != "grey", moduleColors[[tissue]] !="grey"]
-}
-
-tom$nblood<- TOM$nblood[moduleColors$blood != "grey", moduleColors$blood !="grey"]
-
-net<-NULL
-for (tissue in c("blood", "biopsy")){
-  net[[tissue]]<-WGCNA::exportNetworkToCytoscape(
-    tom[[tissue]],
-    edgeFile = NULL, #paste("data/", tissue, "_smod_tom_01_edge.txt", sep=""),
-    nodeFile = NULL, #paste("data/", tissue, "_smod_tom_01_node.txt", sep=""),
-    weighted = TRUE,
-    threshold = 0.1,
-    nodeAttr = moduleColors[[tissue]][moduleColors[[tissue]] !="grey"])
-}
-
-devtools::use_data(net, overwrite=TRUE, compress="gzip") 
-
-
-load(paste0(mixt_dir,"/data/mixt/topGO_mod.RData")) 
-load(paste0(mixt_dir,"/data/mixt/go_common.RData")) 
-goterms <- all.single
+# Datasets we need to wrangle a bit to include
+load(url(paste0(dir,"/data/topGO_mod.RData")))
+load(url(paste0(dir,"/data/goterms.RData")))
 for (tissue in names(goterms)){
   for(module in names(goterms[[tissue]])){
     goterms[[tissue]][[module]]$GO.data <- NULL
