@@ -18,7 +18,7 @@ load(paste0(mixt_dir,"/data/mixt/combat_data.RData"))
 devtools::use_data(dat,  overwrite=TRUE, compress="gzip") 
 
 load(paste0(mixt_dir,"/data/mixt/mod_clinical_fdr.RData")) 
-devtools::use_data(fdr,  overwrite=TRUE, compress="gzip") 
+devtools::use_data(mod_cinical_fdr,  overwrite=TRUE, compress="gzip") 
 
 load(paste0(mixt_dir,"/data/mixt/perm_cor_p.RData")) 
 devtools::use_data(perm.cor.p,  overwrite=TRUE, compress="gzip") 
