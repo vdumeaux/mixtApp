@@ -29,13 +29,10 @@ net = TOM_net
 devtools::use_data(net, overwrite=TRUE, compress="gzip")
 
 # Datasets we need to wrangle a bit to include
-load(url(paste0(dir,"/data/topGO_mod.RData")))
 load(url(paste0(dir,"/data/goterms.RData")))
 for (tissue in names(goterms)){
   for(module in names(goterms[[tissue]])){
     goterms[[tissue]][[module]]$GO.data <- NULL
-    goterms[[tissue]][[module]]$resultFisher <- NULL
-    goterms[[tissue]][[module]]$common <- NULL
     goterms[[tissue]][[module]]$common <- go.common[[tissue]][[module]]
   }
 }
