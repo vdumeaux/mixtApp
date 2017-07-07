@@ -86,7 +86,8 @@ cohort_heatmap <- function(tissue, module, cohort.name="all", patient.ids=NULL, 
       data<-data[rownames(data) %in% gene.names,]
     }
         
-    bc.var<- c("er","her2" ,"pam50.parker", "hybrid", "cit", "claudin.low", 
+    bc.var<- c("er","her2" ,"pam50.parker", "hybrid", "cit", "intclust",
+               "claudin.low", 
                "lymph" , "t.size",
                "menopause","hrt","medication",
                "age","weight", "MKS", "LUMS", "HER2S")
@@ -259,7 +260,17 @@ cohort_scatterplot <-
         cit.normL = "green4",
         cit.mApo = "hotpink2",
         cit.lumc = "#7fffd4",
-        cit.basalL = "firebrick2"
+        cit.basalL = "firebrick2",
+        intclust1="deepskyblue",
+        intclust3="blue4", 
+        intclust7="blue4", 
+        intclust8="blue4",
+        intclust9="deepskyblue", 
+        intclust4="green4",
+        intclust4.ern="green4",
+        intclust4.erp="green4", 
+        intclust5="hotpink2",
+        intclust10="firebrick2"
       )
     plot.data$sub.col <- sub.col[as.character(plot.data$cohort)]
     plot.data$sub.col <-
@@ -354,7 +365,9 @@ cohort_boxplot<-function (blood.module, orderByTissue, orderByModule, cohort.nam
   sub.col <- c(normal="white", all="grey", erp="green", ern="firebrick2", her2p="hotpink2", her2n="#21B6A8",
                erp.her2p="orange", ern.her2p="hotpink2", erp.her2n="blue", ern.her2n="firebrick2",
                luma="blue4", erp.luma="blue4", lumb="deepskyblue", erp.lumb="deepskyblue", normL="green4", erp.normL="green4", basalL="firebrick2", her2E="hotpink2", erp.her2E="orange", erp.basalL="#7fffd4", 
-               cit.luma="blue4", cit.lumb="deepskyblue", cit.normL="green4", cit.mApo="hotpink2", cit.lumc="#7fffd4",  cit.basalL="firebrick2")
+               cit.luma="blue4", cit.lumb="deepskyblue", cit.normL="green4", cit.mApo="hotpink2", cit.lumc="#7fffd4",  cit.basalL="firebrick2",
+               intclust1="deepskyblue", intclust3="blue4", intclust7="blue4", intclust8="blue4", intclust9="deepskyblue", 
+               intclust4="green4", intclust4.ern="green4", intclust4.erp="green4",intclust5="hotpink2", intclust10="firebrick2")
   plot.data$sub.col<-sub.col[as.character(plot.data$cohort)]
   
   p<-ggplot2::ggplot(data = plot.data, ggplot2::aes(x=tumor.cat.ordered, y=bnbl.ranksum)) + 
@@ -724,16 +737,16 @@ comparisonAnalyses <- function(tissueA, tissueB, moduleA, moduleB, cohort="all")
 #' @export 
 clinicalRanksum <- function(tissue, cohort="all") { 
   ### Now results are pre-computed. Preseting now FDR stat adjusted for multiple testing
-        clinicalVars = row.names(fdr[[cohort]][[tissue]])
-        cols = colnames(fdr[[cohort]][[tissue]]) 
-        fdr[[cohort]][[tissue]] = cbind(clinicalVars, fdr[[cohort]][[tissue]])
-        colnames(fdr[[cohort]][[tissue]]) = c("Clinical", cols)
+        clinicalVars = row.names(mod_clinical_fdr[[cohort]][[tissue]])
+        cols = colnames(mod_clinical_fdr[[cohort]][[tissue]]) 
+        mod_clinical_fdr[[cohort]][[tissue]] = cbind(clinicalVars, mod_clinical_fdr[[cohort]][[tissue]])
+        colnames(mod_clinical_fdr[[cohort]][[tissue]]) = c("Clinical", cols)
         select.var<-c("lymph", "er", "MKS","pam50.parker", "hybrid", "cit",
                       "lumC", "t.size", "claudin.low", "weight", "LUMS", "hrt",
                       "her2", "HER2S", "age", "menopause", "medication")
     
         tmp = NULL
-        tmp = fdr[[cohort]][[tissue]] 
+        tmp = mod_clinical_fdr[[cohort]][[tissue]] 
         tmp = tmp[rownames(tmp) %in% select.var, ]
 
        return(tmp)
