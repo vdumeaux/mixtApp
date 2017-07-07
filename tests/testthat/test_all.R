@@ -1,40 +1,45 @@
 library(testthat)
 
+# First get all available tissues in the dataset
+tissues = names(bresat)
+
 # Note: We do not check for correctness, just that all the functions run without
 # crashing. The rational behind this is that the data in the package is
-# continuously changing which would make it necessary to update the tests 
+# continuously changing which would make it necessary to update the tests
 # whenever we updated the data.
 
 test_that("heatmap works", {
-  tissue = "blood"
-  module = "blue"
-  expect_silent(cohort_heatmap(tissue, module)) 
-  expect_silent(cohort_heatmap(tissue,module,"erp"))
+  for (tissue in tissues) {
+  	module = names(bresat[[tissue]])[1]
+  	expect_silent(cohort_heatmap(tissue, module))
+  	expect_silent(cohort_heatmap(tissue,module,"erp"))
+  }
 })
 
 
 test_that("scatterplot works", {
-  x.tissue = "blood"
-  y.tissue = "biopsy"
-  x.module = "blue"
-  y.module = "blue"
-  expect_silent(cohort_scatterplot(x.tissue,x.module, y.tissue, y.module))
+  x_tissue = tissues[1]
+  y_tissue = tissues[2]
+  x_module = names(bresat[[x_tissue]])[1]
+  y_module =  names(bresat[[y_tissue]])[1]
+  expect_silent(cohort_scatterplot(x_tissue,x_module, y_tissue, y_module))
 })
 
 test_that("boxplot works", {
-  blood.module="blue"
-  orderByTissue="blood"
-  orderByModule="blue"
-  expect_silent(cohort_boxplot(blood.module, orderByTissue, orderByModule))
-  orderByTissue="biopsy"
-  expect_silent(cohort_boxplot(blood.module, orderByTissue, orderByModule))
+  tissue = tissues[1]
+  module = names(bresat[[tissue]])[1]
+  orderByTissue= tissue
+  orderByModule=module
+
+  expect_silent(cohort_boxplot(module, orderByTissue, orderByModule))
+  orderByTissue= tissues[2]
+  expect_silent(cohort_boxplot(module, orderByTissue, orderByModule))
 })
 
 test_that("get modules works", {
-  expect_silent(getModules("blood"))
-  expect_silent(getModules("biopsy"))
-  expect_silent(getModules("bnblood"))
-  expect_silent(getModules("nblood"))
+	for(tissue in tissues) {
+		  expect_silent(getModules(tissue))
+	}
 })
 
 test_that("get all genes works", {
@@ -42,7 +47,9 @@ test_that("get all genes works", {
 })
 
 test_that("get all modules works", {
-  expect_silent(getAllModules("BRCA1"))
+	genes = getAllGenes()
+	gene = genes[1]
+  expect_silent(getAllModules(gene))
 })
 
 # test_that("get all genes and modules works", {
@@ -50,16 +57,23 @@ test_that("get all modules works", {
 # })
 
 test_that("get all tissues works", {
-  expect_equal(getAllTissues(), c("blood","biopsy","nblood","bnblood"))
+  expect_equal(getAllTissues(), tissues)
 })
 
 test_that("get gene list works", {
-  expect_silent(getGeneList("blood", "blue"))
+	tissue = tissues[1]
+	module = names(bresat[[tissue]])[1]
+  expect_silent(getGeneList(tissue,module))
 })
 
 test_that("get en richment scores works", {
-  expect_silent(getEnrichmentScores("blood","green")) 
-  expect_silent(getEnrichmentScores("biopsy","green")) 
+	tissue = tissues[1]
+	module = names(bresat[[tissue]])[1]
+  expect_silent(getEnrichmentScores(tissue, module))
+
+	tissue = tissues[2]
+	module = names(bresat[[tissue]])[1]
+  expect_silent(getEnrichmentScores(tissue, module))
 })
 
 test_that("get gene set names works", {
@@ -67,29 +81,43 @@ test_that("get gene set names works", {
 })
 
 test_that("get nerichment for tissue works", {
-  expect_silent(getEnrichmentForTissue("blood"))
-  expect_silent(getEnrichmentForTissue("biopsy"))
+	for(tissue in tissues){
+  expect_silent(getEnrichmentForTissue(tissue))
+	}
 })
 
+# only check first two tissues
 test_that("get go terms works", {
-  expect_silent(getGOTerms("blood","green"))
-  expect_silent(getGOTerms("biopsy","green"))
+	for(tissue in tissues[c(1,2)]){
+		module = names(bresat[[tissue]])[1]
+  	expect_silent(getGOTerms(tissue, module))
+	}
 })
 
 test_that("get common genes works", {
-  expect_silent(getCommonGenes("blood","green", "REACTOME_RNA_POL_I_TRANSCRIPTION"))
+	tissue = tissues[1]
+	module = names(bresat[[tissue]])[1]
+  geneset ="REACTOME_RNA_POL_I_TRANSCRIPTION"
+  expect_silent(getCommonGenes(tissue, module, geneset))
 })
 
 test_that("get common go terms works", {
-  expect_silent(getCommonGOTermGenes("blood","green","GO:0070848"))
+	tissue = tissues[1]
+	module = names(bresat[[tissue]])[1]
+  expect_silent(getCommonGOTermGenes(tissue, module, "GO:0070848"))
 })
 
 test_that("user enrichment scores works", {
-  expect_silent(userEnrichmentScores("blood",c("BRCA1", "ESR1")))
+	tissue = tissues[1]
+	genes = getAllGenes()[c(1,2)]
+  expect_silent(userEnrichmentScores(tissue, genes))
 })
 
 test_that("common enrichment score genes works", {
-  expect_silent(commonEnrichmentScoreGenes("blood", "green", c("BRCA1", "ESR1")))
+	tissue = tissues[1]
+	module = names(bresat[[tissue]])[1]
+	genes = getAllGenes()[c(1,2)]
+  expect_silent(commonEnrichmentScoreGenes(tissue, module, genes))
 })
 
 test_that("get go term names works ", {
@@ -97,38 +125,53 @@ test_that("get go term names works ", {
 })
 
 test_that("get go scores for tissue work", {
-  expect_silent(getGOScoresForTissue("biopsy", "B cell receptor signaling pathway"))
+	tissue = tissues[1]
+  expect_silent(getGOScoresForTissue(tissue, "B cell receptor signaling pathway"))
 })
 
 test_that("gene overlap test works", {
-  expect_silent(geneOverlapTest("blood", "biopsy"))
+  x_tissue = tissues[1]
+  y_tissue = tissues[2]
+  expect_silent(geneOverlapTest(x_tissue, y_tissue))
 })
 
 
 test_that("patient ranksum works", {
-  expect_silent(patientRankSum("blood","biopsy", "all"))
-  expect_silent(patientRankSum("biopsy","blood", "all"))
+  x_tissue = tissues[1]
+  y_tissue = tissues[2]
+  cohort = "all"
+  expect_silent(patientRankSum(x_tissue, y_tissue, cohort))
+  expect_silent(patientRankSum(y_tissue, x_tissue, cohort))
 })
 
 test_that("comparison analyses work", {
-  expect_silent(comparisonAnalyses("blood", "biopsy", "green","blue"))
+	x_tissue = tissues[1]
+  y_tissue = tissues[2]
+
+  x_module = names(bresat[[x_tissue]])[1]
+  y_module =  names(bresat[[y_tissue]])[1]
+  expect_silent(comparisonAnalyses(x_tissue, y_tissue, x_module, y_module))
 })
 
 test_that("clinical ranksum works", {
-  expect_silent(clinicalRanksum("blood"))
-  expect_silent(clinicalRanksum("biopsy"))
+	for(tissue in tissues[c(1,2)]){
+  	expect_silent(clinicalRanksum(tissue))
+	}
 })
 
 # Old but compatible versions of ggplo2 will produce a warning. We well accept a
 # warning message for now.
 test_that("get tom nodes works", {
-  expect_message(getTOMGraphNodes("blood"))
-  expect_silent(getTOMGraphNodes("biopsy"))
+	tissue = tissues[1]
+	expect_message(getTOMGraphNodes(tissue))
+	tissue = tissues[2]
+	expect_silent(getTOMGraphNodes(tissue))
 })
 
 test_that("get tom edges works", {
-  expect_silent(getTOMGraphEdges("blood"))
-  expect_silent(getTOMGraphEdges("biopsy"))
+	for(tissue in tissues[c(1,2)]){
+	  expect_silent(getTOMGraphEdges(tissue))
+	}
 })
 
 
