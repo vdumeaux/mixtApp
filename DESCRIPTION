@@ -1,4 +1,4 @@
-Package: mixtbt
+Package: mixtApp
 Type: Package
 Title: Matched Interactions across Tissues (MIxT) data analysis
     and visualization application.
@@ -11,8 +11,7 @@ Description: Matched Interactions across Tissues (MIxT) data
     mixt-blood-tumor.bci.mcgill.ca web application.
 License: MIT
 Depends:
-  BCIutils,
-  huc,
+	mixtR,
   colorspace,
   ggplot2,
 Imports:

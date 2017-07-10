@@ -34,5 +34,5 @@ given by 'imgpath'
 }
 \examples{
 heatmap("blood", "green")
-heatmap("biopsy", "blue") 
+heatmap("biopsy", "blue")
 }

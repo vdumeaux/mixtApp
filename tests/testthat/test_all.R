@@ -31,9 +31,9 @@ test_that("boxplot works", {
   orderByTissue= tissue
   orderByModule=module
 
-  expect_silent(cohort_boxplot(module, orderByTissue, orderByModule))
+  expect_silent(cohort_boxplot(tissue, module, orderByTissue, orderByModule))
   orderByTissue= tissues[2]
-  expect_silent(cohort_boxplot(module, orderByTissue, orderByModule))
+  expect_silent(cohort_boxplot(tissue, module, orderByTissue, orderByModule))
 })
 
 test_that("get modules works", {
