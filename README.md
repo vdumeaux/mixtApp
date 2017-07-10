@@ -1,4 +1,4 @@
-# MIxT Blood Tumor App R Package (mixtApp)
+# MIxT App R Package (mixtApp)
 R package that provides the statistical analyses used in the compute service for
 the [MIxT](http://mixt-blood-tumor.bci.mcgill.ca) web application. 
 
