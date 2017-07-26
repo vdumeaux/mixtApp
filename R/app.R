@@ -271,7 +271,9 @@ commonEnrichmentScoreGenes <- function(tissue, module, genelist){
 #' Get all go term names
 #' @export
 getGOTermNames <- function(){
-  return(goterms$blood$blue$GO.table$Term)
+	tissue = names(moduleColors[1])
+	module = getModules(tissue)[1]
+  return(goterms[[tissue]][[module]]$GO.table$Term)
 }
 
 #' Get all scores for a specific term in a tissue
