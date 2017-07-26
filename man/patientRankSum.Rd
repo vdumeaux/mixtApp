@@ -4,7 +4,7 @@
 \alias{patientRankSum}
 \title{Calculate patient rank sum scores for given tissues.}
 \usage{
-patientRankSum(tissueA = "blood", tissueB = "biopsy", cohort = "all")
+patientRankSum(tissueA = NULL, tissueB = NULL, cohort = "all")
 }
 \description{
 Calculate patient rank sum scores for given tissues.

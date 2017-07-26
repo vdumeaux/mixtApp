@@ -4,7 +4,7 @@
 \alias{geneOverlapTest}
 \title{Compute gene overlap between genes from two tissues}
 \usage{
-geneOverlapTest(tissueA = "blood", tissueB = "biopsy")
+geneOverlapTest(tissueA = NULL, tissueB = NULL)
 }
 \description{
 Compute gene overlap between genes from two tissues

@@ -4,7 +4,7 @@
 \alias{getCohorts}
 \title{Get available cohorts}
 \usage{
-getCohorts(tissue = "blood")
+getCohorts(tissue = NULL)
 }
 \description{
 Get available cohorts

@@ -322,7 +322,14 @@ computeEigengenes <- function(tissues) {
 #' Compute gene overlap between genes from two tissues
 #' @import WGCNA
 #' @export
-geneOverlapTest <- function(tissueA="blood", tissueB="biopsy"){
+geneOverlapTest <- function(tissueA=NULL, tissueB=NULL){
+
+		if(is.null(tissueA)){
+			tissueA = names(moduleColors)[1]
+		} else if(is.null(tissueB)){
+			tissueB = names(moduleColors)[2]
+		}
+
     tissue.overlap = NULL
     tissue.overlap = WGCNA::overlapTable(moduleColors[[tissueA]], moduleColors[[tissueB]])
     adjusted = NULL
@@ -339,16 +346,23 @@ geneOverlapTest <- function(tissueA="blood", tissueB="biopsy"){
 
 #' Get available cohorts
 #' @export
-getCohorts <- function(tissue="blood"){
-  pat.dat <- NULL
-  pat.dat[[tissue]]$cohorts <- pat.cohorts(dat[[tissue]])
-  cohorts<- names(pat.dat[[tissue]]$cohorts)
+getCohorts <- function(tissue=NULL){
+	if(is.null(tissue)){
+		tissue = names(moduleColors)[1]
+	}
+  cohorts = names(dat[[tissue]]$cohorts)
   return(cohorts)
 }
 
 #' Calculate patient rank sum scores for given tissues.
 #' @export
-patientRankSum <- function(tissueA="blood",tissueB="biopsy",cohort="all") {
+patientRankSum <- function(tissueA=NULL,tissueB=NULL,cohort="all") {
+
+	if(is.null(tissueA)){
+		tissueA = names(moduleColors)[1]
+	} else if(is.null(tissueB)){
+		tissueB = names(moduleColors)[2]
+	}
 
   # The p-values have already been computed so we can just extract them
   # from the data frame.
