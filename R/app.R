@@ -10,8 +10,6 @@
 #' @param re.order set to true if patients should be re ordered. Defaults to FALSE.
 #' @param cohort the patient cohort we select patients from, defaults to all patients
 #' @import colorspace
-#' @import BCIutils
-#' @import huc
 #' @export
 #' @examples
 #' heatmap("blood", "green")
