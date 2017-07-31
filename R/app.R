@@ -373,13 +373,13 @@ patientRankSum <- function(tissueA=NULL,tissueB=NULL,cohort="all") {
 		object = paste(tissueA, tissueB, sep="_")
 		# the tissueA_tissueB object is the same as the tissueB_tissueA, so we
 		# have stored them in a single object.
-		if(is.null(perm.cor.p[[object]][[cohort]])){
+		if(is.null(perm_cor_p[[object]][[cohort]])){
 			object = paste(tissueB, tissueA, sep="_")
 		}
-		correlation_p_value = t(perm.cor.p[[object]][[cohort]])
+		correlation_p_value = t(perm_cor_p[[object]][[cohort]])
 	} else {
 		object = paste0(tissueA, "2")
-		correlation_p_value = t(perm.cor.p[[object]][[cohort]])
+		correlation_p_value = t(perm_cor_p[[object]][[cohort]])
 	}
 
   correlation_p_value = as.data.frame(correlation_p_value)

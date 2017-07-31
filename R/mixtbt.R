@@ -3,7 +3,7 @@
 
 .onLoad <- function(libname, pkgname) {
   utils::data("bresat", "moduleColors", "goterms", "dat", "msigdb.enrichment",
-              "perm.cor.p", "mod_clinical_fdr", "net", package=pkgname,
+              "perm_cor_p", "mod_clinical_fdr", "net", package=pkgname,
               envir=parent.env(environment()))
 }
 

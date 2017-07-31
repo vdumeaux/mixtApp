@@ -20,8 +20,7 @@ load(url(paste0(dir,"/data/mod_clinical_fdr.RData")))
 devtools::use_data(mod_clinical_fdr,  overwrite=TRUE, compress="gzip")
 
 load(url(paste0(dir,"/data/perm_cor_p.RData")))
-perm.cor.p = perm_cor_p
-devtools::use_data(perm.cor.p,  overwrite=TRUE, compress="gzip")
+devtools::use_data(perm_cor_p,  overwrite=TRUE, compress="gzip")
 
 load(url(paste0(dir,"/data/TOM_net.RData")))
 net = TOM_net
