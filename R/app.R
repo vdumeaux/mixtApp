@@ -401,11 +401,29 @@ comparisonAnalyses <- function(tissueA, tissueB, moduleA, moduleB, cohort="all")
 
   analyses = NULL
   overlap = geneOverlapTest(tissueA, tissueB)
-  ranksum = patientRankSum(tissueA,tissueB, cohort = "all")
+  ranksum = patientRankSum(tissueA,tissueB, cohort)
+  
+  if(tissueB == names(moduleColors)[1] & tissueA == names(moduleColors[2])){
+    modA <- moduleB
+    modB <- moduleA
+    tissA <- tissueB
+    tissB <- tissueA
+  }
+  else if(tissueA == tissueB & tissueB == names(moduleColors)[1]){
+    modA <- moduleB
+    modB <- moduleA
+    tissA <- tissB <- tissueA
+  } else {
+    modA <- moduleA
+    modB <- moduleB
+    tissA <- tissueA
+    tissB <- tissueB
+  }
+  
 
-  analyses$ranksum = as.numeric(ranksum[ranksum[,1] == moduleA, colnames(ranksum) == moduleB])
-  analyses$overlap =  as.numeric(overlap[overlap[,1] == moduleA , colnames(overlap) == moduleB])
-  analyses$common =  intersect(rownames(bresat[[tissueA]][[moduleA]][[cohort]]$dat),rownames(bresat[[tissueB]][[moduleB]][[cohort]]$dat))
+  analyses$ranksum = as.numeric(ranksum[ranksum[,1] == modA, colnames(ranksum) == modB])
+  analyses$overlap =  as.numeric(overlap[overlap[,1] == modA , colnames(overlap) == modB])
+  analyses$common =  intersect(rownames(bresat[[tissA]][[modA]][[cohort]]$dat),rownames(bresat[[tissB]][[modB]][[cohort]]$dat))
 
   return(analyses)
 }
