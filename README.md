@@ -15,7 +15,7 @@ If you want to modify the data being used in the web application you'll have to
 rebuild the mixtApp package yourself, and start the different services
 manually.
 
-First clone down the  [mixtApp](https://github.com/vdumeaux/mixtApp)
+First clone down the [mixtApp](https://github.com/vdumeaux/mixtApp)
 repository: 
 
 ```
@@ -25,7 +25,7 @@ $ cd mixtApp
 $ R -f data-raw/datasets.R
 $ R CMD INSTALL .
 ```
-Data must be formatted as described in the mixtR package. 
+Data must be formatted as described in the [mixtR package](https://github.com/vdumeaux/mixtR). 
 
 Next up is building the compute service
 container with your new mixtApp package.
