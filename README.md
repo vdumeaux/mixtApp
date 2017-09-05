@@ -1,5 +1,5 @@
-# MIxT App R Package (mixtApp) to develop MixT web application
-R package that provides the statistical analyses used in the compute service for
+# MIxT App R Package (mixtApp) 
+The mixtApp R package provides the statistical analyses used in the compute service for
 the MIxT web application (Matched Interactions Across Tissues - [blood:tumor example](http://mixt-blood-tumor.bci.mcgill.ca). 
 
 The MIxT web application is designed for exploring the results from the MIxT
@@ -10,11 +10,6 @@ For a more detailed description of the ideas and design of the MIxT web
 application please refer to
 ["Building Applications For Interactive Data Exploration In Systems Biology" by Fjukstad et al.](biorxiv.org/content/early/2017/05/24/141630) 
 and the source code [here](https://github.com/fjukstad/mixt). 
-
-The [mixtApp](https://github.com/vdumeaux/mixtApp) R package provides data and
-analyses of transcriptional profiles for the web application. Instead of
-building a web application where we use pre-computed results we run the analyses
-on demand. 
 
 If you want to modify the data being used in the web application you'll have to
 rebuild the mixtApp package yourself, and start the different services
