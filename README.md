@@ -1,6 +1,6 @@
 # MIxT App R Package (mixtApp) 
-The mixtApp R package provides the statistical analyses used in the compute service for
-the MIxT web application (Matched Interactions Across Tissues - [blood:tumor example](http://mixt-blood-tumor.bci.mcgill.ca). 
+The mixtApp R package provides the data and statistical analyses used in the compute service for
+the MIxT web application (Matched Interactions Across Tissues - [blood:tumor example](http://mixt-blood-tumor.bci.mcgill.ca)). 
 
 The MIxT web application is designed for exploring the results from the MIxT
 analysis comparing transcriptional profiles from two matched tissues across
