@@ -369,18 +369,18 @@ patientRankSum <- function(tissueA=NULL,tissueB=NULL,cohort="all") {
   # The p-values have already been computed so we can just extract them
   # from the data frame.
 
-	if(tissueA != tissueB & tissueA == names(moduleColors)[1]){
-		object <-  paste(tissueA, tissueB, sep="_")
-		correlation_p_value <- perm_cor_p[[object]][[cohort]]
-		}
-  if(tissueA != tissueB & tissueB == names(moduleColors)[1]){
-    object = paste(tissueB, tissueA, sep="_")
-    correlation_p_value <- t(perm_cor_p[[object]][[cohort]])
+    if(tissueA != tissueB & tissueA == names(moduleColors)[1]){
+        object <-  paste(tissueA, tissueB, sep="_")
+	correlation_p_value <- perm_cor_p[[object]][[cohort]]
     }
-  if(tissueA == tissueB){
-		object = paste0(tissueA, "2")
-		correlation_p_value = perm_cor_p[[object]][[cohort]]
-	}
+    if(tissueA != tissueB & tissueB == names(moduleColors)[1]){
+        object = paste(tissueB, tissueA, sep="_")
+        correlation_p_value <- t(perm_cor_p[[object]][[cohort]])
+    }
+    if(tissueA == tissueB){
+	object = paste0(tissueA, "2")
+	correlation_p_value = perm_cor_p[[object]][[cohort]]
+    }
 
   correlation_p_value = as.data.frame(correlation_p_value)
 
@@ -421,7 +421,7 @@ comparisonAnalyses <- function(tissueA, tissueB, moduleA, moduleB, cohort="all")
   }
   
 
-  analyses$ranksum = as.numeric(ranksum[ranksum[,1] == modA, colnames(ranksum) == modB])
+  analyses$ranksum = as.numeric(ranksum[ranksum[,1] == moduleA, colnames(ranksum) == moduleB])
   analyses$overlap =  as.numeric(overlap[overlap[,1] == modA , colnames(overlap) == modB])
   analyses$common =  intersect(rownames(bresat[[tissA]][[modA]][[cohort]]$dat),rownames(bresat[[tissB]][[modB]][[cohort]]$dat))
 
