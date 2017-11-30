@@ -405,10 +405,11 @@ comparisonAnalyses <- function(tissueA, tissueB, moduleA, moduleB, cohort="all")
   
   analyses$ranksum = as.numeric(ranksum[ranksum[,1] == moduleA, colnames(ranksum) == moduleB])
   analyses$overlap =  as.numeric(overlap[overlap[,1] == moduleA , colnames(overlap) == moduleB])
-  analyses$common =  intersect(rownames(bresat[[tissA]][[modA]][[cohort]]$dat),rownames(bresat[[tissB]][[modB]][[cohort]]$dat))
-
+  analyses$common =  intersect(rownames(bresat[[tissueA]][[moduleA]][[cohort]]$dat),rownames(bresat[[tissueB]][[moduleB]][[cohort]]$dat))
+  
   return(analyses)
 }
+
 
 #' Compute clinical ranksum for given tissue
 #' @export
