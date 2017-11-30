@@ -220,7 +220,7 @@ cohort_scatterplot <-
     if(x.tissue==y.tissue){
       comp=paste0(xtissue, 2)
     } else {
-      comp=paste0(xtissue,".", ytissue)
+      comp=paste0(xtissue,"_", ytissue)
     }
     
     
@@ -692,16 +692,16 @@ patientRankSum <- function(tissueA="blood",tissueB="biopsy",cohort="all") {
   # The p-values have already been computed so we can just extract them 
   # from the data frame.
   
-  if(tissueA == "biopsy" & tissueB=="blood") {
-    correlation_p_value = t(perm.cor.p$blood.biopsy[[cohort]])
+  if(tissueA == "biopsy" && tissueB=="blood") {
+    correlation_p_value = t(perm.cor.p$blood_biopsy[[cohort]])
   }
-  if(tissueB == "biopsy" & tissueA=="blood") {
-    correlation_p_value = perm.cor.p$blood.biopsy[[cohort]]
+  if(tissueA=="blood" && tissueB == "biopsy") {
+    correlation_p_value = perm.cor.p$blood_biopsy[[cohort]]
   }
-  if(tissueB == "biopsy" & tissueB=="biopsy") {
+  if(tissueA=="biopsy" && tissueB == "biopsy") {
     correlation_p_value = perm.cor.p$biopsy2[[cohort]]
   }
-  if(tissueA== "blood" & tissueB=="blood") {
+  if(tissueA== "blood" && tissueB=="blood") {
     correlation_p_value = perm.cor.p$blood2[[cohort]]
   }
   
