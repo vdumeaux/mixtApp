@@ -332,8 +332,11 @@ geneOverlapTest <- function(tissueA=NULL, tissueB=NULL){
 			tissueB = names(moduleColors)[2]
 		}
 
+    modColors[[tissueA]] <- moduleColors[[tissueA]][names(moduleColors[[tissueA]]) %in% names(moduleColors[[tissueB]])] 
+    modColors[[tissueB]] <- moduleColors[[tissueB]][names(moduleColors[[tissueB]]) %in% names(moduleColors[[tissueA]])] 
+    
     tissue.overlap = NULL
-    tissue.overlap = WGCNA::overlapTable(moduleColors[[tissueA]], moduleColors[[tissueB]])
+    tissue.overlap = WGCNA::overlapTable(modColors[[tissueA]], modColors[[tissueB]])
     adjusted = NULL
     adjusted = matrix(p.adjust(tissue.overlap$pTable, method="BH"),
                          nrow = nrow(tissue.overlap$pTable),
