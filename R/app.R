@@ -332,6 +332,7 @@ geneOverlapTest <- function(tissueA=NULL, tissueB=NULL){
 			tissueB = names(moduleColors)[2]
 		}
 
+    modColors <- list()
     modColors[[tissueA]] <- moduleColors[[tissueA]][names(moduleColors[[tissueA]]) %in% names(moduleColors[[tissueB]])] 
     modColors[[tissueB]] <- moduleColors[[tissueB]][names(moduleColors[[tissueB]]) %in% names(moduleColors[[tissueA]])] 
     
