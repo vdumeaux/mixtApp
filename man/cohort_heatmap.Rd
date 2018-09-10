@@ -8,22 +8,21 @@ to store a new one, it returns this file. This heat map function
 generates both a png and a pdf. All plots are stored in the path
 given by 'imgpath'}
 \usage{
-cohort_heatmap(tissue, module, cohort.name = "all", patient.ids = NULL,
-  gene.names = NULL, orderByModule = NULL, orderByTissue = NULL,
-  cl.height = 6, title = title)
+cohort_heatmap(tissue, module, cohort.name = "all",
+  orderByModule = NULL, orderByTissue = NULL, cl.height = 6)
 }
 \arguments{
 \item{tissue}{we want to look at}
 
 \item{module}{the module we want to generate a heetmap for}
 
+\item{cohort.name}{the patient cohort we select patients from, defaults to all patients}
+
 \item{orderByModule}{which module we want to order patients by. Default is order by module.}
 
 \item{orderByTissue}{the tissue where the orderByModule module is found. Default is the same tissue.}
 
-\item{re.order}{set to true if patients should be re ordered. Defaults to FALSE.}
-
-\item{cohort}{the patient cohort we select patients from, defaults to all patients}
+\item{cl.height}{dimension of plotting area for clinical variable. Default = 6}
 }
 \description{
 Generate heatmap plot for the given tissue and module. If the heatmap
@@ -31,8 +30,4 @@ already exists, it finds the appropriate png file where it is supposed
 to store a new one, it returns this file. This heat map function
 generates both a png and a pdf. All plots are stored in the path
 given by 'imgpath'
-}
-\examples{
-heatmap("blood", "green")
-heatmap("biopsy", "blue")
 }
