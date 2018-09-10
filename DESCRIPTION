@@ -1,20 +1,15 @@
 Package: mixtApp
 Type: Package
-Title: Matched Interactions across Tissues (MIxT) data analysis
-    and visualization application.
-Version: 1.0
-Date: 2017-06-30
-Author:Vanessa Dumeaux and Bjørn Fjukstad
-Maintainer: Vanessa Dumeaux <vdumeaux@gmail.com>, Bjørn Fjukstad <bjorn.fjukstad@uit.no>
-Description: Matched Interactions across Tissues (MIxT) data
-    analysis and visualization. Package that provides data and analyses to the
-    mixt-blood-tumor.bci.mcgill.ca web application.
-License: MIT
-Depends:
-	mixtR,
-  colorspace,
-  ggplot2,
-Imports:
+Title: Matched Interaction across Tissues (MIxT) data analysis
+Description: The Matched Interaction Across Tissues (MIxT) is a system designed for exploring and comparing transcriptional profiles from two matched tissues across individuals.
+Version: 0.99.0
+Authors@R: c(person("Vanessa", "Dumeaux", , "vanessadumeaux@gmail.com", c("aut", "cre")),
+    person("Bjorn", "Fjukstad", , "bjorn@cs.uit.no", role = "aut"))
+Depends: R (>= 3.3),
+    mixtR,
+    colorspace,
+    ggplot2
+Imports: stats,
     utils,
     Biobase,
     DBI,
@@ -46,6 +41,7 @@ Imports:
     hgu133a.db,
     genefu,
     iC10
-Suggests: testthat
-RoxygenNote: 6.0.1.9000
+VignetteBuilder: knitr
+License: MIT
+RoxygenNote: 6.1.0
 Encoding: UTF-8
