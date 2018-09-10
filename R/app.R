@@ -7,21 +7,17 @@
 #' @param module the module we want to generate a heetmap for
 #' @param orderByModule which module we want to order patients by. Default is order by module.
 #' @param orderByTissue the tissue where the orderByModule module is found. Default is the same tissue.
-#' @param re.order set to true if patients should be re ordered. Defaults to FALSE.
-#' @param cohort the patient cohort we select patients from, defaults to all patients
+#' @param cohort.name the patient cohort we select patients from, defaults to all patients
+#' @param cl.height dimension of plotting area for clinical variable. Default = 6
 #' @import colorspace
 #' @export
-#' @examples
-#' heatmap("blood", "green")
-#' heatmap("biopsy", "blue")
-#'@export
-cohort_heatmap <- function(tissue, module, cohort.name="all", patient.ids=NULL,
-													 gene.names=NULL,  orderByModule=NULL,
-													 orderByTissue=NULL, cl.height=6, title=title) {
-	return (mixtR::cohort_heatmap(mixt.dat=dat, mixt.ranksum = bresat,
+cohort_heatmap <- function(tissue, module, cohort.name="all", 
+                           orderByModule = NULL,
+													 orderByTissue = NULL, cl.height=6) {
+	return (mixtR::cohort_heatmap(mixt.dat = dat, mixt.ranksum = bresat,
 															 tissue = tissue, module = module,
-															 cohort.name=cohort.name, orderByModule=orderByModule,
-															 orderByTissue = orderByTissue, cl.height=cl.height))
+															 cohort.name = cohort.name, orderByModule = orderByModule,
+															 orderByTissue = orderByTissue, cl.height = cl.height))
 }
 
 # Generate cohort scatterplot.
@@ -29,8 +25,10 @@ cohort_heatmap <- function(tissue, module, cohort.name="all", patient.ids=NULL,
 #' @export
 cohort_scatterplot <-  function (x.tissue, x.module, y.tissue, y.module,
 												cohort.name = "all") {
-	return(mixtR::cohort_scatterplot(bresat, x.tissue, x.module,
-																	 y.tissue, y.module, cohort.name))
+	return(mixtR::cohort_scatterplot(mixt.ranksum = bresat, 
+	                                 x.tissue = x.tissue, x.module = x.module,
+																	 y.tissue = y.tissue, y.module = y.module, 
+																	 cohort.name = cohort.name))
 }
 
 #' Generate boxplot.
@@ -38,8 +36,9 @@ cohort_scatterplot <-  function (x.tissue, x.module, y.tissue, y.module,
 cohort_boxplot<-function (tissue, module, orderByTissue, orderByModule,
 													cohort.name="all", patient.ids=NULL){
 
-	return(mixtR::cohort_boxplot(bresat, tissue, module, cohort.name,
-															 orderByTissue, orderByModule))
+	return(mixtR::cohort_boxplot(mixt.ranksum = bresat, tissue = tissue, module = module, 
+	                             cohort.name = cohort.name,
+															 orderByTissue = orderByTissue, orderByModule = orderByModule))
 }
 
 #' Returns a list of modules found for the given tissue
@@ -47,7 +46,7 @@ cohort_boxplot<-function (tissue, module, orderByTissue, orderByModule,
 #' @return vector of module names
 #' @export
 getModules <- function(tissue) {
-  return (names(bresat[[tissue]]))
+  return (names(table(moduleColors[[tissue]])))
 }
 
 #' Returns a list of all genes found in  all modules across all tissues.
@@ -111,7 +110,7 @@ getAllGenesAndModules <- function(cohort="all") {
 #' Get available tissues
 #' @export
 getAllTissues <- function() {
-  return (names(bresat))
+  return (names(moduleColors))
 }
 
 #' Get a list of genes for a specific module and tissue.
@@ -419,20 +418,19 @@ comparisonAnalyses <- function(tissueA, tissueB, moduleA, moduleB, cohort="all")
 #' @export
 clinicalRanksum <- function(tissue, cohort="all") {
   ### Now results are pre-computed. Preseting now FDR stat adjusted for multiple testing
-  clinicalVars = row.names(mod_clinical_fdr[[cohort]][[tissue]])
+  clinicalVars = rownames(mod_clinical_fdr[[cohort]][[tissue]])
   cols = colnames(mod_clinical_fdr[[cohort]][[tissue]])
   mod_clinical_fdr[[cohort]][[tissue]] = cbind(clinicalVars, mod_clinical_fdr[[cohort]][[tissue]])
   colnames(mod_clinical_fdr[[cohort]][[tissue]]) = c("Clinical", cols)
   select.var<-c("lymph", "er", "MKS","pam50.parker", "hybrid", "cit",
                 "lumC", "t.size", "claudin.low", "weight", "LUMS", "hrt",
                 "her2", "HER2S", "age", "menopause", "medication")
-
+  
   tmp = NULL
   tmp = mod_clinical_fdr[[cohort]][[tissue]]
   tmp = tmp[rownames(tmp) %in% select.var, ]
-
-       return(tmp)
-    }
+  return(tmp)
+  }
 
 
 #' Get graph nodes for a TOM graph for a given tissue
