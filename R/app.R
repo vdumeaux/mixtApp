@@ -30,7 +30,7 @@ cohort_scatterplot <-  function (x.tissue, x.module, y.tissue, y.module, cohort.
 
 #' Generate boxplot.
 #' @export
-cohort_boxplot<-function (tissue, module, orderByTissue, orderByModule, cohort.name="all"){
+cohort_boxplot<-function (tissue, module, orderByTissue=NULL, orderByModule=NULL, cohort.name="all"){
 	return(mixtR::cohort_boxplot(mixt.ranksum=bresat, tissue=tissue, module=module, 
 		cohort.name=cohort.name, orderByTissue=orderByTissue, orderByModule=orderByModule))
 }
