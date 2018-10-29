@@ -11,34 +11,28 @@
 #' @param cl.height dimension of plotting area for clinical variable. Default = 6
 #' @import colorspace
 #' @export
-cohort_heatmap <- function(tissue, module, cohort.name="all", 
-                           orderByModule = NULL,
-													 orderByTissue = NULL, cl.height=6) {
-	return (mixtR::cohort_heatmap(mixt.dat = dat, mixt.ranksum = bresat,
-															 tissue = tissue, module = module,
-															 cohort.name = cohort.name, orderByModule = orderByModule,
-															 orderByTissue = orderByTissue, cl.height = cl.height))
+#' @examples
+#' cohort_heatmap("blood", "green")
+#' cohort_heatmap("biopsy", "blue")
+#'@export
+cohort_heatmap <- function(tissue, module, cohort.name="all", orderByModule=NULL, orderByTissue=NULL, cl.height=6) {
+	return (mixtR::cohort_heatmap(mixt.dat=dat, mixt.ranksum = bresat, tissue = tissue, module = module,
+		cohort.name=cohort.name, orderByModule=orderByModule, orderByTissue = orderByTissue, cl.height=cl.height))
 }
 
 # Generate cohort scatterplot.
 # Needs some refactoring re: variable names etc.
 #' @export
-cohort_scatterplot <-  function (x.tissue, x.module, y.tissue, y.module,
-												cohort.name = "all") {
-	return(mixtR::cohort_scatterplot(mixt.ranksum = bresat, 
-	                                 x.tissue = x.tissue, x.module = x.module,
-																	 y.tissue = y.tissue, y.module = y.module, 
-																	 cohort.name = cohort.name))
+cohort_scatterplot <-  function (x.tissue, x.module, y.tissue, y.module, cohort.name = "all") {
+	return(mixtR::cohort_scatterplot(mixt.ranksum=bresat, x.tissue=x.tissue, x.module=x.module, 
+		y.tissue=y.tissue, y.module=y.module, cohort.name=cohort.name))
 }
 
 #' Generate boxplot.
 #' @export
-cohort_boxplot<-function (tissue, module, orderByTissue, orderByModule,
-													cohort.name="all", patient.ids=NULL){
-
-	return(mixtR::cohort_boxplot(mixt.ranksum = bresat, tissue = tissue, module = module, 
-	                             cohort.name = cohort.name,
-															 orderByTissue = orderByTissue, orderByModule = orderByModule))
+cohort_boxplot<-function (tissue, module, orderByTissue, orderByModule, cohort.name="all"){
+	return(mixtR::cohort_boxplot(mixt.ranksum=bresat, tissue=tissue, module=module, 
+		cohort.name=cohort.name, orderByTissue=orderByTissue, orderByModule=orderByModule))
 }
 
 #' Returns a list of modules found for the given tissue
@@ -425,12 +419,13 @@ clinicalRanksum <- function(tissue, cohort="all") {
   select.var<-c("lymph", "er", "MKS","pam50.parker", "hybrid", "cit",
                 "lumC", "t.size", "claudin.low", "weight", "LUMS", "hrt",
                 "her2", "HER2S", "age", "menopause", "medication")
-  
+
   tmp = NULL
   tmp = mod_clinical_fdr[[cohort]][[tissue]]
   tmp = tmp[rownames(tmp) %in% select.var, ]
-  return(tmp)
-  }
+
+       return(tmp)
+    }
 
 
 #' Get graph nodes for a TOM graph for a given tissue
