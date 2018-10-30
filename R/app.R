@@ -16,23 +16,23 @@
 #' cohort_heatmap("biopsy", "blue")
 #'@export
 cohort_heatmap <- function(tissue, module, cohort.name="all", orderByModule=NULL, orderByTissue=NULL, cl.height=6) {
-	return (mixtR::cohort_heatmap(mixt.dat=dat, mixt.ranksum = bresat, tissue = tissue, module = module,
-		cohort.name=cohort.name, orderByModule=orderByModule, orderByTissue = orderByTissue, cl.height=cl.height))
+	mixtR::cohort_heatmap(mixt.dat=dat, mixt.ranksum = bresat, tissue = tissue, module = module,
+		cohort.name=cohort.name, orderByModule=orderByModule, orderByTissue = orderByTissue, cl.height=cl.height)
 }
 
 # Generate cohort scatterplot.
 # Needs some refactoring re: variable names etc.
 #' @export
 cohort_scatterplot <-  function (x.tissue, x.module, y.tissue, y.module, cohort.name = "all") {
-	return(mixtR::cohort_scatterplot(mixt.ranksum=bresat, x.tissue=x.tissue, x.module=x.module, 
-		y.tissue=y.tissue, y.module=y.module, cohort.name=cohort.name))
+	mixtR::cohort_scatterplot(mixt.ranksum=bresat, x.tissue=x.tissue, x.module=x.module, 
+		y.tissue=y.tissue, y.module=y.module, cohort.name=cohort.name)
 }
 
 #' Generate boxplot.
 #' @export
 cohort_boxplot<-function (tissue, module, orderByTissue=NULL, orderByModule=NULL, cohort.name="all"){
-	return(mixtR::cohort_boxplot(mixt.ranksum=bresat, tissue=tissue, module=module, 
-		cohort.name=cohort.name, orderByTissue=orderByTissue, orderByModule=orderByModule))
+	mixtR::cohort_boxplot(mixt.ranksum=mixt.ranksum, tissue=tissue, module=module, 
+	                      cohort.name=cohort.name, orderByTissue=orderByTissue, orderByModule=orderByModule)
 }
 
 #' Returns a list of modules found for the given tissue
