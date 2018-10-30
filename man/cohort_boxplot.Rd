@@ -4,8 +4,8 @@
 \alias{cohort_boxplot}
 \title{Generate boxplot.}
 \usage{
-cohort_boxplot(tissue, module, orderByTissue, orderByModule,
-  cohort.name = "all", patient.ids = NULL)
+cohort_boxplot(tissue, module, orderByTissue = NULL,
+  orderByModule = NULL, cohort.name = "all")
 }
 \description{
 Generate boxplot.

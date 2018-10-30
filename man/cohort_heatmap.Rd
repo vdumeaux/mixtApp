@@ -31,3 +31,7 @@ to store a new one, it returns this file. This heat map function
 generates both a png and a pdf. All plots are stored in the path
 given by 'imgpath'
 }
+\examples{
+cohort_heatmap("blood", "green")
+cohort_heatmap("biopsy", "blue")
+}
