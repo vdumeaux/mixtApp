@@ -20,6 +20,28 @@ repository:
 
 ```
 $ git clone https://github.com/vdumeaux/mixtApp.git
+```
+Install dependencies in R
+```
+install.packages("devtools")
+install.packages("ggplot2")
+
+install.packages("BiocManager")
+BiocManager::install("Biobase")
+install.packages("DBI")
+install.packages("RSQLite")
+BiocManager::install("AnnotationDbi")
+BiocManager::install("GO.db")
+install.packages(c("latticeExtra","Hmisc", "reshape"))
+BiocManager::install(c("illuminaHumanv3.db", "illuminaHumanv4.db"))
+BiocManager::install(c("limma"))
+install.packages(c("WGCNA","animation", "plyr", "dplyr", "igraph", "GGally", "network", "sna"))
+BiocManager::install(c("breastCancerVDX", "hgu133a.db"))
+BiocManager::install(c("genefu", "iC10"))
+BiocManager::install("preprocessCore")
+```
+
+```
 $ cd mixtApp
 # modify the data-raw/datasets.R file to load your data. 
 $ R -f data-raw/datasets.R
@@ -41,6 +63,7 @@ port `8787` by running
 
 ```
 docker run --name=compute-service -t compute-service
+docker run --name=my-kvik-app -t my-kvik-app
 ```
 
 and it should appear with the `docker ps` command: 
@@ -56,6 +79,8 @@ container. This is lucily one liner:
 
 ```
 docker run -p 8000:80 --link compute-service -e COMPUTE_SERVICE=compute-service:80 --name=mixt -t fjukstad/mixt
+
+docker run -p 8000:80 --link my-kvik-app -e COMPUTE_SERVICE=my-kvik-app:80 --name=mixt -t fjukstad/mixt
 ```
 
 That's it!  You can now visit the application running on
