@@ -63,7 +63,6 @@ port `8787` by running
 
 ```
 docker run --name=compute-service -t compute-service
-docker run --name=my-kvik-app -t my-kvik-app
 ```
 
 and it should appear with the `docker ps` command: 
@@ -79,8 +78,6 @@ container. This is lucily one liner:
 
 ```
 docker run -p 8000:80 --link compute-service -e COMPUTE_SERVICE=compute-service:80 --name=mixt -t fjukstad/mixt
-
-docker run -p 8000:80 --link my-kvik-app -e COMPUTE_SERVICE=my-kvik-app:80 --name=mixt -t fjukstad/mixt
 ```
 
 That's it!  You can now visit the application running on
